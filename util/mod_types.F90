@@ -17,16 +17,16 @@
 !
 !-----------------------------------------------------------------------
 !
-#define FILENAME "util/mod_types.F90" 
+#define FILENAME "util/mod_types.F90"
 !
 !-----------------------------------------------------------------------
-!     Module for user defined types 
+!     Module for user defined types
 !-----------------------------------------------------------------------
 !
       module mod_types
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -35,7 +35,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Constants 
+!     Constants
 !     cf3 - 1/rhow (rhow is reference density of seawater in kg/m3)
 !-----------------------------------------------------------------------
 !
@@ -69,7 +69,7 @@
       integer, parameter :: MAX_MAPPED_GRID = 1000
 !
 !-----------------------------------------------------------------------
-!     RTM river point data type 
+!     RTM river point data type
 !-----------------------------------------------------------------------
 !
       type RTM_River
@@ -88,13 +88,13 @@
       end type RTM_River
 !
 !-----------------------------------------------------------------------
-!     ESM generic field data type 
+!     ESM generic field data type
 !-----------------------------------------------------------------------
 !
       type ESM_Field
         integer :: fid
         integer :: rank
-        integer :: gtype        
+        integer :: gtype
         integer :: itype
         character(len=100) :: short_name
         character(len=100) :: long_name
@@ -107,7 +107,7 @@
       end type ESM_Field
 !
 !-----------------------------------------------------------------------
-!     ESM generic mesh data type 
+!     ESM generic mesh data type
 !-----------------------------------------------------------------------
 !
       type ESM_Mesh
@@ -116,11 +116,11 @@
         real(ESMF_KIND_R8), allocatable :: glon(:,:)
         real(ESMF_KIND_R8), allocatable :: glat(:,:)
         real(ESMF_KIND_R8), allocatable :: gare(:,:)
-        integer(ESMF_KIND_I4), allocatable :: gmsk(:,:) 
+        integer(ESMF_KIND_I4), allocatable :: gmsk(:,:)
       end type ESM_Mesh
 !
 !-----------------------------------------------------------------------
-!     ESM high-level generic model data type 
+!     ESM high-level generic model data type
 !-----------------------------------------------------------------------
 !
       type ESM_Model
@@ -130,10 +130,10 @@
         integer :: tile(2)
         integer :: nLevs
         real(ESMF_KIND_R8), allocatable :: levs(:)
-        integer, allocatable :: petList(:) 
+        integer, allocatable :: petList(:)
         integer :: isLand
         integer :: isOcean
-        type(ESM_Mesh), allocatable :: mesh(:) 
+        type(ESM_Mesh), allocatable :: mesh(:)
         type(ESM_Field), allocatable :: importField(:)
         type(ESM_Field), allocatable :: exportField(:)
         type(ESMF_Grid) :: grid
@@ -141,7 +141,7 @@
       end type ESM_Model
 !
 !-----------------------------------------------------------------------
-!     ESM high-level generic connector data type 
+!     ESM high-level generic connector data type
 !-----------------------------------------------------------------------
 !
       type ESM_Conn
@@ -158,7 +158,7 @@
 !     ESM grided component (models) holder
 !-----------------------------------------------------------------------
 !
-      type(ESM_Model), allocatable, target :: models(:) 
+      type(ESM_Model), allocatable, target :: models(:)
 !
 !-----------------------------------------------------------------------
 !     ESM connector (coupler) holder
@@ -177,14 +177,14 @@
 !-----------------------------------------------------------------------
 !
       character(len=3) :: COMPDES(5) = (/'ATM','OCN','RTM','WAV','COP'/)
-      integer, parameter :: Iatmos = 1 
+      integer, parameter :: Iatmos = 1
       integer, parameter :: Iocean = 2
       integer, parameter :: Iriver = 3
       integer, parameter :: Iwavee = 4
       integer, parameter :: Icopro = 5
 !
 !-----------------------------------------------------------------------
-!     Interaction interfaces  
+!     Interaction interfaces
 !-----------------------------------------------------------------------
 !
       character(len=3) :: IFACEDES(3) = (/'LND','OCN','ALL'/)
@@ -194,11 +194,11 @@
 !
 !-----------------------------------------------------------------------
 !     Staggered grid point indices
-!     d --------- d   d --- v --- d  
+!     d --------- d   d --- v --- d
 !     |           |   |           |
 !     |     c     |   u     c     u
 !     |           |   |           |
-!     d --------- d   d --- v --- d     
+!     d --------- d   d --- v --- d
 !     Arakawa - B     Arakawa - C
 !     RegCM           ROMS (c = rho, d = psi)
 !-----------------------------------------------------------------------
@@ -212,18 +212,18 @@
       integer, parameter :: Ivpoint = 4
 !
 !-----------------------------------------------------------------------
-!     Interpolation type        
+!     Interpolation type
 !-----------------------------------------------------------------------
 !
       character(len=4) :: INTPDES(0:4) = (/'NONE','BLIN','CONS','NS2D', 'ND2S'/)
-      integer, parameter :: Inone  = 0 
-      integer, parameter :: Ibilin = 1 
+      integer, parameter :: Inone  = 0
+      integer, parameter :: Ibilin = 1
       integer, parameter :: Iconsv = 2
       integer, parameter :: Instod = 3
       integer, parameter :: Indtos = 4
 !
 !-----------------------------------------------------------------------
-!     Running mode        
+!     Running mode
 !-----------------------------------------------------------------------
 !
       character(len=10) :: RUNNDES(2) = (/'SEQUENTIAL','CONCURENT '/)
@@ -256,6 +256,9 @@
       logical :: enablePerfCheck
       logical :: restarted
       integer :: riverOpt
+#ifdef NO_HD_SUPPORT
+      logical :: firstT
+#endif
 !
       contains
 !
@@ -263,18 +266,18 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESM_Field), intent(in) :: list(:)
       character(len=*) :: key
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i
-!     
+!
 !-----------------------------------------------------------------------
 !     Find index of specified field
 !-----------------------------------------------------------------------
@@ -285,7 +288,7 @@
           return
         end if
       end do
-      get_varid = -1 
+      get_varid = -1
       return
       end function get_varid
 !

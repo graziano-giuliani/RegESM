@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_ocn_mit.F90"
 !
 !-----------------------------------------------------------------------
-!     OCN gridded component code 
+!     OCN gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_ocn
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -47,7 +47,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Global module variables 
+!     Global module variables
 !-----------------------------------------------------------------------
 !
       real*8  :: myTime = 0.0d0
@@ -58,7 +58,7 @@
       type(ESMF_RouteHandle) :: rh_halo
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: OCN_SetServices
@@ -69,7 +69,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -78,7 +78,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Register NUOPC generic routines    
+!     Register NUOPC generic routines
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
@@ -86,7 +86,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Register initialize routine (P 1/2) for specific implementation   
+!     Register initialize routine (P 1/2) for specific implementation
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSetEntryPoint(gcomp,                               &
@@ -107,7 +107,7 @@
 !
 !-----------------------------------------------------------------------
 !     Attach phase independent specializing methods
-!     Setting the slow and fast model clocks 
+!     Setting the slow and fast model clocks
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSpecialize(gcomp,                                  &
@@ -134,9 +134,9 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Register finalize routine    
+!     Register finalize routine
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridCompSetEntryPoint(gcomp,                            &
                                       methodflag=ESMF_METHOD_FINALIZE,  &
                                       userRoutine=OCN_SetFinalize,      &
@@ -151,7 +151,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -161,7 +161,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i
@@ -169,7 +169,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Set import fields 
+!     Set import fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Iocean)%importField, dim=1)
@@ -178,10 +178,10 @@
              name=trim(models(Iocean)%importField(i)%short_name), rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-      end do 
+      end do
 !
 !-----------------------------------------------------------------------
-!     Set export fields 
+!     Set export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Iocean)%exportField, dim=1)
@@ -199,7 +199,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -209,7 +209,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: myThid = 1
@@ -221,7 +221,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=gname, vm=vm, rc=rc)
@@ -229,18 +229,18 @@
                              line=__LINE__, file=FILENAME)) return
 !
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount,         &
-                      mpiCommunicator=comm, rc=rc) 
+                      mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize the gridded component 
+!     Initialize the gridded component
 !-----------------------------------------------------------------------
 !
-      call MIT_INIT(comm, iLoop, myTime, myIter, myThid) 
+      call MIT_INIT(comm, iLoop, myTime, myIter, myThid)
 !
 !-----------------------------------------------------------------------
-!     Set-up grid and load coordinate data 
+!     Set-up grid and load coordinate data
 !-----------------------------------------------------------------------
 !
       call OCN_SetGridArrays(gcomp, petCount, localPet, rc)
@@ -261,14 +261,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_Clock) :: clock
@@ -301,7 +301,7 @@
       subroutine OCN_SetClock(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : TheCalendar, startdate_1, startdate_2,    &
@@ -310,14 +310,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: localPet, petCount, fac1, fac2, maxdiv
@@ -334,12 +334,12 @@
       type(ESMF_TimeInterval) :: timeStep, elapsedTime
       type(ESMF_Time) :: cmpRefTime, cmpStartTime, cmpStopTime
       type(ESMF_Time) :: dummTime, currTime
-      type(ESMF_Calendar) :: cal 
+      type(ESMF_Calendar) :: cal
 !
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
@@ -351,7 +351,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create gridded component clock 
+!     Create gridded component clock
 !-----------------------------------------------------------------------
 !
       if (trim(TheCalendar) == 'gregorian') then
@@ -507,7 +507,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Modify component clock time step 
+!     Modify component clock time step
 !-----------------------------------------------------------------------
 !
       fac1 = maxval(connectors(Iocean,:)%divDT,mask=models(:)%modActive)
@@ -521,20 +521,20 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
-      end subroutine OCN_SetClock 
+      end subroutine OCN_SetClock
 !
       subroutine OCN_CheckImport(gcomp, rc)
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: itemCount, localPet
@@ -584,7 +584,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
@@ -600,7 +600,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Check fields in the importState (fast time step) 
+!     Check fields in the importState (fast time step)
 !-----------------------------------------------------------------------
 !
       if (itemCount > 0) then
@@ -638,7 +638,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Check fields in the importState (slow time step) 
+!     Check fields in the importState (slow time step)
 !-----------------------------------------------------------------------
 !
       if (models(Iriver)%modActive) then
@@ -667,7 +667,7 @@
       subroutine OCN_SetGridArrays(gcomp, petCount, localPet, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : xC, yC, xG, yG, maskC, maskW, maskS, rA
@@ -675,16 +675,16 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp), intent(inout) :: gcomp
-      integer, intent(in) :: localPet 
-      integer, intent(in) :: petCount 
+      integer, intent(in) :: localPet
+      integer, intent(in) :: petCount
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, k, m, n, p, nr, bi, bj, iG, jG
@@ -704,7 +704,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, vm=vm, name=cname, rc=rc)
@@ -726,7 +726,7 @@
                              recvOffsets=(/ (k, k = 0, petCount-1) /),  &
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return      
+                             line=__LINE__, file=FILENAME)) return
 !
       call ESMF_VMAllGatherV(vm, sendData=(/ myYGlobalLo /),            &
                              sendCount=1, recvData=mpi_myYGlobalLo,     &
@@ -749,7 +749,7 @@
       do tile = 0, (nPx*nPy)-1
         deBlockList(1,1,tile+1) = mpi_myXGlobalLo(tile+1)
         deBlockList(1,2,tile+1) = mpi_myXGlobalLo(tile+1)+sNx-1
-        deBlockList(2,1,tile+1) = mpi_myYGlobalLo(tile+1) 
+        deBlockList(2,1,tile+1) = mpi_myYGlobalLo(tile+1)
         deBlockList(2,2,tile+1) = mpi_myYGlobalLo(tile+1)+sNy-1
       end do
 !
@@ -777,10 +777,10 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
-      do p = 1, 4 
+      do p = 1, 4
 !
       if (models(Iocean)%mesh(p)%gtype == Iupoint) then
         staggerLoc = ESMF_STAGGERLOC_EDGE1
@@ -806,7 +806,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Allocate coordinates 
+!     Allocate coordinates
 !-----------------------------------------------------------------------
 !
       call ESMF_GridAddCoord(models(Iocean)%grid,                       &
@@ -829,7 +829,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Set mask value for land and ocean 
+!     Set mask value for land and ocean
 !-----------------------------------------------------------------------
 !
       models(Iocean)%isLand = 0
@@ -851,7 +851,7 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
@@ -859,9 +859,9 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointers and set coordinates for the grid 
+!     Get pointers and set coordinates for the grid
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
       call ESMF_GridGetCoord(models(Iocean)%grid,                       &
                              localDE=j,                                 &
@@ -904,7 +904,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: write size of pointers    
+!     Debug: write size of pointers
 !-----------------------------------------------------------------------
 !
       name = GRIDDES(models(Iocean)%mesh(p)%gtype)
@@ -916,7 +916,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Fill the pointers    
+!     Fill the pointers
 !-----------------------------------------------------------------------
 !
       bj = 1
@@ -975,28 +975,28 @@
 !
        if (models(Iocean)%mesh(p)%gtype == Icross) then
         arrX = ESMF_ArrayCreate(distGrid, ptrX,                         &
-                                indexflag=ESMF_INDEX_DELOCAL, rc=rc) 
+                                indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
 !
         arrY = ESMF_ArrayCreate(distGrid, ptrY,                         &
-                                indexflag=ESMF_INDEX_DELOCAL, rc=rc) 
+                                indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
 !
         arrM = ESMF_ArrayCreate(distGrid, ptrM,                         &
-                                indexflag=ESMF_INDEX_DELOCAL, rc=rc) 
+                                indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
 !
         arrA = ESMF_ArrayCreate(distGrid, ptrA,                         &
-                                indexflag=ESMF_INDEX_DELOCAL, rc=rc) 
+                                indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
        end if
 !
 !-----------------------------------------------------------------------
-!     Nullify pointers 
+!     Nullify pointers
 !-----------------------------------------------------------------------
 !
       if (associated(ptrY)) then
@@ -1014,7 +1014,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Assign grid to gridded component 
+!     Assign grid to gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompSet(gcomp, grid=models(Iocean)%grid, rc=rc)
@@ -1022,7 +1022,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write out component grid in VTK format 
+!     Debug: write out component grid in VTK format
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
@@ -1035,7 +1035,7 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-      end do     
+      end do
 !
 !-----------------------------------------------------------------------
 !     Collect data from arrays to first PET of the component
@@ -1079,7 +1079,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Destroy temporary arrays 
+!     Destroy temporary arrays
 !-----------------------------------------------------------------------
 !
       call ESMF_ArrayDestroy(arrX, rc=rc)
@@ -1099,9 +1099,10 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Find location of the rivers 
+!     Find location of the rivers
 !-----------------------------------------------------------------------
 !
+#ifdef NO_CHYM_SUPPORT
       nr = size(rivers, dim=1)
       do i = 1, nr
         if (rivers(i)%isActive > 0) then
@@ -1131,10 +1132,10 @@
             rivers(i)%jindex = ZERO_I4
             rivers(i)%rootPet = ZERO_I4
           else
-            rivers(i)%lon = ZERO_R8 
+            rivers(i)%lon = ZERO_R8
             rivers(i)%lat = ZERO_R8
             rivers(i)%rootPet = ZERO_I4
-          end if 
+          end if
 !
           if (localPet == 0) then
             write(*,20) i, rivers(i)%dir, rivers(i)%eRadius,            &
@@ -1146,20 +1147,21 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Map ocean grid points to rivers defined by RTM component 
+!     Map ocean grid points to rivers defined by RTM component
 !-----------------------------------------------------------------------
 !
       call map_rivers(vm, rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
+#endif
       end if
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
- 20   format(" RIVER(",I2.2,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
+ 20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I4.4,":",I4.4,"] - ",I4," ",A)
  30   format(" PET(",I3.3,") - DE(",I2.2,") - ", A20, " : ", 4I8)
 !
       end subroutine OCN_SetGridArrays
@@ -1168,14 +1170,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp), intent(in) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, k, itemCount, localDECount, localPet, petCount
@@ -1185,11 +1187,11 @@
       type(ESMF_VM) :: vm
       type(ESMF_Field) :: field
       type(ESMF_ArraySpec) :: arraySpec
-      type(ESMF_StaggerLoc) :: staggerLoc 
+      type(ESMF_StaggerLoc) :: staggerLoc
       type(ESMF_State) :: importState, exportState
 !
 !-----------------------------------------------------------------------
-!     Get information about gridded component 
+!     Get information about gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, importState=importState,             &
@@ -1213,7 +1215,7 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
@@ -1236,14 +1238,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create export fields 
+!     Create export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
       k = get_varid(models(Iocean)%exportField, trim(itemNameList(i)))
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
       if (models(Iocean)%exportField(k)%gtype == Iupoint) then
@@ -1257,7 +1259,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Create field 
+!     Create field
 !-----------------------------------------------------------------------
 !
       field = ESMF_FieldCreate(models(Iocean)%grid,                     &
@@ -1270,13 +1272,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Put initial data into state 
+!     Put initial data into state
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
@@ -1284,14 +1286,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize pointer 
+!     Initialize pointer
 !-----------------------------------------------------------------------
 !
       ptr2d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -1304,19 +1306,19 @@
 !     Add field export state
 !-----------------------------------------------------------------------
 !
-      call NUOPC_Realize(exportState, field=field, rc=rc) 
+      call NUOPC_Realize(exportState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
@@ -1331,14 +1333,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create import fields 
+!     Create import fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
       k = get_varid(models(Iocean)%importField, trim(itemNameList(i)))
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
       if (models(Iocean)%importField(k)%gtype == Iupoint) then
@@ -1367,7 +1369,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Store routehandle to exchage halo region data 
+!     Store routehandle to exchage halo region data
 !-----------------------------------------------------------------------
 !
 !      if (i == 1) then
@@ -1377,13 +1379,13 @@
 !      end if
 !
 !-----------------------------------------------------------------------
-!     Put data into state 
+!     Put data into state
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
@@ -1391,14 +1393,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize pointer 
+!     Initialize pointer
 !-----------------------------------------------------------------------
 !
       ptr2d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -1411,23 +1413,23 @@
 !     Add field import state
 !-----------------------------------------------------------------------
 !
-      call NUOPC_Realize(importState, field=field, rc=rc) 
+      call NUOPC_Realize(importState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
 !
-      end subroutine OCN_SetStates 
+      end subroutine OCN_SetStates
 !
       subroutine OCN_ModelAdvance(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : deltaT
@@ -1435,21 +1437,21 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       real*8 :: trun
       integer :: myThid = 1
       integer :: localPet, petCount, phase, iter
       character(ESMF_MAXSTR) :: str1, str2
-!     
+!
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
       type(ESMF_TimeInterval) :: timeStep
@@ -1459,7 +1461,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, clock=clock, importState=importState,&
@@ -1477,12 +1479,12 @@
 !-----------------------------------------------------------------------
 !
       call ESMF_ClockGet(clock, timeStep=timeStep, startTime=startTime, &
-                         stopTime=stopTime, currTime=currTime, rc=rc) 
+                         stopTime=stopTime, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get time interval 
+!     Get time interval
 !-----------------------------------------------------------------------
 !
       call ESMF_TimeIntervalGet(timeStep, s_r8=trun, rc=rc)
@@ -1490,7 +1492,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write time information 
+!     Debug: write time information
 !-----------------------------------------------------------------------
 !
       iter = int(trun/deltaT)
@@ -1514,7 +1516,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Get import fields 
+!     Get import fields
 !-----------------------------------------------------------------------
 !
       if ((currTime /= startTime) .or. restarted) then
@@ -1530,7 +1532,7 @@
       call MIT_RUN(iter, iLoop, myTime, myIter, myThid)
 !
 !-----------------------------------------------------------------------
-!     Put export fields 
+!     Put export fields
 !-----------------------------------------------------------------------
 !
       call OCN_Put(gcomp, rc=rc)
@@ -1538,7 +1540,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
  40   format(' Running OCN Component: ',A,' --> ',A,' Phase: ',I1)
@@ -1552,7 +1554,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -1562,7 +1564,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       rc = ESMF_SUCCESS
@@ -1578,7 +1580,7 @@
       subroutine OCN_Get(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : ustress_ESMF, vstress_ESMF, hflux_ESMF,   &
@@ -1592,17 +1594,17 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
-      integer :: i, j, ii, jj, bi, bj, iG, jG, imax, jmax
+      integer :: i, j, ii, jj, bi, bj, iG, jG, imax, jmax, nr
       integer :: id, iyear, iday, imonth, ihour, iunit
       integer :: LBi, UBi, LBj, UBj
       integer :: localPet, petCount, itemCount, localDECount
@@ -1610,6 +1612,9 @@
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8) :: sfac, addo
       real(ESMF_KIND_R8), pointer :: ptr(:,:)
+#ifdef NO_HD_SUPPORT
+      real(ESMF_KIND_R8), allocatable :: farrayDst(:,:)
+#endif
 !
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
@@ -1621,7 +1626,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
@@ -1634,7 +1639,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get current time 
+!     Get current time
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 2) then
@@ -1651,19 +1656,19 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return 
+                             line=__LINE__, file=FILENAME)) return
 !
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
@@ -1677,12 +1682,12 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over excahange fields 
+!     Loop over excahange fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
 !
-      id = get_varid(models(Iocean)%importField, itemNameList(i)) 
+      id = get_varid(models(Iocean)%importField, itemNameList(i))
 !
 !-----------------------------------------------------------------------
 !     Get field
@@ -1694,7 +1699,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over decomposition elements (DEs) 
+!     Loop over decomposition elements (DEs)
 !-----------------------------------------------------------------------
 !
       do j = 0, localDECount-1
@@ -1708,7 +1713,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write size of pointers    
+!     Debug: write size of pointers
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
@@ -1720,7 +1725,7 @@
                   ubound(ustress_ESMF, dim=1),                          &
                   lbound(ustress_ESMF, dim=2),                          &
                   ubound(ustress_ESMF, dim=2)
-      end if 
+      end if
 !
 !-----------------------------------------------------------------------
 !     Put data to OCN component variable
@@ -1925,18 +1930,58 @@
           end do
         end do
       case ('rdis')
+#ifdef NO_HD_SUPPORT
+        if (localPet .eq. 0) then
+          allocate (farrayDst(Nx,Ny))
+        else
+          allocate (farrayDst(0,0))
+        end if
+        call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                               line=__LINE__, file=FILENAME)) return
+#endif
         LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
         UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
         LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)
         UBj = myYGlobalLo-1+(bj-1)*sNy+(sNy+OLy)
+#ifdef NO_HD_SUPPORT
+        if (firstT) then
+          call init_rivers(vm, farrayDst, Nx, Ny, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          nr = size(rivers, dim=1)
+          do ii = 1, nr
+            if (rivers(ii)%isActive > 0) then
+              rivers(ii)%rootPet = findPet(vm, rivers(ii)%iindex, &
+                                           rivers(ii)%jindex, rc)
+              if (localPet == 0) then
+                write(*,20) ii, rivers(ii)%dir, rivers(ii)%eRadius,  &
+                        rivers(ii)%lon, rivers(ii)%lat, &
+                        rivers(ii)%iindex, rivers(ii)%jindex, &
+                        rivers(ii)%rootPet, 'ACTIVE'
+              end if
+            end if
+          end do
+          call map_rivers(vm, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+       else
+          call put_river(vm, clock, LBi, UBi, LBj, UBj, &
+                         ptr, sfac, addo, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+       end if
+#endif
+#ifdef NO_CHYM_SUPPORT
         call put_river(vm, clock, LBi, UBi, LBj, UBj,                   &
                        ptr, sfac, addo, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
+#endif
       end select
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in ASCII format   
+!     Debug: write field in ASCII format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 4) then
@@ -1951,18 +1996,18 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr)) then
         nullify(ptr)
       end if
 !
-      end do       
+      end do
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in netCDF format    
+!     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 3) then
@@ -1976,16 +2021,19 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
+#ifdef NO_HD_SUPPORT
+ 20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I4.4,":",I4.4,"] - ",I4," ",A)
+#endif
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
  70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
  80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
@@ -1995,7 +2043,7 @@
       subroutine OCN_Put(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : theta
@@ -2003,14 +2051,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: bi, bj, iG, jG, imax, jmax
@@ -2025,12 +2073,12 @@
       type(ESMF_Time) :: currTime
       type(ESMF_Field) :: field
       type(ESMF_State) :: exportState
-      type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)      
+      type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)
 !
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
@@ -2043,7 +2091,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get current time 
+!     Get current time
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 2) then
@@ -2060,19 +2108,19 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of export fields 
+!     Get list of export fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return 
+                             line=__LINE__, file=FILENAME)) return
 !
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
@@ -2086,13 +2134,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over export fields 
+!     Loop over export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
 !
 !-----------------------------------------------------------------------
-!     Get export field 
+!     Get export field
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(exportState, trim(itemNameList(i)),            &
@@ -2101,7 +2149,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Perform halo region update 
+!     Perform halo region update
 !-----------------------------------------------------------------------
 !
 !      call ESMF_FieldHalo(field, routehandle=rh_halo,                   &
@@ -2110,13 +2158,13 @@
 !                             line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over decomposition elements (DEs) 
+!     Loop over decomposition elements (DEs)
 !-----------------------------------------------------------------------
 !
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer 
+!     Get pointer
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr, rc=rc)
@@ -2124,13 +2172,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set initial value to missing 
+!     Set initial value to missing
 !-----------------------------------------------------------------------
 !
       ptr = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Put data to export field 
+!     Put data to export field
 !-----------------------------------------------------------------------
 !
       bi = 1
@@ -2150,22 +2198,22 @@
       end select
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in ASCII format   
+!     Debug: write field in ASCII format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 4) then
         iunit = localPet
         write(ofile,90) 'ocn_export', trim(itemNameList(i)),            &
                         iyear, imonth, iday, ihour, localPet, j
-        open(unit=iunit, file=trim(ofile)//'.txt') 
+        open(unit=iunit, file=trim(ofile)//'.txt')
         call print_matrix(ptr, 1, sNx, 1, sNy, 1, 1,                    &
                           localPet, iunit, "PTR/OCN/EXP")
         close(unit=iunit)
-      end if         
+      end if
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr)) then
@@ -2175,7 +2223,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in netCDF format    
+!     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 3) then
@@ -2189,14 +2237,14 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
@@ -2208,7 +2256,7 @@
                            ptr, sfac, addo, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use mod_mit_gcm, only : runoff_ESMF
@@ -2217,7 +2265,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM), intent(in) :: vm
@@ -2228,16 +2276,16 @@
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       real*8 :: rdis(1)
       integer :: i, j, k, r, ii, jj, iG, jG, bi, bj
-      integer :: mm, ng, np, nr, localPet, petCount 
+      integer :: mm, ng, np, nr, localPet, petCount
       character(ESMF_MAXSTR) :: str
 !
       type(ESMF_Time) :: currTime
-! 
+!
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -2249,7 +2297,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Query clock and time 
+!     Query clock and time
 !-----------------------------------------------------------------------
 !
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
@@ -2259,7 +2307,7 @@
       call ESMF_TimeGet(currTime, mm=mm, timeStringISOFrac=str, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!     
+!
 !-----------------------------------------------------------------------
 !     Fill array with river discharge data
 !-----------------------------------------------------------------------
@@ -2308,10 +2356,10 @@
           ! apply as surface boundary condition
           else if (riverOpt == 2) then
             ! distribute data to the mapped ocean grid points
-            np = rivers(r)%mapSize 
+            np = rivers(r)%mapSize
             do k = 1, np
               i = int(rivers(r)%mapTable(1,k))
-              j = int(rivers(r)%mapTable(2,k))                
+              j = int(rivers(r)%mapTable(2,k))
 
               do jj = 1-OLy, sNy+OLy
                 do ii = 1-OLx, sNx+OLx
@@ -2320,9 +2368,9 @@
                   if (iG == i .and. jG ==j .and. rdis(1) < TOL_R8) then
                     runoff_ESMF(ii,jj,1,1) = runoff_ESMF(ii,jj,1,1)+  &
                                            (rdis(1)/rivers(r)%mapArea)
-                  end if 
+                  end if
                 end do
-              end do  
+              end do
             end do
           end if
 !
@@ -2332,7 +2380,7 @@
               write(*,110) r, trim(str), rdis(1)
             else
               write(*,110) r, trim(str), ZERO_R8
-            end if 
+            end if
           end if
         else
           ! print debug info
@@ -2343,25 +2391,30 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
+#ifdef NO_CHYM_SUPPORT
  110  format(' River (',I2.2,') Discharge [',A,'] : ',F15.6)
+#endif
+#ifdef NO_HD_SUPPORT
+ 110  format(' River (',I3.2,') Discharge [',A,'] : ',F15.6)
+#endif
 !
       end subroutine put_river
 !
       function findPet(vm, i, j, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
-!      
+!
       integer :: findPet
 !
       type(ESMF_VM), intent(in) :: vm
@@ -2369,7 +2422,7 @@
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: k, n, m, bi, bj, iG, jG
@@ -2378,7 +2431,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Query VM 
+!     Query VM
 !-----------------------------------------------------------------------
 !
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
@@ -2386,7 +2439,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Find rootPET that has river discharge data 
+!     Find rootPET that has river discharge data
 !-----------------------------------------------------------------------
 !
       bj = 1
@@ -2406,7 +2459,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Broadcast rootPET data to PETs 
+!     Broadcast rootPET data to PETs
 !-----------------------------------------------------------------------
 !
       sendData(1) = rootPet

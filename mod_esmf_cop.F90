@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_cop.F90"
 !
 !-----------------------------------------------------------------------
-!     COP gridded component code 
+!     COP gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_cop
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -43,13 +43,13 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: COP_SetServices
 !
 !-----------------------------------------------------------------------
-!     Component specific variables 
+!     Component specific variables
 !-----------------------------------------------------------------------
 !
       integer :: nports
@@ -80,7 +80,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -180,7 +180,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Query component 
+!     Query component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
@@ -226,7 +226,7 @@
                                "_input3d"//char(0)
             k = k+2
           end if
-        end do 
+        end do
       end if
 !
       if (localPet == models(Icopro)%petList(1)) then
@@ -254,7 +254,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
   10  format(A,I02,A)
@@ -270,7 +270,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -280,7 +280,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i
@@ -288,7 +288,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Set import fields 
+!     Set import fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Icopro)%importField, dim=1)
@@ -299,10 +299,10 @@
              rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-      end do 
+      end do
 !
 !-----------------------------------------------------------------------
-!     Set export fields 
+!     Set export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Icopro)%exportField, dim=1)
@@ -566,7 +566,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get local DE count 
+!     Get local DE count
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDECount=localDECount, rc=rc)
@@ -574,14 +574,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over decomposition elements (DEs) 
+!     Loop over decomposition elements (DEs)
 !-----------------------------------------------------------------------
 !
       do j = 0, localDECount-1
       if (models(Icopro)%importField(k)%rank .eq. 2) then
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr2d, rc=rc)
@@ -589,14 +589,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set initial value to missing 
+!     Set initial value to missing
 !-----------------------------------------------------------------------
 !
-      ptr2d = MISSING_R8      
+      ptr2d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -606,7 +606,7 @@
       else if (models(Icopro)%importField(k)%rank .eq. 3) then
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr3d, rc=rc)
@@ -614,14 +614,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set initial value to missing 
+!     Set initial value to missing
 !-----------------------------------------------------------------------
 !
       ptr3d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr3d)) then
@@ -670,19 +670,19 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: fac1, fac2, maxdiv
 !
-      type(ESMF_Clock) :: cmpClock 
+      type(ESMF_Clock) :: cmpClock
       type(ESMF_TimeInterval) :: timeStep
 !
       rc = ESMF_SUCCESS
@@ -700,7 +700,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Modify component clock time step 
+!     Modify component clock time step
 !-----------------------------------------------------------------------
 !
       fac1 = maxval(connectors(Icopro,:)%divDT,mask=models(:)%modActive)
@@ -725,12 +725,12 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
-      integer :: i, j, k, its, tileX, tileY 
+      integer :: i, j, k, its, tileX, tileY
       integer :: localPet, petCount, itemCount, dimCount, tileCount
-      integer :: nPoints2D, nPoints3D  
+      integer :: nPoints2D, nPoints3D
       integer :: cc2d(2), cc3d(3), lb(3), ub(3), dims(3)
       integer, allocatable :: minIndexPTile(:,:), maxIndexPTile(:,:)
       character(ESMF_MAXSTR) :: gname, str1, str2
@@ -764,14 +764,14 @@
       type(ESMF_TimeInterval) :: elapsedTime, timeStep
       type(ESMF_Time) :: startTime, currTime
       type(ESMF_DistGrid) :: distgrid
-      type(ESMF_State) :: importState 
+      type(ESMF_State) :: importState
 !
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
 !     Query component
 !-----------------------------------------------------------------------
-! 
+!
       call NUOPC_ModelGet(gcomp, modelClock=clock,                      &
                           importState=importState, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -885,7 +885,7 @@
       end if
 !
       if (.not. allocated(maxIndexPTile)) then
-        allocate(maxIndexPTile(dimCount, tileCount)) 
+        allocate(maxIndexPTile(dimCount, tileCount))
       end if
 !
 !-----------------------------------------------------------------------
@@ -987,7 +987,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Serialize (2d -> 1d) coordinate arrays 
+!     Serialize (2d -> 1d) coordinate arrays
 !-----------------------------------------------------------------------
 !
       lb = (/ lbound(ptr2X,dim=1), lbound(ptr2X,dim=2), 0 /)
@@ -1049,7 +1049,7 @@
       if (allocated(lat2d)) deallocate(lat2d)
 !
 !-----------------------------------------------------------------------
-!     Measure performance of creating 2d grid 
+!     Measure performance of creating 2d grid
 !-----------------------------------------------------------------------
 !
       if (enablePerfCheck) then
@@ -1126,7 +1126,7 @@
       call ESMF_GridGetCoord(grid, coordDim=3, array=arrZ, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=__FILE__)) return
-!                             
+!
       if (.not. allocated(lev3d)) then
         allocate(lev3d(minIndexPTile(1,1):maxIndexPTile(1,1),           &
                        minIndexPTile(2,1):maxIndexPTile(2,1),           &
@@ -1152,7 +1152,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Serialize (3d -> 1d) coordinate arrays 
+!     Serialize (3d -> 1d) coordinate arrays
 !-----------------------------------------------------------------------
 !
       lb = (/ lbound(ptr3X,dim=1), lbound(ptr3X,dim=2),                 &
@@ -1223,7 +1223,7 @@
       if (allocated(lev3d)) deallocate(lev3d)
 !
 !-----------------------------------------------------------------------
-!     Measure performance of creating 3d grid 
+!     Measure performance of creating 3d grid
 !-----------------------------------------------------------------------
 !
       if (enablePerfCheck) then
@@ -1239,14 +1239,14 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Save defined grid name in lookup table 
+!     Save defined grid name in lookup table
 !-----------------------------------------------------------------------
 !
       gridnames(j) = trim(gname)
       j = j+1
 !
 !-----------------------------------------------------------------------
-!     Debug: write out component grid in VTK format 
+!     Debug: write out component grid in VTK format
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
@@ -1286,7 +1286,7 @@
                              line=__LINE__, file=__FILE__)) return
 !
 !-----------------------------------------------------------------------
-!     Serialize (2d -> 1d) coordinate arrays 
+!     Serialize (2d -> 1d) coordinate arrays
 !-----------------------------------------------------------------------
 !
       lb = (/ lbound(ptr2d,dim=1), lbound(ptr2d,dim=2), 0 /)
@@ -1340,7 +1340,7 @@
         end if
       end if
 !
-      else if (dimCount == 3) then ! 3d     
+      else if (dimCount == 3) then ! 3d
 !
       if (.not. allocated(var3d)) then
         allocate(var3d(minIndexPTile(1,1):maxIndexPTile(1,1),           &
@@ -1360,7 +1360,7 @@
                              line=__LINE__, file=__FILE__)) return
 !
 !-----------------------------------------------------------------------
-!     Serialize (3d -> 1d) coordinate arrays 
+!     Serialize (3d -> 1d) coordinate arrays
 !-----------------------------------------------------------------------
 !
       lb = (/ lbound(ptr3d,dim=1), lbound(ptr3d,dim=2),                 &
@@ -1428,7 +1428,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
@@ -1459,7 +1459,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: write time information 
+!     Debug: write time information
 !-----------------------------------------------------------------------
 !
       if (debugLevel >= 0 .and. localPet == 0) then
@@ -1467,7 +1467,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
  40   format(' Running COP Component: ',A,' --> ',A,                    &
@@ -1477,16 +1477,16 @@
 !
       function check_grid(gname) result(flag)
       implicit none
-!     
+!
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       character(ESMF_MAXSTR), intent(in) :: gname
       logical :: flag
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i
@@ -1495,7 +1495,7 @@
       do i = 1, ubound(gridnames, dim=1)
         if (trim(gname) == trim(gridnames(i))) flag = .true.
       end do
-!  
+!
       end function check_grid
 !
       subroutine ntooned_2d(lb, ub, xnd, x1d)
@@ -1591,12 +1591,12 @@
 !-----------------------------------------------------------------------
 !     Local variable declarations
 !-----------------------------------------------------------------------
-!      
+!
       logical :: flag1, continueProcessing
       integer :: flag2
 !
 !-----------------------------------------------------------------------
-!     Create grid in co-processing module 
+!     Create grid in co-processing module
 !-----------------------------------------------------------------------
 !
       flag1 = .false.
@@ -1614,7 +1614,7 @@
           call create_grid(name//char(0), petCount, localPet,           &
                            dims, lb, ub, nPoints, lon1d, lat1d)
         end if
-        !write(*,fmt="(A,6I5,I8)") name//char(0), lb, ub, nPoints 
+        !write(*,fmt="(A,6I5,I8)") name//char(0), lb, ub, nPoints
       else
         continueProcessing = .false.
       end if

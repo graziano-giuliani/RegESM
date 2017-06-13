@@ -38,10 +38,10 @@
       use mod_types
       use mod_shared
 !
-      use mod_hd_iface, only :                                          &
-          RTM_Initialize => hd_init,                                    &
-          RTM_Run        => hd_run,                                     &
-          RTM_Finalize   => hd_finalize
+      use mod_chym_iface, only :                                        &
+          RTM_Initialize => chym_init,                                  &
+          RTM_Run        => chym_run,                                   &
+          RTM_Finalize   => chym_finalize
 !
       implicit none
       private
@@ -299,7 +299,7 @@
         istart = int(dstart)+1
       else
         write(msgString,'(A,I3)') trim(cname)//                         &
-              ': time step of the HD model must be defined '//          &
+              ': time step of the CHYM model must be defined '//        &
               'as day increments. check istart!' 
         call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_ERROR)
         return
@@ -309,7 +309,7 @@
         iend = int(dend)
       else
         write(msgString,'(A,I3)') trim(cname)//                         &
-              ': time step of the HD model must be defined '//          &
+              ': time step of the CHYM model must be defined '//        &
               'as day increments. check iend!'
         call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_ERROR)
         return
@@ -341,8 +341,6 @@
 !     Put export fields in case of restart run 
 !-----------------------------------------------------------------------
 !
-        call RTM_Run(istart, iend)
-!
         call RTM_Put(gcomp, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
@@ -364,7 +362,7 @@
 !     Used module declarations 
 !-----------------------------------------------------------------------
 !
-      use mod_hd_param, only : nl, nb, hd_lsm, area
+      use mod_chym_param, only : nlc,nbc,chym_lsm, chym_area
 !
       implicit none
 !
@@ -399,7 +397,7 @@
       cpus_per_dim = 1
 !
       distGrid = ESMF_DistGridCreate(minIndex=(/ 1, 1 /),               &
-                                     maxIndex=(/ nl, nb /),             &
+                                     maxIndex=(/ nlc, nbc /),             &
                                      regDecomp=cpus_per_dim,            &
                                      rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -523,29 +521,24 @@
 !     Fill the pointers    
 !-----------------------------------------------------------------------
 !
-      if (.not. allocated(lon1d)) allocate(lon1d(nl))
-      if (.not. allocated(lat1d)) allocate(lat1d(nb))
+      if (.not. allocated(lon1d)) allocate(lon1d(nlc))
+      if (.not. allocated(lat1d)) allocate(lat1d(nbc))
 !
-      do i = 0, nl-1
-        lon1d(i+1) = 0.25d0+dble(i)/dble(nl)*dble(umfang)
+      do i = 0, nlc-1
+        lon1d(i+1) = 14.0d0+0.12d0*i
       end do
-      lon1d = lon1d-180.0d0
-      do i = 0, nb-1
-        lat1d(i+1) = 0.25d0-dble(umfang)/4.0d0+                         &
-                     dble(umfang)/2.0d0*dble(i)/dble(nb)
-        lat1d(i+1) = -lat1d(i+1)
+      do i = 0, nbc-1
+        lat1d(i+1) = -26.0d0+0.12d0*i
       end do 
 !
-      do i = 1, nb
+      do i = 1, nbc
         ptrX(:,i) = lon1d
       end do
-      do i = 1, nl
+      do i = 1, nlc
         ptrY(i,:) = lat1d
       end do
-      ptrM = hd_lsm
-      do i = 1, nb
-        ptrA(:,i) = area(i)
-      end do
+      ptrM = chym_lsm 
+      ptrA = chym_area
 !
       if (allocated(lon1d)) deallocate(lon1d)
       if (allocated(lat1d)) deallocate(lat1d)
@@ -842,7 +835,7 @@
 !     Used module declarations 
 !-----------------------------------------------------------------------
 !
-      use mod_hd_param, only : runoff, drain
+      use mod_chym_param, only : runoff, drain
 !
       implicit none
 !
@@ -912,7 +905,7 @@
         istart = int(dstart)+1 
       else
         write(msgString,'(A,I3)') trim(cname)//                         &
-              ': time step of the HD model must be defined '//          &
+              ': time step of the CHYM model must be defined '//        &
               'as day increments. check istart!' 
         call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_ERROR)
         return
@@ -922,7 +915,7 @@
         iend = int(dend)
       else
         write(msgString,'(A,I3)') trim(cname)//                         &
-              ': time step of the HD model must be defined '//          &
+              ': time step of the CHYM model must be defined '//        &
               'as day increments. check iend!'
         call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_ERROR)
         return
@@ -964,7 +957,7 @@
 !     Run RTM component
 !-----------------------------------------------------------------------
 !
-      call RTM_Run(istart, iend)
+      call RTM_Run(istart, iend ,restarted)
 !
 !-----------------------------------------------------------------------
 !     Put export fields
@@ -1018,7 +1011,8 @@
 !     Used module declarations 
 !-----------------------------------------------------------------------
 !
-      use mod_hd_param, only : nl, nb, runoff, drain
+      use mod_chym_param, only : runoff, drain
+      use mod_chym_param, only : nlc, nbc, chym_runoff, chym_drain
 !
       implicit none
 !
@@ -1146,7 +1140,7 @@
                   lbound(ptr, dim=1), ubound(ptr, dim=1),               &
                   lbound(ptr, dim=2), ubound(ptr, dim=2)
       write(*,60) localPet, j, adjustl("IND/RTM/IMP/"//itemNameList(i)),&
-                  1, nl, 1, nb
+                  1, nlc, 1, nbc
       end if
 !
 !-----------------------------------------------------------------------
@@ -1158,22 +1152,22 @@
 !
       select case (trim(adjustl(itemNameList(i))))
       case ('rnof')
-        do m = 1, nb
-          do n = 1, nl
+        do m = 1, nbc
+          do n = 1, nlc
             if (ptr(n,m) < 0.0d0 .or. ptr(n,m) > 1.0d0) then
-              runoff(n,m) = 0.0d0
+              chym_runoff(n,m) = 0.0d0
             else
-              runoff(n,m) = (ptr(n,m)*sfac)+addo
+              chym_runoff(n,m) = (ptr(n,m)*sfac)+addo
             end if
           end do
         end do 
       case ('snof')
-        do m = 1, nb
-          do n = 1, nl
+        do m = 1, nbc
+          do n = 1, nlc
             if (ptr(n,m) < 0.0d0 .or. ptr(n,m) > 1.0d0) then
-              drain(n,m) = 0.0d0
+              chym_drain(n,m) = 0.0d0
             else
-              drain(n,m) = (ptr(n,m)*sfac)+addo
+              chym_drain(n,m) = (ptr(n,m)*sfac)+addo
             end if
           end do
         end do
@@ -1188,7 +1182,7 @@
                         iyear, imonth, iday, ihour, localPet, j
         iunit = localPet*10
         open(unit=iunit, file=trim(ofile)//'.txt')
-        call print_matrix(ptr, 1, nl, 1, nb, 1, 1,                      &
+        call print_matrix(ptr, 1, nlc, 1, nbc, 1, 1,                      &
                           localPet, iunit, "PTR/RTM/IMP")
         close(unit=iunit)
       end if
@@ -1241,7 +1235,7 @@
 !     Used module declarations 
 !-----------------------------------------------------------------------
 !
-      use mod_hd_param, only : nl, nb, friv
+      use mod_chym_param, only : nlc, nbc, chym_dis
 !
       implicit none
 !
@@ -1369,9 +1363,9 @@
 !
       select case (trim(adjustl(itemNameList(i)))) 
       case ('rdis')
-        do m = 1, nb
-          do n = 1, nl
-            ptr(n,m) = friv(n,m)
+        do m = 1, nbc
+          do n = 1, nlc
+            ptr(n,m) = chym_dis(n,m)
           end do
         end do
       end select
@@ -1385,7 +1379,7 @@
         write(ofile,80) 'rtm_export', trim(itemNameList(i)),            &
                         iyear, imonth, iday, ihour, localPet, j
         open(unit=iunit, file=trim(ofile)//'.txt') 
-        call print_matrix(ptr, 1, nl, 1, nb, 1, 1,                      &
+        call print_matrix(ptr, 1, nlc, 1, nbc, 1, 1,                    &
                           localPet, iunit, "PTR/RTM/EXP")
         close(unit=iunit)
       end if

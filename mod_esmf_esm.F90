@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_esm.F90"
 !
 !-----------------------------------------------------------------------
-!     ESM gridded component code 
+!     ESM gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_esm
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -47,7 +47,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: ESM_SetServices
@@ -58,7 +58,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -67,7 +67,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Register generic methods 
+!     Register generic methods
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
@@ -75,7 +75,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Attach specializing methods 
+!     Attach specializing methods
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSpecialize(gcomp,                                  &
@@ -96,14 +96,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!     
+!
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j
@@ -114,7 +114,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     SetServices for model components 
+!     SetServices for model components
 !-----------------------------------------------------------------------
 !
       do i = 1, nModels
@@ -158,7 +158,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     SetServices for connector components 
+!     SetServices for connector components
 !-----------------------------------------------------------------------
 !
       do i = 1, nModels
@@ -185,7 +185,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Set internal clock for application (gcomp). The time step must be 
+!     Set internal clock for application (gcomp). The time step must be
 !     set to the slowest time interval of the connector components
 !-----------------------------------------------------------------------
 !
@@ -213,20 +213,20 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
 !
-      end subroutine ESM_SetModelServices 
+      end subroutine ESM_SetModelServices
 !
       subroutine ESM_SetRunSequence(gcomp, rc)
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!     
+!
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, maxdiv, runid, localPet, petCount
@@ -251,14 +251,14 @@
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!  
+!
 !-----------------------------------------------------------------------
 !     Replace default RunSequence
-!     - single RunSequence for coupling. In this case, all components 
+!     - single RunSequence for coupling. In this case, all components
 !       interact with same interval (coupling time step).
 !     - multiple RunSequence for coupling. In this case, multiple slots
 !       are created to support different coupling time step among the
-!       model components. 
+!       model components.
 !-----------------------------------------------------------------------
 !
       runid = 0
@@ -266,20 +266,20 @@
         do j = 1, nModels
           if (connectors(i,j)%modActive) then
             runid = runid+10**(nModels-j)
-          end if 
+          end if
         end do
-      end do 
+      end do
 !
       if (localPet == 0) then
         write(*,fmt="(A,I5)") "RUN ID = ", runid
       end if
-!  
+!
 !-----------------------------------------------------------------------
 !     ATM-OCN
 !-----------------------------------------------------------------------
 !
       if (runid == 11000) then
-!  
+!
 !-----------------------------------------------------------------------
 !     ATM-OCN: Explicit
 !-----------------------------------------------------------------------
@@ -314,9 +314,9 @@
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!  
+!
 !-----------------------------------------------------------------------
-!     ATM-OCN: Semi-implicit 
+!     ATM-OCN: Semi-implicit
 !-----------------------------------------------------------------------
 !
       else
@@ -349,10 +349,10 @@
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-      end if      
-!  
+      end if
+!
 !-----------------------------------------------------------------------
-!     ATM-WAV 
+!     ATM-WAV
 !-----------------------------------------------------------------------
 !
       else if (runid == 10010) then
@@ -385,7 +385,7 @@
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!  
+!
 !-----------------------------------------------------------------------
 !     ATM-OCN-RTM
 !-----------------------------------------------------------------------
@@ -410,7 +410,7 @@
            line=__LINE__, file=FILENAME)) return
 !
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                       linkSlot=2, rc=rc) 
+                                       linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 !
@@ -457,7 +457,7 @@
            line=__LINE__, file=FILENAME)) return
 !
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
-                     connectors(Iocean,Iatmos)%divDT) 
+                     connectors(Iocean,Iatmos)%divDT)
         cname = trim(connectors(Iatmos,Iocean)%name)//'_clock'
 !
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
@@ -472,7 +472,7 @@
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!  
+!
 !-----------------------------------------------------------------------
 !     ATM-OCN-RTM-WAV
 !-----------------------------------------------------------------------
@@ -497,7 +497,7 @@
            line=__LINE__, file=FILENAME)) return
 !
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                       linkSlot=2, rc=rc) 
+                                       linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 !
@@ -578,7 +578,7 @@
            line=__LINE__, file=FILENAME)) return
 !
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
-                     connectors(Iocean,Iatmos)%divDT) 
+                     connectors(Iocean,Iatmos)%divDT)
         cname = trim(connectors(Iatmos,Iocean)%name)//'_clock'
 !
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
@@ -593,9 +593,9 @@
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!  
+!
 !-----------------------------------------------------------------------
-!     ATM-OCN-COP 
+!     ATM-OCN-COP
 !-----------------------------------------------------------------------
 !
       else if (runid == 11002) then
@@ -618,7 +618,7 @@
            line=__LINE__, file=FILENAME)) return
 !
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                       linkSlot=2, rc=rc) 
+                                       linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 !
@@ -667,7 +667,7 @@
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
                      connectors(Iocean,Iatmos)%divDT,                   &
                      connectors(Iatmos,Icopro)%divDT,                   &
-                     connectors(Iocean,Icopro)%divDT) 
+                     connectors(Iocean,Icopro)%divDT)
         cname = trim(models(Iatmos)%name)//"-TO-"//                     &
                 trim(models(Iocean)%name)//"-TO-"//                     &
                 trim(models(Icopro)%name)//'_clock'

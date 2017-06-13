@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_ocn_void.F90"
 !
 !-----------------------------------------------------------------------
-!     OCN gridded component code 
+!     OCN gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_ocn
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -39,7 +39,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: OCN_SetServices
@@ -50,7 +50,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp

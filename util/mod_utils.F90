@@ -16,7 +16,7 @@
 !     along with ITU RegESM.  If not, see <http://www.gnu.org/licenses/>.
 !
 !-----------------------------------------------------------------------
-#define FILENAME "util/mod_utils.F90" 
+#define FILENAME "util/mod_utils.F90"
 !
 !-----------------------------------------------------------------------
 !     Module file for generic utilities
@@ -25,7 +25,7 @@
       module mod_utils
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -35,10 +35,10 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Interfaces 
+!     Interfaces
 !-----------------------------------------------------------------------
 !
-      interface UTIL_VMGlobalBroadcast 
+      interface UTIL_VMGlobalBroadcast
         module procedure UTIL_VMGlobalBroadcastI4
       end interface UTIL_VMGlobalBroadcast
 !
@@ -50,19 +50,19 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
-      type(ESMF_Field), intent(in) :: srcField 
+      type(ESMF_Field), intent(in) :: srcField
       type(ESMF_Field), intent(in) :: dstField
-      integer, intent(in) :: srcLandMask 
+      integer, intent(in) :: srcLandMask
       integer, intent(in) :: dstLandMask
       integer, intent(in) :: srcMId
       integer, intent(in) :: dstMId
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: cLbnd(2), cUbnd(2)
@@ -81,7 +81,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Create dummy fields 
+!     Create dummy fields
 !-----------------------------------------------------------------------
 !
       fname = 'const_1'
@@ -102,7 +102,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create 1st routehandle 
+!     Create 1st routehandle
 !     Used to find the boundary of the destination grid
 !-----------------------------------------------------------------------
 !
@@ -129,7 +129,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Perform regrid using 1st routehandle 
+!     Perform regrid using 1st routehandle
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldRegrid(aField, bField, routeHandle,                &
@@ -140,7 +140,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create 2nd routehandle 
+!     Create 2nd routehandle
 !     Used to find the unmapped grid cells
 !-----------------------------------------------------------------------
 !
@@ -190,7 +190,7 @@
       do k = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from fields 
+!     Get pointer from fields
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(bField, localDe=k, farrayPtr=bdy2d, rc=rc)
@@ -204,16 +204,16 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (mask item) 
+!     Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
-                            localDe=k, farrayPtr=msk2d, rc=rc) 
+                            localDe=k, farrayPtr=msk2d, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Modify masking to split mapped and unmapped grid cells    
+!     Modify masking to split mapped and unmapped grid cells
 !-----------------------------------------------------------------------
 !
       do i = cLbnd(1), cUbnd(1)
@@ -223,14 +223,14 @@
             msk2d(i,j) = UNMAPPED_MASK
           else
             msk2d(i,j) = MAPPED_MASK
-          end if   
+          end if
         end if
       end do
       end do
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -260,26 +260,26 @@
       call ESMF_FieldDestroy(cField, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-! 
+!
       end subroutine UTIL_FindUnmapped
 !
       function UTIL_FieldCreate(field, fname, initVal, dstLandMask, rc)
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
-      type(ESMF_Field) :: UTIL_FieldCreate 
-! 
+      type(ESMF_Field) :: UTIL_FieldCreate
+!
       type(ESMF_Field), intent(in) :: field
       character(*), intent(in) :: fname
       real(ESMF_KIND_R8), intent(in) :: initVal
-      integer(ESMF_KIND_I4), intent(in) :: dstLandMask      
-      integer, intent(out) :: rc 
+      integer(ESMF_KIND_I4), intent(in) :: dstLandMask
+      integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, k, localDECount
@@ -291,7 +291,7 @@
       type(ESMF_Grid) :: grid
       type(ESMF_DistGrid) :: distGrid
       type(ESMF_ArraySpec) :: arraySpec
-      type(ESMF_StaggerLoc) :: staggerLoc      
+      type(ESMF_StaggerLoc) :: staggerLoc
 !
       rc = ESMF_SUCCESS
 !
@@ -314,7 +314,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Allocate arrays for totalLWidth, totalUWidth and query field 
+!     Allocate arrays for totalLWidth, totalUWidth and query field
 !-----------------------------------------------------------------------
 !
       if (.not. allocated(tlw)) then
@@ -327,7 +327,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create field from base field attributes 
+!     Create field from base field attributes
 !-----------------------------------------------------------------------
 !
       if (localDECount == 1) then
@@ -347,7 +347,7 @@
       do k = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(UTIL_FieldCreate, localDe=k, farrayPtr=ptr2d,  &
@@ -357,17 +357,17 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (mask item) 
+!     Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK,                   &
                             staggerloc=staggerLoc,                      &
-                            localDe=k, farrayPtr=msk2d, rc=rc) 
+                            localDe=k, farrayPtr=msk2d, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize pointer 
+!     Initialize pointer
 !-----------------------------------------------------------------------
 !
       do i = cLbnd(1), cUbnd(1)
@@ -381,8 +381,8 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -404,20 +404,20 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Check consistency of the created field 
+!     Check consistency of the created field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldValidate(UTIL_FieldCreate, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!      
+!
       end function UTIL_FieldCreate
 !
       function UTIL_CalcIntegral(vm, field, maskval, rc)
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       real(ESMF_KIND_R8) :: UTIL_CalcIntegral
@@ -428,25 +428,25 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: cLbnd(2), cUbnd(2)
       integer :: i, j, k, localDECount, localPet, petCount
-      real(ESMF_KIND_R8), pointer :: ptrField(:,:) 
-      real(ESMF_KIND_R8), pointer :: ptrArea(:,:)      
-      integer(ESMF_KIND_I4), pointer :: ptrMask(:,:)      
+      real(ESMF_KIND_R8), pointer :: ptrField(:,:)
+      real(ESMF_KIND_R8), pointer :: ptrArea(:,:)
+      integer(ESMF_KIND_I4), pointer :: ptrMask(:,:)
       real*8 :: total_de(1), total_global(1)
       character(ESMF_MAXSTR) :: fname
 !
       type(ESMF_Grid) :: grid
       type(ESMF_StaggerLoc) :: sLoc
 !
-      UTIL_CalcIntegral = ZERO_R8 
+      UTIL_CalcIntegral = ZERO_R8
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Query VM 
+!     Query VM
 !-----------------------------------------------------------------------
 !
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
@@ -469,7 +469,7 @@
       do k = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get field pointers 
+!     Get field pointers
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=k, farrayPtr=ptrField,          &
@@ -479,7 +479,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (area item) 
+!     Get pointer from grid (area item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_AREA, staggerloc=sLoc,  &
@@ -488,7 +488,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (mask item) 
+!     Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
@@ -497,20 +497,20 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Calculate integral for each local DE and PET 
+!     Calculate integral for each local DE and PET
 !-----------------------------------------------------------------------
 !
       do i = cLbnd(1), cUbnd(1)
       do j = cLbnd(2), cUbnd(2)
-        if (any(ptrMask(i,j) == maskval)) then 
+        if (any(ptrMask(i,j) == maskval)) then
           total_de(1) = total_de(1)+ptrField(i,j)*ptrArea(i,j)
         end if
       end do
       end do
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptrField)) then
@@ -526,7 +526,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Debug: write sum of each PETs    
+!     Debug: write sum of each PETs
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 2) then
@@ -540,7 +540,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Collect integral from PETs and calculate global one 
+!     Collect integral from PETs and calculate global one
 !-----------------------------------------------------------------------
 !
       call ESMF_VMAllReduce(vm, total_de, total_global, 1,              &
@@ -551,12 +551,12 @@
       UTIL_CalcIntegral = total_global(1)
 !
 !-----------------------------------------------------------------------
-!     Debug: write global sum    
+!     Debug: write global sum
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
         if (localPet == 0) then
-          write(*,30) localPet, total_global(1), trim(fname) 
+          write(*,30) localPet, total_global(1), trim(fname)
         end if
         call ESMF_VMBarrier(vm, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -564,7 +564,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  20   format(" PET(",I3.3,") - DE(",I2.2,                               &
@@ -576,7 +576,7 @@
       subroutine UTIL_AdjustField(vm, field, maskval, error, rc)
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM), intent(in) :: vm
@@ -586,14 +586,14 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: cLbnd(2), cUbnd(2)
       integer :: i, j, k, localDECount, localPet, petCount
-      real(ESMF_KIND_R8), pointer :: ptrField(:,:) 
-      real(ESMF_KIND_R8), pointer :: ptrArea(:,:)    
-      integer(ESMF_KIND_I4), pointer :: ptrMask(:,:)    
+      real(ESMF_KIND_R8), pointer :: ptrField(:,:)
+      real(ESMF_KIND_R8), pointer :: ptrArea(:,:)
+      integer(ESMF_KIND_I4), pointer :: ptrMask(:,:)
       real(ESMF_KIND_R8) :: total_de(1), total_global(1)
       real(ESMF_KIND_R8) :: error_unit
       character(ESMF_MAXSTR) :: fname
@@ -604,7 +604,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Query VM 
+!     Query VM
 !-----------------------------------------------------------------------
 !
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
@@ -628,7 +628,7 @@
       do k = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (area item) 
+!     Get pointer from grid (area item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_AREA, staggerloc=sLoc,  &
@@ -637,7 +637,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (mask item) 
+!     Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
@@ -646,7 +646,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Calculate total area of matched region 
+!     Calculate total area of matched region
 !-----------------------------------------------------------------------
 !
       cLbnd(1) = lbound(ptrMask, dim=1)
@@ -655,7 +655,7 @@
       cUbnd(2) = ubound(ptrMask, dim=2)
 !
       do i = cLbnd(1), cUbnd(1)
-      do j = cLbnd(2), cUbnd(2)      
+      do j = cLbnd(2), cUbnd(2)
         if (any(ptrMask(i,j) == maskval)) then
           total_de(1) = total_de(1)+ptrArea(i,j)
         end if
@@ -663,8 +663,8 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptrArea)) then
@@ -687,7 +687,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Calculate error per unit area 
+!     Calculate error per unit area
 !-----------------------------------------------------------------------
 !
       error_unit = error/total_global(1)
@@ -696,13 +696,13 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Adjust field using error 
+!     Adjust field using error
 !-----------------------------------------------------------------------
 !
       do k = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get field pointers 
+!     Get field pointers
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=k, farrayPtr=ptrField,          &
@@ -712,7 +712,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointer from grid (mask item) 
+!     Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
 !
       call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
@@ -721,7 +721,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add error 
+!     Add error
 !-----------------------------------------------------------------------
 !
       do i = cLbnd(1), cUbnd(1)
@@ -733,8 +733,8 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptrField)) then
@@ -747,7 +747,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  40   format(" PET(",I3.3,") - AVGERAGE DIFF = ",2E14.5," (",A,")")
@@ -758,7 +758,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       integer, intent(inout) :: var
@@ -766,22 +766,22 @@
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM) :: vm
       integer :: var_local(1)
 !
 !-----------------------------------------------------------------------
-!     Get global VM 
+!     Get global VM
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_VMGetGlobal(vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Broadcast data 
+!     Broadcast data
 !-----------------------------------------------------------------------
 !
       var_local(1) = var

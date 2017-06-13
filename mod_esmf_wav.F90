@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_wav.F90"
 !
 !-----------------------------------------------------------------------
-!     WAV gridded component code 
+!     WAV gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_wav
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -50,7 +50,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: WAV_SetServices
@@ -61,7 +61,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -70,7 +70,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Register NUOPC generic routines    
+!     Register NUOPC generic routines
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
@@ -78,7 +78,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Register initialize routine (P 1/2) for specific implementation   
+!     Register initialize routine (P 1/2) for specific implementation
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSetEntryPoint(gcomp,                               &
@@ -99,7 +99,7 @@
 !
 !-----------------------------------------------------------------------
 !     Attach phase independent specializing methods
-!     Setting the slow and fast model clocks 
+!     Setting the slow and fast model clocks
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSpecialize(gcomp,                                  &
@@ -128,7 +128,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Register finalize routine    
+!     Register finalize routine
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompSetEntryPoint(gcomp,                            &
@@ -145,7 +145,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -155,7 +155,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i
@@ -163,7 +163,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Set import fields 
+!     Set import fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Iwavee)%importField, dim=1)
@@ -172,10 +172,10 @@
              name=trim(models(Iwavee)%importField(i)%short_name), rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-      end do 
+      end do
 !
 !-----------------------------------------------------------------------
-!     Set export fields 
+!     Set export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, ubound(models(Iwavee)%exportField, dim=1)
@@ -193,7 +193,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -203,7 +203,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       logical :: flag
@@ -215,7 +215,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=gname, vm=vm, rc=rc)
@@ -223,18 +223,18 @@
                              line=__LINE__, file=FILENAME)) return
 !
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount,         &
-                      mpiCommunicator=comm, rc=rc) 
+                      mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize the gridded component 
+!     Initialize the gridded component
 !-----------------------------------------------------------------------
 !
-      call WAV_Initialize(comm)  
+      call WAV_Initialize(comm)
 !
 !-----------------------------------------------------------------------
-!     Set-up grid and load coordinate data 
+!     Set-up grid and load coordinate data
 !-----------------------------------------------------------------------
 !
       call WAV_SetGridArrays(gcomp, localPet, rc)
@@ -253,14 +253,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: localPet, petCount
@@ -295,22 +295,22 @@
       subroutine WAV_SetClock(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use wam_timopt_module, only : cdatea, cdatee, coldstart  
+      use wam_timopt_module, only : cdatea, cdatee, coldstart
 !
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: ng, fac1, fac2, maxdiv
@@ -329,12 +329,12 @@
       type(ESMF_TimeInterval) :: timeStep
       type(ESMF_Time) :: cmpRefTime, cmpStartTime, cmpStopTime
       type(ESMF_Time) :: startTime, currTime
-      type(ESMF_Calendar) :: cal   
+      type(ESMF_Calendar) :: cal
 !
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
@@ -346,7 +346,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set calendar 
+!     Set calendar
 !-----------------------------------------------------------------------
 !
       calendar='gregorian'
@@ -483,7 +483,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Modify component clock time step 
+!     Modify component clock time step
 !-----------------------------------------------------------------------
 !
       fac1 = maxval(connectors(Iwavee,:)%divDT,mask=models(:)%modActive)
@@ -510,14 +510,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: itemCount, localPet
@@ -526,7 +526,7 @@
 !
       type(ESMF_VM) :: vm
       type(ESMF_Time) :: startTime, currTime
-      type(ESMF_Clock) :: driverClock 
+      type(ESMF_Clock) :: driverClock
       type(ESMF_Field) :: field
       type(ESMF_State) :: importState
 !
@@ -566,7 +566,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
@@ -582,7 +582,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Check fields in the importState (fast time step) 
+!     Check fields in the importState (fast time step)
 !-----------------------------------------------------------------------
 !
       if (itemCount > 0) then
@@ -595,7 +595,7 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
 !
-      call print_timestamp(field, currTime, localPet, "WAV", rc)      
+      call print_timestamp(field, currTime, localPet, "WAV", rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
 !
@@ -609,12 +609,12 @@
       end if
       end if
 !
-      end subroutine WAV_CheckImport      
+      end subroutine WAV_CheckImport
 !
       subroutine WAV_SetGridArrays(gcomp, localPet, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use wam_grid_module, only : nx, amowep, amoeap, xdello
@@ -624,15 +624,15 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp), intent(inout) :: gcomp
-      integer :: localPet 
+      integer :: localPet
       integer :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, ii, jj, p, localDECount, tile
@@ -688,10 +688,10 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
-      do p = 1, ubound(models(Iwavee)%mesh, dim=1) 
+      do p = 1, ubound(models(Iwavee)%mesh, dim=1)
 !
       if (models(Iwavee)%mesh(p)%gtype == Icross) then
         staggerLoc = ESMF_STAGGERLOC_CENTER
@@ -711,7 +711,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Allocate coordinates 
+!     Allocate coordinates
 !-----------------------------------------------------------------------
 !
       call ESMF_GridAddCoord(models(Iwavee)%grid,                       &
@@ -731,7 +731,7 @@
       if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Set mask value for land and ocean 
+!     Set mask value for land and ocean
 !-----------------------------------------------------------------------
 !
       models(Iwavee)%isLand = 0
@@ -740,7 +740,7 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iwavee)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
@@ -748,9 +748,9 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get pointers and set coordinates for the grid 
+!     Get pointers and set coordinates for the grid
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
       call ESMF_GridGetCoord(models(Iwavee)%grid,                       &
                              localDE=j,                                 &
@@ -780,7 +780,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write size of pointers    
+!     Debug: write size of pointers
 !-----------------------------------------------------------------------
 !
       name = GRIDDES(models(Iwavee)%mesh(p)%gtype)
@@ -796,7 +796,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Fill the pointers    
+!     Fill the pointers
 !-----------------------------------------------------------------------
 !
       if (models(Iwavee)%mesh(p)%gtype == Icross) then
@@ -818,7 +818,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Nullify pointers 
+!     Nullify pointers
 !-----------------------------------------------------------------------
 !
       if (associated(ptrX)) then
@@ -833,7 +833,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Assign grid to gridded component 
+!     Assign grid to gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompSet(gcomp, grid=models(Iwavee)%grid, rc=rc)
@@ -841,7 +841,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write out component grid in VTK format 
+!     Debug: write out component grid in VTK format
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
@@ -854,10 +854,10 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-      end do 
+      end do
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  30   format(" PET(",I3.3,") - DE(",I2.2,") - ", A20, " : ", 4I8)
@@ -868,14 +868,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp), intent(in) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, k, itemCount, localDECount, localPet, petCount
@@ -891,7 +891,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Query gridded component. 
+!     Query gridded component.
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, importState=importState,             &
@@ -911,7 +911,7 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iwavee)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
@@ -919,7 +919,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of export fields 
+!     Get list of export fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
@@ -935,14 +935,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create export fields 
+!     Create export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
       k = get_varid(models(Iwavee)%exportField, trim(itemNameList(i)))
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
       if (models(Iwavee)%exportField(k)%gtype == Icross) then
@@ -950,7 +950,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Create field 
+!     Create field
 !-----------------------------------------------------------------------
 !
       field = ESMF_FieldCreate(models(Iwavee)%grid,                     &
@@ -962,13 +962,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Put data into state 
+!     Put data into state
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
@@ -976,14 +976,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize pointer 
+!     Initialize pointer
 !-----------------------------------------------------------------------
 !
       ptr2d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -996,19 +996,19 @@
 !     Add field export state
 !-----------------------------------------------------------------------
 !
-      call NUOPC_Realize(exportState, field=field, rc=rc) 
+      call NUOPC_Realize(exportState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
@@ -1024,14 +1024,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Create import fields 
+!     Create import fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
       k = get_varid(models(Iwavee)%importField, trim(itemNameList(i)))
 !
 !-----------------------------------------------------------------------
-!     Set staggering type 
+!     Set staggering type
 !-----------------------------------------------------------------------
 !
       if (models(Iwavee)%importField(k)%gtype == Icross) then
@@ -1052,13 +1052,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Put data into state 
+!     Put data into state
 !-----------------------------------------------------------------------
-! 
+!
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer from field 
+!     Get pointer from field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
@@ -1066,14 +1066,14 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Initialize pointer 
+!     Initialize pointer
 !-----------------------------------------------------------------------
 !
       ptr2d = MISSING_R8
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr2d)) then
@@ -1086,13 +1086,13 @@
 !     Add field import state
 !-----------------------------------------------------------------------
 !
-      call NUOPC_Realize(importState, field=field, rc=rc) 
+      call NUOPC_Realize(importState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
@@ -1103,20 +1103,20 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       real*8 :: trun
       integer :: localPet, petCount, phase
       character(ESMF_MAXSTR) :: str1, str2
-!     
+!
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
       type(ESMF_TimeInterval) :: timeStep
@@ -1126,7 +1126,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, clock=clock, importState=importState,&
@@ -1144,12 +1144,12 @@
 !-----------------------------------------------------------------------
 !
       call ESMF_ClockGet(clock, timeStep=timeStep, refTime=refTime, &
-                         stopTime=stopTime, currTime=currTime, rc=rc) 
+                         stopTime=stopTime, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get time interval 
+!     Get time interval
 !-----------------------------------------------------------------------
 !
       call ESMF_TimeIntervalGet(timeStep, s_r8=trun, rc=rc)
@@ -1157,7 +1157,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write time information 
+!     Debug: write time information
 !-----------------------------------------------------------------------
 !
       if (debugLevel >= 0 .and. localPet == 0) then
@@ -1179,7 +1179,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Get import fields 
+!     Get import fields
 !-----------------------------------------------------------------------
 !
       if ((currTime /= refTime) .or. restarted) then
@@ -1195,20 +1195,20 @@
       call WAV_Run()
 !
 !-----------------------------------------------------------------------
-!     Put export fields 
+!     Put export fields
 !-----------------------------------------------------------------------
 !
       call WAV_Put(gcomp, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return      
+                             line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
  40   format(' Running WAV Component: ',A,' --> ',A,' Phase: ',I1)
  50   format(' Running WAV Component: ',A,' --> ',A,' Phase: ',I1,      &
-             ' [', F15.2, ']')    
+             ' [', F15.2, ']')
 !
       end subroutine WAV_ModelAdvance
 !
@@ -1217,7 +1217,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
@@ -1227,7 +1227,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       rc = ESMF_SUCCESS
@@ -1243,23 +1243,23 @@
       subroutine WAV_Get(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use wam_grid_module, only : nx, ny, nsea, l_s_mask
       use wam_user_interface, only : us_esmf, vs_esmf
 !
-      implicit none   
+      implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, ii, jj
@@ -1280,7 +1280,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
@@ -1293,7 +1293,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get current time 
+!     Get current time
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 2) then
@@ -1308,12 +1308,12 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Get list of import fields 
+!     Get list of import fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return 
+                             line=__LINE__, file=FILENAME)) return
 !
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
@@ -1328,12 +1328,12 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over excahange fields 
+!     Loop over excahange fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
 !
-      id = get_varid(models(Iwavee)%importField, itemNameList(i)) 
+      id = get_varid(models(Iwavee)%importField, itemNameList(i))
 !
 !-----------------------------------------------------------------------
 !     Get field
@@ -1345,7 +1345,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Gather field 
+!     Gather field
 !-----------------------------------------------------------------------
 !
       if (.not. allocated(arr2d)) allocate(arr2d(nx,ny))
@@ -1357,13 +1357,13 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Debug: write size of pointers    
+!     Debug: write size of pointers
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 1) then
       write(*,60) localPet, j, adjustl("IND/WAV/IMP/"//itemNameList(i)),&
                   1, nx, 1, ny
-      end if 
+      end if
 !
 !-----------------------------------------------------------------------
 !     Put data to WAV component variable
@@ -1388,7 +1388,7 @@
       end select
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in netCDF format    
+!     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 3) then
@@ -1402,7 +1402,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
@@ -1410,7 +1410,7 @@
       if (allocated(arr2d)) deallocate(arr2d)
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
@@ -1422,7 +1422,7 @@
       subroutine WAV_Put(gcomp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use wam_model_module, only : z0, ustar, tauw
@@ -1430,14 +1430,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, imin, imax, jmin, jmax
@@ -1457,7 +1457,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Get gridded component 
+!     Get gridded component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
@@ -1470,7 +1470,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get current time 
+!     Get current time
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 2) then
@@ -1487,19 +1487,19 @@
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridGet(models(Iwavee)%grid,                            &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get list of export fields 
+!     Get list of export fields
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return 
+                             line=__LINE__, file=FILENAME)) return
 !
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
@@ -1514,13 +1514,13 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over export fields 
+!     Loop over export fields
 !-----------------------------------------------------------------------
 !
       do i = 1, itemCount
 !
 !-----------------------------------------------------------------------
-!     Get export field 
+!     Get export field
 !-----------------------------------------------------------------------
 !
       call ESMF_StateGet(exportState, trim(itemNameList(i)),            &
@@ -1531,7 +1531,7 @@
       do j = 0, localDECount-1
 !
 !-----------------------------------------------------------------------
-!     Get pointer 
+!     Get pointer
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr, rc=rc)
@@ -1539,7 +1539,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set initial value to missing 
+!     Set initial value to missing
 !-----------------------------------------------------------------------
 !
       ptr = MISSING_R8
@@ -1550,7 +1550,7 @@
       jmax = ubound(ptr, dim=2)
 !
 !-----------------------------------------------------------------------
-!     Put data to export field 
+!     Put data to export field
 !-----------------------------------------------------------------------
 !
       select case (trim(adjustl(itemNameList(i))))
@@ -1566,22 +1566,22 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in ASCII format   
+!     Debug: write field in ASCII format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 4) then
         iunit = localPet
         write(ofile,90) 'wav_export', trim(itemNameList(i)),            &
                         iyear, imonth, iday, ihour, localPet, j
-        open(unit=iunit, file=trim(ofile)//'.txt') 
+        open(unit=iunit, file=trim(ofile)//'.txt')
         call print_matrix(ptr, imin, imax, jmin, jmax, 1, 1,            &
                           localPet, iunit, "PTR/WAV/EXP")
         close(unit=iunit)
-      end if         
+      end if
 !
 !-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random 
-!     part in the memory 
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
 !-----------------------------------------------------------------------
 !
       if (associated(ptr)) then
@@ -1591,7 +1591,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Debug: write field in netCDF format    
+!     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
 !
       if (debugLevel == 3) then
@@ -1605,14 +1605,14 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate arrays    
+!     Deallocate arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
@@ -1623,7 +1623,7 @@
       subroutine WAV_Unpack(vm, ptr, imin, imax, jmin, jmax, inp, rc)
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use wam_mpi_module, only : nstart, nend, pelocal, irank
@@ -1632,7 +1632,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM), intent(in) :: vm
@@ -1642,13 +1642,13 @@
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: localPet, petCount
       integer :: i, j, k, ii, jj, ijs, ijl
       integer(ESMF_KIND_I4), allocatable :: offsets_recv(:)
-      integer(ESMF_KIND_I4), allocatable :: blocksize(:) 
+      integer(ESMF_KIND_I4), allocatable :: blocksize(:)
       real(ESMF_KIND_R4), allocatable :: dumm1(:), dumm2(:,:)
 !
       rc = ESMF_SUCCESS
@@ -1662,7 +1662,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Allocate temporary arrays 
+!     Allocate temporary arrays
 !-----------------------------------------------------------------------
 !
       if (.not. allocated(dumm1)) then
@@ -1682,9 +1682,9 @@
         allocate (offsets_recv(petCount))
         offsets_recv = ZERO_I4
       end if
-!      
+!
 !-----------------------------------------------------------------------
-!     Collect block size from each PETs 
+!     Collect block size from each PETs
 !-----------------------------------------------------------------------
 !
       ijs = nstart(irank)
@@ -1707,7 +1707,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Collect data from each PETs 
+!     Collect data from each PETs
 !-----------------------------------------------------------------------
 !
       call ESMF_VMAllGatherV(vm, sendData=inp(1:blocksize(irank)),      &
@@ -1720,7 +1720,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Unpack data and fill pointer 
+!     Unpack data and fill pointer
 !-----------------------------------------------------------------------
 !
       dumm2 = unpack(dumm1, l_s_mask, MISSING_R4)
@@ -1730,11 +1730,11 @@
           if (dumm2(ii,jj) < TOL_R4) then
             ptr(ii,jj) = dumm2(ii,jj)
           end if
-        end do 
+        end do
       end do
 !
 !-----------------------------------------------------------------------
-!     Deallocate temporary arrays 
+!     Deallocate temporary arrays
 !-----------------------------------------------------------------------
 !
       if (allocated(dumm1)) deallocate(dumm1)

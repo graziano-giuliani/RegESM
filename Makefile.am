@@ -67,7 +67,12 @@ LIBS += ${PWD}/librtm.a
 CPPFLAGS += -I$(RTM_PREFIX)
 noinst_LIBRARIES += librtm.a
 librtm_a_SOURCES =
+if DO_COMPILE_HD
 skip_files = $(RTM_PREFIX)/hdmain.o
+endif
+if DO_COMPILE_CHYM
+skip_files = $(RTM_PREFIX)/chymmain.o
+endif
 librtm_a_LIBADD = $(filter-out $(skip_files), $(wildcard $(RTM_PREFIX)/*.o))
 endif
 
@@ -147,7 +152,12 @@ regesm_x_SOURCES += mod_esmf_ocn_void.F90
 endif
 
 if DO_COMPILE_LIBRTM
-regesm_x_SOURCES += mod_esmf_rtm.F90
+if DO_COMPILE_HD
+regesm_x_SOURCES += mod_esmf_rtm_hd.F90
+endif
+if DO_COMPILE_CHYM
+regesm_x_SOURCES += mod_esmf_rtm_chym.F90
+endif
 else
 regesm_x_SOURCES += mod_esmf_rtm_void.F90
 endif
@@ -213,8 +223,14 @@ OBJ+=mod_esmf_ocn_void.o
 endif
 
 if DO_COMPILE_LIBRTM
-mod_esmf_rtm.o: mod_esmf_rtm.F90 mod_types.o mod_shared.o
-OBJ+=mod_esmf_rtm.o
+if DO_COMPILE_HD
+mod_esmf_rtm_hd.o: mod_esmf_rtm_hd.F90 mod_types.o mod_shared.o
+OBJ+=mod_esmf_rtm_hd.o
+endif
+if DO_COMPILE_CHYM
+mod_esmf_rtm_chym.o: mod_esmf_rtm_chym.F90 mod_types.o mod_shared.o
+OBJ+=mod_esmf_rtm_chym.o
+endif
 else
 mod_esmf_rtm_void.o: mod_esmf_rtm_void.F90
 OBJ+=mod_esmf_rtm_void.o

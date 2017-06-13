@@ -19,13 +19,13 @@
 #define FILENAME "mod_esmf_cpl.F90"
 !
 !-----------------------------------------------------------------------
-!     CPL gridded component code 
+!     CPL gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_cpl
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -44,7 +44,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: CPL_SetServices
@@ -55,7 +55,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_CplComp) :: ccomp
@@ -64,7 +64,7 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!     Register generic methods 
+!     Register generic methods
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompDerive(ccomp, NUOPC_SetServices, rc=rc)
@@ -72,7 +72,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Attach specializing methods 
+!     Attach specializing methods
 !-----------------------------------------------------------------------
 !
       call NUOPC_CompSpecialize(ccomp, specLabel=NUOPC_Label_ComputeRH, &
@@ -96,14 +96,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_CplComp) :: ccomp
       integer, intent(out) :: rc
-!     
+!
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       logical :: enableExtp, coprocActive, rhExist, rh1Exist, rh2Exist
@@ -119,7 +119,7 @@
 !
       type(ESMF_VM) :: vm
       type(ESMF_State) :: state
-      type(ESMF_DistGrid) :: distgrid 
+      type(ESMF_DistGrid) :: distgrid
       type(ESMF_Grid) :: srcGrid, dstGrid
       type(ESMF_StaggerLoc) :: srcSLoc, dstSLoc
       type(ESMF_UnmappedAction_Flag) :: unmap
@@ -145,7 +145,7 @@
       do i = 1, nModels
         do j = 1, nModels
           if (connectors(i,j)%modActive .and.                           &
-              trim(connectors(i,j)%name) == trim(cname)) then       
+              trim(connectors(i,j)%name) == trim(cname)) then
             iSrc = i
             iDst = j
           end if
@@ -155,7 +155,7 @@
       enableExtp = connectors(iSrc,iDst)%modExtrapolation
 !
 !-----------------------------------------------------------------------
-!     Interacting with co-processing component or not? 
+!     Interacting with co-processing component or not?
 !-----------------------------------------------------------------------
 !
       coprocActive = .false.
@@ -164,7 +164,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Exchange land-sea mask information 
+!     Exchange land-sea mask information
 !-----------------------------------------------------------------------
 !
       call UTIL_VMGlobalBroadcast(models(iSrc)%isLand,                  &
@@ -188,7 +188,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Set source and destination masks for connector 
+!     Set source and destination masks for connector
 !-----------------------------------------------------------------------
 !
       if (connectors(iSrc,iDst)%modInteraction == Ioverocn) then
@@ -223,7 +223,7 @@
       if (srcCount == dstCount .and. dstCount > 0) then
 !
 !-----------------------------------------------------------------------
-!     Allocate list arrays and routehandle 
+!     Allocate list arrays and routehandle
 !-----------------------------------------------------------------------
 !
       allocate(srcList(srcCount))
@@ -242,20 +242,20 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over exchange fields 
+!     Loop over exchange fields
 !-----------------------------------------------------------------------
 !
       do i = 1, srcCount
 !
 !-----------------------------------------------------------------------
-!     Get source and destination field index 
+!     Get source and destination field index
 !-----------------------------------------------------------------------
 !
       idSrc = get_varid(models(iSrc)%exportField, srcList(i))
       idDst = get_varid(models(iDst)%importField, dstList(i))
 !
 !-----------------------------------------------------------------------
-!     Get interpolation type 
+!     Get interpolation type
 !-----------------------------------------------------------------------
 !
       itSrc = models(iSrc)%exportField(idSrc)%itype
@@ -269,7 +269,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Get grid type 
+!     Get grid type
 !-----------------------------------------------------------------------
 !
       grSrc = models(iSrc)%exportField(idSrc)%gtype
@@ -307,7 +307,7 @@
 !
 !-----------------------------------------------------------------------
 !     If co-processing is active, then create routehandle just for
-!     field redistribution without regridding 
+!     field redistribution without regridding
 !-----------------------------------------------------------------------
 !
       if (coprocActive) then
@@ -341,7 +341,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add name to routehandle    
+!     Add name to routehandle
 !-----------------------------------------------------------------------
 !
       call ESMF_RouteHandleSet(routeHandle,                             &
@@ -350,7 +350,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add 1st routehandle to the state    
+!     Add 1st routehandle to the state
 !-----------------------------------------------------------------------
 !
       call ESMF_StateAdd(state, (/ routeHandle /), rc=rc)
@@ -360,7 +360,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Interacting with other earth system model components (ATM, OCN), 
+!     Interacting with other earth system model components (ATM, OCN),
 !     co-processing component is not active.
 !-----------------------------------------------------------------------
 !
@@ -370,10 +370,10 @@
 !     Check for extrapolation option for field?
 !-----------------------------------------------------------------------
 !
-      if (enableExtp) then 
+      if (enableExtp) then
 !
 !-----------------------------------------------------------------------
-!     Create routehandles for two step interpolation 
+!     Create routehandles for two step interpolation
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
 !     Check 1st routehandle (i.e. rh_CROSS_DOT_BLIN_ATM-OCN)
@@ -415,7 +415,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add name to 1st routehandle    
+!     Add name to 1st routehandle
 !-----------------------------------------------------------------------
 !
       call ESMF_RouteHandleSet(routeHandle,                             &
@@ -424,7 +424,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add 1st routehandle to the state    
+!     Add 1st routehandle to the state
 !-----------------------------------------------------------------------
 !
       call ESMF_StateAdd(state, (/ routeHandle /), rc=rc)
@@ -459,7 +459,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Modify grid mask to split masked and unmasked grid cells    
+!     Modify grid mask to split masked and unmasked grid cells
 !-----------------------------------------------------------------------
 !
       call UTIL_FindUnmapped(srcField, dstField, srcMaskVal,            &
@@ -492,7 +492,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add name to 2nd routehandle    
+!     Add name to 2nd routehandle
 !-----------------------------------------------------------------------
 !
       call ESMF_RouteHandleSet(routeHandle,                             &
@@ -501,7 +501,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add 2nd routehandle to the state    
+!     Add 2nd routehandle to the state
 !-----------------------------------------------------------------------
 !
       call ESMF_StateAdd(state, (/ routeHandle /), rc=rc)
@@ -509,7 +509,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Delete temporary field    
+!     Delete temporary field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldDestroy(tmpField, rc=rc)
@@ -521,7 +521,7 @@
       else
 !
 !-----------------------------------------------------------------------
-!     Create routehandle for one step interpolation    
+!     Create routehandle for one step interpolation
 !-----------------------------------------------------------------------
 !
       rname = trim(GRIDDES(grSrc))//'_'//trim(GRIDDES(grDst))//'_'//    &
@@ -538,7 +538,7 @@
 !
       if (.not. rh1Exist) then
       unmap = ESMF_UNMAPPEDACTION_IGNORE
-! 
+!
       if (itSrc == Ibilin) then
         regridMethod = ESMF_REGRIDMETHOD_BILINEAR
       else if (itSrc == Instod) then
@@ -564,6 +564,18 @@
                                  srcTermProcessing=srcTermProcessing,   &
                                  ignoreDegenerate=.true.,               &
                                  rc=rc)
+#ifdef NO_HD_SUPPORT
+      else if (iSrc == Iriver) then
+      call ESMF_FieldRegridStore(srcField=srcField,                     &
+                                 dstField=dstField,                     &
+                                 srcMaskValues=(/models(iSrc)%isOcean/),&
+                                 unmappedaction=unmap,                  &
+                                 routeHandle=routeHandle,               &
+                                 regridmethod=regridMethod,             &
+                                 srcTermProcessing=srcTermProcessing,   &
+                                 ignoreDegenerate=.true.,               &
+                                 rc=rc)
+#endif
       else
       call ESMF_FieldRegridStore(srcField=srcField,                     &
                                  dstField=dstField,                     &
@@ -578,7 +590,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add name to routehandle    
+!     Add name to routehandle
 !-----------------------------------------------------------------------
 !
       call ESMF_RouteHandleSet(routeHandle,                             &
@@ -587,7 +599,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add routehandle to the state    
+!     Add routehandle to the state
 !-----------------------------------------------------------------------
 !
       call ESMF_StateAdd(state, (/ routeHandle /), rc=rc)
@@ -599,7 +611,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: print out exchange fields    
+!     Debug: print out exchange fields
 !-----------------------------------------------------------------------
 !
       if ((debugLevel > 0) .and. (localPet == 0)) then
@@ -609,7 +621,7 @@
                   trim(models(iDst)%importField(idDst)%short_name),     &
                   trim(GRIDDES(models(iDst)%importField(idDst)%gtype)), &
                   trim(INTPDES(models(iSrc)%exportField(idSrc)%itype)), &
-                  rh1Exist, rh2Exist 
+                  rh1Exist, rh2Exist
       end if
 !
       end if
@@ -619,7 +631,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
  40   format(A10,': routehandle ',A4,'[',A,'] to ',A4,'[',A,']',        &
@@ -631,14 +643,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_CplComp) :: ccomp
       integer, intent(out) :: rc
-!     
+!
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       logical :: coprocActive, enableExtp
@@ -686,7 +698,7 @@
       enableExtp = connectors(iSrc,iDst)%modExtrapolation
 !
 !-----------------------------------------------------------------------
-!     Interacting with co-processing component or not? 
+!     Interacting with co-processing component or not?
 !-----------------------------------------------------------------------
 !
       coprocActive = .false.
@@ -712,7 +724,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get name of fields 
+!     Get name of fields
 !-----------------------------------------------------------------------
 !
       allocate(srcList(srcCount))
@@ -726,20 +738,20 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over exchange fields 
+!     Loop over exchange fields
 !-----------------------------------------------------------------------
 !
       do i = 1, srcCount
 !
 !-----------------------------------------------------------------------
-!     Get source and destination field index 
+!     Get source and destination field index
 !-----------------------------------------------------------------------
 !
       idSrc = get_varid(models(iSrc)%exportField, srcList(i))
       idDst = get_varid(models(iDst)%importField, dstList(i))
 !
 !-----------------------------------------------------------------------
-!     Get interpolation type 
+!     Get interpolation type
 !-----------------------------------------------------------------------
 !
       itSrc = models(iSrc)%exportField(idSrc)%itype
@@ -753,7 +765,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Get grid type 
+!     Get grid type
 !-----------------------------------------------------------------------
 !
       grSrc = models(iSrc)%exportField(idSrc)%gtype
@@ -777,7 +789,7 @@
 !
 !-----------------------------------------------------------------------
 !     If co-processing is active, then create routehandle just for
-!     field redistribution without regridding 
+!     field redistribution without regridding
 !-----------------------------------------------------------------------
 !
       if (coprocActive) then
@@ -799,7 +811,7 @@
 !
 !
 !-----------------------------------------------------------------------
-!     Debug: print out exchange fields    
+!     Debug: print out exchange fields
 !-----------------------------------------------------------------------
 !
       if ((debugLevel > 0) .and. (localPet == 0)) then
@@ -823,7 +835,7 @@
 !     Perform regrid with extrapolation support
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
-!     Get 1st routehandle from state 
+!     Get 1st routehandle from state
 !-----------------------------------------------------------------------
 !
       rname = trim(GRIDDES(grSrc))//'_'//trim(GRIDDES(grDst))//'_'//    &
@@ -853,7 +865,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Copy content from temporary field to destination field 
+!     Copy content from temporary field to destination field
 !-----------------------------------------------------------------------
 !
       call ESMF_FieldCopy(dstField, tmpField, rc=rc)
@@ -861,7 +873,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get 2nd routehandle from state 
+!     Get 2nd routehandle from state
 !-----------------------------------------------------------------------
 !
       rname = trim(GRIDDES(grSrc))//'_'//trim(GRIDDES(grDst))//'_'//    &
@@ -887,13 +899,13 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Check: integral adjustment is activated or not for the field 
+!     Check: integral adjustment is activated or not for the field
 !-----------------------------------------------------------------------
 !
       if (models(iSrc)%exportField(idSrc)%enable_integral_adj) then
 !
 !-----------------------------------------------------------------------
-!     Calculate integral 
+!     Calculate integral
 !-----------------------------------------------------------------------
 !
       src_total = ZERO_R8
@@ -904,7 +916,7 @@
 !
       if (localPet == 0) then
         write(*,70) localPet, 'SRC. INTEGRAL', src_total,               &
-                    trim(models(iSrc)%exportField(idSrc)%short_name) 
+                    trim(models(iSrc)%exportField(idSrc)%short_name)
       end if
 !
       dst_total = ZERO_R8
@@ -921,11 +933,11 @@
           rel_error = (dst_total-src_total)/src_total
         end if
         write(*,70) localPet, 'RELATIVE ERROR 1', rel_error,            &
-                    trim(models(iSrc)%exportField(idSrc)%short_name) 
+                    trim(models(iSrc)%exportField(idSrc)%short_name)
       end if
 !
 !-----------------------------------------------------------------------
-!     Adjust destination field based on calculated integral 
+!     Adjust destination field based on calculated integral
 !-----------------------------------------------------------------------
 !
       call UTIL_AdjustField(vm, dstField,                               &
@@ -975,7 +987,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: write data to disk   
+!     Debug: write data to disk
 !-----------------------------------------------------------------------
 !
       if (debugLevel > 4) then
@@ -993,7 +1005,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: print out exchange fields    
+!     Debug: print out exchange fields
 !-----------------------------------------------------------------------
 !
       if ((debugLevel > 0) .and. (localPet == 0)) then
@@ -1006,7 +1018,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Debug: print out import/export fields time stamp info    
+!     Debug: print out import/export fields time stamp info
 !-----------------------------------------------------------------------
 !
       if ((debugLevel > 0) .and. (localPet == 0)) then
@@ -1045,7 +1057,7 @@
       deallocate(dstList)
 !
 !-----------------------------------------------------------------------
-!     Formats 
+!     Formats
 !-----------------------------------------------------------------------
 !
  50   format(A10,': tstamp ',A4,' [',I4,'-',I2.2,'-',                   &
@@ -1061,14 +1073,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_CplComp) :: ccomp
       integer, intent(out) :: rc
-!     
+!
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       logical :: enableExtp, rhExist, rh1Exist, rh2Exist
@@ -1127,7 +1139,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Allocate list arrays and routehandle 
+!     Allocate list arrays and routehandle
 !-----------------------------------------------------------------------
 !
       allocate(srcList(srcCount))
@@ -1146,27 +1158,27 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Loop over exchange fields 
+!     Loop over exchange fields
 !-----------------------------------------------------------------------
 !
       do i = 1, srcCount
 !
 !-----------------------------------------------------------------------
-!     Get source and destination field index 
+!     Get source and destination field index
 !-----------------------------------------------------------------------
 !
       idSrc = get_varid(models(iSrc)%exportField, srcList(i))
       idDst = get_varid(models(iDst)%importField, dstList(i))
 !
 !-----------------------------------------------------------------------
-!     Get interpolation type 
+!     Get interpolation type
 !-----------------------------------------------------------------------
 !
       itSrc = models(iSrc)%exportField(idSrc)%itype
       itDst = models(iDst)%importField(idDst)%itype
 !
 !-----------------------------------------------------------------------
-!     Get grid type 
+!     Get grid type
 !-----------------------------------------------------------------------
 !
       grSrc = models(iSrc)%exportField(idSrc)%gtype
@@ -1176,7 +1188,7 @@
 !     Check for extrapolation option for field?
 !-----------------------------------------------------------------------
 !
-      if (enableExtp) then 
+      if (enableExtp) then
 !
 !-----------------------------------------------------------------------
 !     Check 1st routehandle (i.e. rh_CROSS_DOT_BLIN_ATM-OCN)
@@ -1241,7 +1253,7 @@
       else
 !
 !-----------------------------------------------------------------------
-!     Check routehandle for one step interpolation    
+!     Check routehandle for one step interpolation
 !-----------------------------------------------------------------------
 !
       rname = trim(GRIDDES(grSrc))//'_'//trim(GRIDDES(grDst))//'_'//    &
