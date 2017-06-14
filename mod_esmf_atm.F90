@@ -1,4 +1,4 @@
-!-----------------------------------------------------------------------
+!!-----------------------------------------------------------------------
 !
 !     This file is part of ITU RegESM.
 !
@@ -1449,7 +1449,7 @@
 !     Check rank of the export field
 !-----------------------------------------------------------------------
 !
-      if (models(Iatmos)%exportField(k)%rank .eq. 2) then
+      !if (models(Iatmos)%exportField(k)%rank .eq. 2) then
 !
 !-----------------------------------------------------------------------
 !     Set staggering type
@@ -1512,7 +1512,7 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
-      end if
+      !end if
 !
       end do
 !
@@ -1548,7 +1548,7 @@
 !     Check rank of the import field
 !-----------------------------------------------------------------------
 !
-      if (models(Iatmos)%importField(k)%rank .eq. 2) then
+      !if (models(Iatmos)%importField(k)%rank .eq. 2) then
 !
 !-----------------------------------------------------------------------
 !     Set staggering type
@@ -1611,7 +1611,7 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
-      end if
+      !end if
 !
       end do
 !
@@ -1707,70 +1707,70 @@
 !     Check rank of the export field
 !-----------------------------------------------------------------------
 !
-      if (models(Iatmos)%exportField(k)%rank .eq. 3) then
-!
-!-----------------------------------------------------------------------
-!     Set staggering type
-!-----------------------------------------------------------------------
-!
-      if (models(Iatmos)%exportField(k)%gtype == Icross) then
-        staggerLoc = ESMF_STAGGERLOC_CENTER
-      else if (models(Iatmos)%exportField(k)%gtype == Idot) then
-        staggerLoc = ESMF_STAGGERLOC_CORNER
-      end if
-!
-!-----------------------------------------------------------------------
-!     Create field
-!-----------------------------------------------------------------------
-!
-      field = ESMF_FieldCreate(models(Iatmos)%grid3d,                   &
-                               arraySpec,                               &
-                               staggerloc=staggerLoc,                   &
-                               name=trim(itemNameList(i)),              &
-                               rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Put data into state
-!-----------------------------------------------------------------------
-!
-      do j = 0, localDECount-1
-!
-!-----------------------------------------------------------------------
-!     Get pointer from field
-!-----------------------------------------------------------------------
-!
-      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Initialize pointer
-!-----------------------------------------------------------------------
-!
-      ptr = MISSING_R8
-!
-!-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random
-!     part in the memory
-!-----------------------------------------------------------------------
-!
-      if (associated(ptr)) then
-        nullify(ptr)
-      end if
-!
-      end do
-!
-!-----------------------------------------------------------------------
-!     Add field export state
-!-----------------------------------------------------------------------
-!
-      call NUOPC_Realize(exportState, field=field, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-      end if
+!      if (models(Iatmos)%exportField(k)%rank .eq. 3) then
+!!
+!!-----------------------------------------------------------------------
+!!     Set staggering type
+!!-----------------------------------------------------------------------
+!!
+!      if (models(Iatmos)%exportField(k)%gtype == Icross) then
+!        staggerLoc = ESMF_STAGGERLOC_CENTER
+!      else if (models(Iatmos)%exportField(k)%gtype == Idot) then
+!        staggerLoc = ESMF_STAGGERLOC_CORNER
+!      end if
+!!
+!!-----------------------------------------------------------------------
+!!     Create field
+!!-----------------------------------------------------------------------
+!!
+!      field = ESMF_FieldCreate(models(Iatmos)%grid3d,                   &
+!                               arraySpec,                               &
+!                               staggerloc=staggerLoc,                   &
+!                               name=trim(itemNameList(i)),              &
+!                               rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Put data into state
+!!-----------------------------------------------------------------------
+!!
+!      do j = 0, localDECount-1
+!!
+!!-----------------------------------------------------------------------
+!!     Get pointer from field
+!!-----------------------------------------------------------------------
+!!
+!      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Initialize pointer
+!!-----------------------------------------------------------------------
+!!
+!      ptr = MISSING_R8
+!!
+!!-----------------------------------------------------------------------
+!!     Nullify pointer to make sure that it does not point on a random
+!!     part in the memory
+!!-----------------------------------------------------------------------
+!!
+!      if (associated(ptr)) then
+!        nullify(ptr)
+!      end if
+!!
+!      end do
+!!
+!!-----------------------------------------------------------------------
+!!     Add field export state
+!!-----------------------------------------------------------------------
+!!
+!      call NUOPC_Realize(exportState, field=field, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!      end if
 !
       end do
 !
@@ -1806,70 +1806,70 @@
 !     Check rank of the import field
 !-----------------------------------------------------------------------
 !
-      if (models(Iatmos)%importField(k)%rank .eq. 3) then
-!
-!-----------------------------------------------------------------------
-!     Set staggering type
-!-----------------------------------------------------------------------
-!
-      if (models(Iatmos)%importField(k)%gtype == Icross) then
-        staggerLoc = ESMF_STAGGERLOC_CENTER
-      else if (models(Iatmos)%importField(k)%gtype == Idot) then
-        staggerLoc = ESMF_STAGGERLOC_CORNER
-      end if
-!
-!-----------------------------------------------------------------------
-!     Create field
-!-----------------------------------------------------------------------
-!
-      field = ESMF_FieldCreate(models(Iatmos)%grid3d,                   &
-                               arraySpec,                               &
-                               staggerloc=staggerLoc,                   &
-                               name=trim(itemNameList(i)),              &
-                               rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Put data into state
-!-----------------------------------------------------------------------
-!
-      do j = 0, localDECount-1
-!
-!-----------------------------------------------------------------------
-!     Get pointer from field
-!-----------------------------------------------------------------------
-!
-      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Initialize pointer
-!-----------------------------------------------------------------------
-!
-      ptr = MISSING_R8
-!
-!-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random
-!     part in the memory
-!-----------------------------------------------------------------------
-!
-      if (associated(ptr)) then
-        nullify(ptr)
-      end if
-!
-      end do
-!
-!-----------------------------------------------------------------------
-!     Add field import state
-!-----------------------------------------------------------------------
-!
-      call NUOPC_Realize(importState, field=field, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-      end if
+!      if (models(Iatmos)%importField(k)%rank .eq. 3) then
+!!
+!!-----------------------------------------------------------------------
+!!     Set staggering type
+!!-----------------------------------------------------------------------
+!!
+!      if (models(Iatmos)%importField(k)%gtype == Icross) then
+!        staggerLoc = ESMF_STAGGERLOC_CENTER
+!      else if (models(Iatmos)%importField(k)%gtype == Idot) then
+!        staggerLoc = ESMF_STAGGERLOC_CORNER
+!      end if
+!!
+!!-----------------------------------------------------------------------
+!!     Create field
+!!-----------------------------------------------------------------------
+!!
+!      field = ESMF_FieldCreate(models(Iatmos)%grid3d,                   &
+!                               arraySpec,                               &
+!                               staggerloc=staggerLoc,                   &
+!                               name=trim(itemNameList(i)),              &
+!                               rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Put data into state
+!!-----------------------------------------------------------------------
+!!
+!      do j = 0, localDECount-1
+!!
+!!-----------------------------------------------------------------------
+!!     Get pointer from field
+!!-----------------------------------------------------------------------
+!!
+!      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Initialize pointer
+!!-----------------------------------------------------------------------
+!!
+!      ptr = MISSING_R8
+!!
+!!-----------------------------------------------------------------------
+!!     Nullify pointer to make sure that it does not point on a random
+!!     part in the memory
+!!-----------------------------------------------------------------------
+!!
+!      if (associated(ptr)) then
+!        nullify(ptr)
+!      end if
+!!
+!      end do
+!!
+!!-----------------------------------------------------------------------
+!!     Add field import state
+!!-----------------------------------------------------------------------
+!!
+!      call NUOPC_Realize(importState, field=field, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!      end if
 !
       end do
 !
@@ -2284,10 +2284,10 @@
 !-----------------------------------------------------------------------
 !
       use mod_constants, only : regrav, d_100
-      use mod_hgt, only : htsig_s, nonhydrost_s
-      use mod_vertint, only : intlinregz
+      !use mod_hgt, only : htsig, nonhydrost
+      !use mod_vertint, only : intlin
       use mod_mppparam, only : ma
-      use mod_update, only : exportFields, exportFields3d
+      use mod_update, only : exportFields! , exportFields3d
       use mod_dynparam, only : ici1, ici2, jci1, jci2
       use mod_dynparam, only : ice1, ice2, jce1, jce2
       use mod_dynparam, only : kz, ptop, idynamic
@@ -2313,8 +2313,8 @@
       character(ESMF_MAXSTR) :: cname, ofile
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8), pointer :: ptr2d(:,:)
-      real(ESMF_KIND_R8), pointer :: ptr3d(:,:,:)
-      real(ESMF_KIND_R8), allocatable :: zvar(:,:,:), hzvar(:,:,:)
+!      real(ESMF_KIND_R8), pointer :: ptr3d(:,:,:)
+!      real(ESMF_KIND_R8), allocatable :: zvar(:,:,:), hzvar(:,:,:)
       integer(ESMF_KIND_I8) :: tstep
 !
       type(ESMF_VM) :: vm
@@ -2393,7 +2393,7 @@
 !     Check rank of the export field
 !-----------------------------------------------------------------------
 !
-      if (models(Iatmos)%exportField(k)%rank .eq. 2) then
+      !if (models(Iatmos)%exportField(k)%rank .eq. 2) then
 !
 !-----------------------------------------------------------------------
 !     Get number of local DEs
@@ -2637,162 +2637,162 @@
 !
       end do
 !
-      else if (models(Iatmos)%exportField(k)%rank .eq. 3) then
-!
-!-----------------------------------------------------------------------
-!     Get number of local DEs
-!-----------------------------------------------------------------------
-!
-      call ESMF_GridGet(models(Iatmos)%grid3d,                          &
-                        localDECount=localDECount, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Get field from export state
-!-----------------------------------------------------------------------
-!
-      call ESMF_StateGet(exportState, trim(itemNameList(i)),            &
-                         field, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Loop over decomposition elements (DEs)
-!-----------------------------------------------------------------------
-!
-      do j = 0, localDECount-1
-!
-!-----------------------------------------------------------------------
-!     Get pointer from field
-!-----------------------------------------------------------------------
-!
-      call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr3d, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Set initial value to missing
-!-----------------------------------------------------------------------
-!
-      ptr3d = MISSING_R8
-!
-!-----------------------------------------------------------------------
-!     Calculate heights on sigma surfaces
-!-----------------------------------------------------------------------
-!
-      if (.not. allocated(hzvar)) then
-        allocate(hzvar(jce1:jce2,ice1:ice2,kz))
-        hzvar = ZERO_R8
-      end if
-!
-      if (idynamic == 1) then
-        call htsig_s(exportFields3d%t, hzvar, exportFields%psfc*d_100,&
-                     mddom%ht(jce1:jce2,ice1:ice2)*regrav,              &
-                     sigma, ptop*d_100, jce1, jce2, ice1, ice2, kz)
-      else
-        call nonhydrost_s(hzvar, exportFields3d%t,                      &
-                          (exportFields%psfc-ptop)*d_100, ptop*d_100,   &
-                          mddom%ht(jce1:jce2,ice1:ice2), sigma,         &
-                          jce1, jce2, ice1, ice2, kz)
-      end if
-!
-!-----------------------------------------------------------------------
-!     Perform vertical interpolation from sigma to height
-!-----------------------------------------------------------------------
-!
-      nz = models(Iatmos)%nLevs
-!
-      if (.not. allocated(zvar)) then
-        allocate(zvar(jce1:jce2,ice1:ice2,nz))
-        zvar = ZERO_R8
-      end if
-!
-      select case (trim(adjustl(itemNameList(i))))
-      case ('tlev')
-        call intlinregz(zvar, exportFields3d%t, hzvar, sigma,           &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('qlev')
-        call intlinregz(zvar, exportFields3d%q, hzvar, sigma,           &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('ulev')
-        call intlinregz(zvar, exportFields3d%u, hzvar, sigma,           &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('vlev')
-        call intlinregz(zvar, exportFields3d%v, hzvar, sigma,           &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('wlev')
-        call intlinregz(zvar, exportFields3d%w, hzvar, sigma,           &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('cldfrc')
-        call intlinregz(zvar, exportFields3d%cldfrc, hzvar, sigma,      &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      case ('cldlwc')
-        call intlinregz(zvar, exportFields3d%cldlwc, hzvar, sigma,      &
-                        jce1, jce2, ice1, ice2, kz,                     &
-                        models(Iatmos)%levs,nz)
-      end select
-!
-!-----------------------------------------------------------------------
-!     Put data to export field
-!-----------------------------------------------------------------------
-!
-      do k = 1 , nz
-        do m = ice1, ice2
-          do n = jce1, jce2
-            ptr3d(m,n,k) = zvar(n,m,k)
-          end do
-        end do
-      end do
-!
-!-----------------------------------------------------------------------
-!     Fill domain boundaries with data
-!-----------------------------------------------------------------------
-!
-      if (ma%has_bdytop) then ! right
-        do k = 1 , nz
-          ptr3d(ice2,:,k) = ptr3d(ice2-1,:,k)
-          ptr3d(ice2+1,:,k) = ptr3d(ice2-1,:,k)
-        end do
-      end if
-!
-      if (ma%has_bdybottom) then ! left
-        do k = 1 , nz
-          ptr3d(ice1,:,k) = ptr3d(ice1+1,:,k)
-        end do
-      end if
-!
-      if (ma%has_bdyright) then !top
-        do k = 1 , nz
-          ptr3d(:,jce2,k) = ptr3d(:,jce2-1,k)
-          ptr3d(:,jce2+1,k) = ptr3d(:,jce2-1,k)
-        end do
-      end if
-!
-      if (ma%has_bdyleft) then ! bottom
-        do k = 1 , nz
-          ptr3d(:,jce1,k) = ptr3d(:,jce1+1,k)
-        end do
-      end if
-!
-!-----------------------------------------------------------------------
-!     Nullify pointer to make sure that it does not point on a random
-!     part in the memory
-!-----------------------------------------------------------------------
-!
-      if (associated(ptr3d)) then
-        nullify(ptr3d)
-      end if
-!
-      end do
-!
-      end if
+!      else if (models(Iatmos)%exportField(k)%rank .eq. 3) then
+!!
+!!-----------------------------------------------------------------------
+!!     Get number of local DEs
+!!-----------------------------------------------------------------------
+!!
+!      call ESMF_GridGet(models(Iatmos)%grid3d,                          &
+!                        localDECount=localDECount, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Get field from export state
+!!-----------------------------------------------------------------------
+!!
+!      call ESMF_StateGet(exportState, trim(itemNameList(i)),            &
+!                         field, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Loop over decomposition elements (DEs)
+!!-----------------------------------------------------------------------
+!!
+!      do j = 0, localDECount-1
+!!
+!!-----------------------------------------------------------------------
+!!     Get pointer from field
+!!-----------------------------------------------------------------------
+!!
+!      call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr3d, rc=rc)
+!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+!                             line=__LINE__, file=FILENAME)) return
+!!
+!!-----------------------------------------------------------------------
+!!     Set initial value to missing
+!!-----------------------------------------------------------------------
+!!
+!      ptr3d = MISSING_R8
+!!
+!!-----------------------------------------------------------------------
+!!     Calculate heights on sigma surfaces
+!!-----------------------------------------------------------------------
+!!
+!      if (.not. allocated(hzvar)) then
+!        allocate(hzvar(jce1:jce2,ice1:ice2,kz))
+!        hzvar = ZERO_R8
+!      end if
+!!
+!      if (idynamic == 1) then
+!        call htsig(exportFields3d%t, hzvar, exportFields%psfc*d_100,&
+!                   mddom%ht(jce1:jce2,ice1:ice2)*regrav,              &
+!                   sigma, ptop*d_100, jce1, jce2, ice1, ice2, kz)
+!      else
+!        call nonhydrost(hzvar, exportFields3d%t,                      &
+!                        (exportFields%psfc-ptop)*d_100, ptop*d_100,   &
+!                        mddom%ht(jce1:jce2,ice1:ice2), sigma,         &
+!                        jce1, jce2, ice1, ice2, kz)
+!      end if
+!!
+!!-----------------------------------------------------------------------
+!!     Perform vertical interpolation from sigma to height
+!!-----------------------------------------------------------------------
+!!
+!      nz = models(Iatmos)%nLevs
+!!
+!      if (.not. allocated(zvar)) then
+!        allocate(zvar(jce1:jce2,ice1:ice2,nz))
+!        zvar = ZERO_R8
+!      end if
+!!
+!      select case (trim(adjustl(itemNameList(i))))
+!      case ('tlev')
+!        call intlin(zvar, exportFields3d%t, hzvar, sigma,           &
+!                    jce1, jce2, ice1, ice2, kz,                     &
+!                    models(Iatmos)%levs,nz)
+!      case ('qlev')
+!        call intlin(zvar, exportFields3d%q, hzvar, sigma,           &
+!                    jce1, jce2, ice1, ice2, kz,                     &
+!                    models(Iatmos)%levs,nz)
+!      case ('ulev')
+!        call intlin(zvar, exportFields3d%u, hzvar, sigma,           &
+!                    jce1, jce2, ice1, ice2, kz,                     &
+!                    models(Iatmos)%levs,nz)
+!      case ('vlev')
+!        call intlinregz(zvar, exportFields3d%v, hzvar, sigma,           &
+!                        jce1, jce2, ice1, ice2, kz,                     &
+!                        models(Iatmos)%levs,nz)
+!      case ('wlev')
+!        call intlinregz(zvar, exportFields3d%w, hzvar, sigma,           &
+!                        jce1, jce2, ice1, ice2, kz,                     &
+!                        models(Iatmos)%levs,nz)
+!      case ('cldfrc')
+!        call intlinregz(zvar, exportFields3d%cldfrc, hzvar, sigma,      &
+!                        jce1, jce2, ice1, ice2, kz,                     &
+!                        models(Iatmos)%levs,nz)
+!      case ('cldlwc')
+!        call intlinregz(zvar, exportFields3d%cldlwc, hzvar, sigma,      &
+!                        jce1, jce2, ice1, ice2, kz,                     &
+!                        models(Iatmos)%levs,nz)
+!      end select
+!!
+!!-----------------------------------------------------------------------
+!!     Put data to export field
+!!-----------------------------------------------------------------------
+!!
+!      do k = 1 , nz
+!        do m = ice1, ice2
+!          do n = jce1, jce2
+!            ptr3d(m,n,k) = zvar(n,m,k)
+!          end do
+!        end do
+!      end do
+!!
+!!-----------------------------------------------------------------------
+!!     Fill domain boundaries with data
+!!-----------------------------------------------------------------------
+!!
+!      if (ma%has_bdytop) then ! right
+!        do k = 1 , nz
+!          ptr3d(ice2,:,k) = ptr3d(ice2-1,:,k)
+!          ptr3d(ice2+1,:,k) = ptr3d(ice2-1,:,k)
+!        end do
+!      end if
+!!
+!      if (ma%has_bdybottom) then ! left
+!        do k = 1 , nz
+!          ptr3d(ice1,:,k) = ptr3d(ice1+1,:,k)
+!        end do
+!      end if
+!!
+!      if (ma%has_bdyright) then !top
+!        do k = 1 , nz
+!          ptr3d(:,jce2,k) = ptr3d(:,jce2-1,k)
+!          ptr3d(:,jce2+1,k) = ptr3d(:,jce2-1,k)
+!        end do
+!      end if
+!!
+!      if (ma%has_bdyleft) then ! bottom
+!        do k = 1 , nz
+!          ptr3d(:,jce1,k) = ptr3d(:,jce1+1,k)
+!        end do
+!      end if
+!!
+!!-----------------------------------------------------------------------
+!!     Nullify pointer to make sure that it does not point on a random
+!!     part in the memory
+!!-----------------------------------------------------------------------
+!!
+!      if (associated(ptr3d)) then
+!        nullify(ptr3d)
+!      end if
+!!
+!      end do
+!!
+!      end if
 !
 !-----------------------------------------------------------------------
 !     Debug: write field in netCDF format
@@ -2816,8 +2816,8 @@
 !
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
-      if (allocated(zvar)) deallocate(zvar)
-      if (allocated(hzvar)) deallocate(hzvar)
+!      if (allocated(zvar)) deallocate(zvar)
+!      if (allocated(hzvar)) deallocate(hzvar)
 !
 !-----------------------------------------------------------------------
 !     Format definition
