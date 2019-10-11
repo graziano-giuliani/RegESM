@@ -1,6 +1,6 @@
 !=======================================================================
 ! Regional Earth System Model (RegESM)
-! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "mod_esmf_ocn_roms.F90"
@@ -445,6 +445,9 @@
       str_hour = int(hour)
       str_minute = int(minute)
       str_second = int((minute-aint(minute))*60.0_r8)
+      if (localPet == 0) then
+      print*, "str = ", stime, r_date, str_year, str_month, str_day, str_hour, str_minute, str_second
+      end if
 !
       call ESMF_TimeSet(cmpStartTime,                                   &
                         yy=str_year,                                    &
@@ -477,7 +480,7 @@
       end_minute = int(minute)
       end_second = int((minute-aint(minute))*60.0_r8)
       if (localPet == 0) then
-      print*, etime, r_date, end_year, end_month, end_day, end_hour, end_minute, end_second
+      print*, "end = ", etime, r_date, end_year, end_month, end_day, end_hour, end_minute, end_second
       end if
 !
       call ESMF_TimeSet(cmpStopTime,                                    &
@@ -509,26 +512,26 @@
 !     Compare driver time vs. component time
 !-----------------------------------------------------------------------
 !
-      if (restarted) then
-        startTime = esmRestartTime
-      else
-        startTime = esmStartTime
-      end if
+!      if (restarted) then
+!        startTime = esmRestartTime
+!      else
+!        startTime = esmStartTime
+!      end if
 !
-      if (cmpStartTime /= startTime) then
-        call ESMF_TimePrint(cmpStartTime, options="string", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+!      if (cmpStartTime /= startTime) then
+!        call ESMF_TimePrint(cmpStartTime, options="string", rc=rc)
+!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+!                               line=__LINE__, file=FILENAME)) return
 !
-        call ESMF_TimePrint(startTime, options="string", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+!        call ESMF_TimePrint(startTime, options="string", rc=rc)
+!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+!                               line=__LINE__, file=FILENAME)) return
 !
-        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
-             msg='ESM and OCN start times do not match: '//             &
-             'please check the config files')
-        return
-      end if
+!        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
+!             msg='ESM and OCN start times do not match: '//             &
+!             'please check the config files')
+!        return
+!      end if
 !
 !      if (cmpStopTime /= esmStopTime) then
 !        call ESMF_TimePrint(cmpStopTime, options="string", rc=rc)
@@ -2416,6 +2419,335 @@
 !     Get start, stop and current time and time step
 !-----------------------------------------------------------------------
 !
+      IstrR = BOUNDS(ng)%IstrR(localPet)
+      IendR = BOUNDS(ng)%IendR(localPet)
+      JstrR = BOUNDS(ng)%JstrR(localPet)
+      JendR = BOUNDS(ng)%JendR(localPet)
+!
+      IstrU = BOUNDS(ng)%Istr(localPet)
+      IendU = BOUNDS(ng)%IendR(localPet)
+      JstrU = BOUNDS(ng)%JstrR(localPet)
+      JendU = BOUNDS(ng)%JendR(localPet)
+!
+      IstrV = BOUNDS(ng)%IstrR(localPet)
+      IendV = BOUNDS(ng)%IendR(localPet)
+      JstrV = BOUNDS(ng)%Jstr(localPet)
+      JendV = BOUNDS(ng)%JendR(localPet)
+!
+      TLW(1)=BOUNDS(ng)%Istr(localPet)-BOUNDS(ng)%LBi(localPet)
+      TLW(2)=BOUNDS(ng)%Jstr(localPet)-BOUNDS(ng)%LBj(localPet)
+      TUW(1)=BOUNDS(ng)%UBi(localPet)-BOUNDS(ng)%Iend(localPet)
+      TUW(2)=BOUNDS(ng)%UBj(localPet)-BOUNDS(ng)%Jend(localPet)
+!
+!-----------------------------------------------------------------------
+!     Set array descriptor
+!-----------------------------------------------------------------------
+!
+      call ESMF_ArraySpecSet(arraySpec, typekind=ESMF_TYPEKIND_R8,      &
+                             rank=3, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Get number of local DEs
+!-----------------------------------------------------------------------
+!
+      call ESMF_GridGet(models(Iocean)%grid3d,                          &
+                        localDECount=localDECount,                      &
+                        rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Get list of export fields
+!-----------------------------------------------------------------------
+!
+      call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      if (.not. allocated(itemNameList)) then
+        allocate(itemNameList(itemCount))
+      end if
+      call ESMF_StateGet(exportState, itemNameList=itemNameList, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Create export fields
+!-----------------------------------------------------------------------
+!
+      do i = 1, itemCount
+      k = get_varid(models(Iocean)%exportField, trim(itemNameList(i)))
+!
+!-----------------------------------------------------------------------
+!     Check rank of the export field
+!-----------------------------------------------------------------------
+!
+      if (models(Iocean)%exportField(k)%rank .eq. 3) then
+!
+!-----------------------------------------------------------------------
+!     Set staggering type
+!-----------------------------------------------------------------------
+!
+      if (models(Iocean)%exportField(k)%gtype == Iupoint) then
+        staggerLoc = ESMF_STAGGERLOC_EDGE1
+        staggerEdgeLWidth = (/0,1/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%exportField(k)%gtype == Ivpoint) then
+        staggerLoc = ESMF_STAGGERLOC_EDGE2
+        staggerEdgeLWidth = (/1,0/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%exportField(k)%gtype == Icross) then
+        staggerLoc = ESMF_STAGGERLOC_CENTER
+        staggerEdgeLWidth = (/1,1/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%exportField(k)%gtype == Idot) then
+        staggerLoc = ESMF_STAGGERLOC_CORNER
+        staggerEdgeLWidth = (/0,0/)
+        staggerEdgeUWidth = (/1,1/)
+      end if
+!
+!-----------------------------------------------------------------------
+!     Create field
+!-----------------------------------------------------------------------
+!
+      field = ESMF_FieldCreate(models(Iocean)%grid3d,                   &
+                               arraySpec,                               &
+                               staggerloc=staggerLoc,                   &
+                               name=trim(itemNameList(i)),              &
+                               rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Put data into state
+!-----------------------------------------------------------------------
+!
+      do j = 0, localDECount-1
+!
+!-----------------------------------------------------------------------
+!     Get pointer from field
+!-----------------------------------------------------------------------
+!
+      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr3d, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Initialize pointer
+!-----------------------------------------------------------------------
+!
+      ptr3d = MISSING_R8
+!
+!-----------------------------------------------------------------------
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
+!-----------------------------------------------------------------------
+!
+      if (associated(ptr3d)) then
+        nullify(ptr3d)
+      end if
+!
+      end do
+!
+!-----------------------------------------------------------------------
+!     Add field export state
+!-----------------------------------------------------------------------
+!
+      call NUOPC_Realize(exportState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      end if
+!
+      end do
+!
+!-----------------------------------------------------------------------
+!     Deallocate arrays
+!-----------------------------------------------------------------------
+!
+      if (allocated(itemNameList)) deallocate(itemNameList)
+!
+!-----------------------------------------------------------------------
+!     Get list of import fields
+!-----------------------------------------------------------------------
+!
+     call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      if (.not. allocated(itemNameList)) then
+        allocate(itemNameList(itemCount))
+      end if
+      call ESMF_StateGet(importState, itemNameList=itemNameList, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Create import fields
+!-----------------------------------------------------------------------
+!
+      do i = 1, itemCount
+      k = get_varid(models(Iocean)%importField, trim(itemNameList(i)))
+!
+!-----------------------------------------------------------------------
+!     Check rank of the import field
+!-----------------------------------------------------------------------
+!
+      if (models(Iocean)%importField(k)%rank .eq. 3) then
+!
+!-----------------------------------------------------------------------
+!     Set staggering type
+!-----------------------------------------------------------------------
+!
+      if (models(Iocean)%importField(k)%gtype == Iupoint) then
+        staggerLoc = ESMF_STAGGERLOC_EDGE1
+        staggerEdgeLWidth = (/0,1/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%importField(k)%gtype == Ivpoint) then
+        staggerLoc = ESMF_STAGGERLOC_EDGE2
+        staggerEdgeLWidth = (/1,0/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%importField(k)%gtype == Icross) then
+        staggerLoc = ESMF_STAGGERLOC_CENTER
+        staggerEdgeLWidth = (/1,1/)
+        staggerEdgeUWidth = (/1,1/)
+      else if (models(Iocean)%importField(k)%gtype == Idot) then
+        staggerLoc = ESMF_STAGGERLOC_CORNER
+        staggerEdgeLWidth = (/0,0/)
+        staggerEdgeUWidth = (/1,1/)
+      end if
+!
+!-----------------------------------------------------------------------
+!     Create field
+!-----------------------------------------------------------------------
+!
+      field = ESMF_FieldCreate(models(Iocean)%grid3d,                   &
+                               arraySpec,                               &
+                               totalLWidth=TLW,                         &
+                               totalUWidth=TUW,                         &
+                               staggerloc=staggerLoc,                   &
+                               indexflag=ESMF_INDEX_GLOBAL,             &
+                               name=trim(itemNameList(i)),              &
+                               rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Store routehandle to exchage halo region data
+!-----------------------------------------------------------------------
+!
+      if (models(Iriver)%modActive) then
+      call ESMF_FieldHaloStore(field,                                   &
+              routehandle=models(Iocean)%importField(k)%rhandle, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+      end if
+!
+!-----------------------------------------------------------------------
+!     Put data into state
+!-----------------------------------------------------------------------
+!
+      do j = 0, localDECount-1
+!
+!-----------------------------------------------------------------------
+!     Get pointer from field
+!-----------------------------------------------------------------------
+!
+      call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr3d, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Initialize pointer
+!-----------------------------------------------------------------------
+!
+      ptr3d = MISSING_R8
+!
+!-----------------------------------------------------------------------
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
+!-----------------------------------------------------------------------
+!
+      if (associated(ptr3d)) then
+        nullify(ptr3d)
+      end if
+!
+      end do
+!
+!-----------------------------------------------------------------------
+!     Add field import state
+!-----------------------------------------------------------------------
+!
+      call NUOPC_Realize(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      end if
+!
+      end do
+!
+!-----------------------------------------------------------------------
+!     Deallocate arrays
+!-----------------------------------------------------------------------
+!
+      if (allocated(itemNameList)) deallocate(itemNameList)
+!
+      end subroutine OCN_SetStates3d
+!
+      subroutine OCN_ModelAdvance(gcomp, rc)
+!
+!-----------------------------------------------------------------------
+!     Used module declarations
+!-----------------------------------------------------------------------
+!
+      use mod_param, only : Ngrids
+      use mod_scalars, only : dt, exit_flag, NoError
+!
+      implicit none
+!
+!-----------------------------------------------------------------------
+!     Imported variable declarations
+!-----------------------------------------------------------------------
+!
+      type(ESMF_GridComp) :: gcomp
+      integer, intent(out) :: rc
+!
+!-----------------------------------------------------------------------
+!     Local variable declarations
+!-----------------------------------------------------------------------
+!
+      real*8 :: trun
+      integer :: localPet, petCount, phase
+      character(ESMF_MAXSTR) :: str1, str2
+!
+      type(ESMF_VM) :: vm
+      type(ESMF_Clock) :: clock
+      type(ESMF_TimeInterval) :: timeStep
+      type(ESMF_Time) :: refTime, stopTime, currTime
+      type(ESMF_State) :: importState, exportState
+!
+      rc = ESMF_SUCCESS
+!
+!-----------------------------------------------------------------------
+!     Get gridded component
+!-----------------------------------------------------------------------
+!
+      call ESMF_GridCompGet(gcomp, clock=clock, importState=importState,&
+                            exportState=exportState, currentPhase=phase,&
+                            vm=vm, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
+!     Get start, stop and current time and time step
+!-----------------------------------------------------------------------
+!
       call ESMF_ClockGet(clock, timeStep=timeStep, refTime=refTime, &
                          stopTime=stopTime, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -3027,6 +3359,21 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
+!     Check rank of the export field
+!-----------------------------------------------------------------------
+!
+      if (models(Iocean)%exportField(k)%rank .eq. 2) then
+!
+!-----------------------------------------------------------------------
+!     Get number of local DEs
+!-----------------------------------------------------------------------
+!
+      call ESMF_GridGet(models(Iocean)%grid,                            &
+                        localDECount=localDECount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+!-----------------------------------------------------------------------
 !     Get export field
 !-----------------------------------------------------------------------
 !
@@ -3292,6 +3639,93 @@
           end do
         end do
       end do
+!
+!-----------------------------------------------------------------------
+!     Nullify pointer to make sure that it does not point on a random
+!     part in the memory
+!-----------------------------------------------------------------------
+!
+      if (associated(ptr3d)) then
+        nullify(ptr3d)
+      end if
+      zvar = ZERO_R8
+!
+      select case (trim(adjustl(itemNameList(i))))
+      case ('rho')
+        call vInterpolation(ng, OCEAN(ng)%rho(IstrR:IendR,JstrR:JendR,1:N(ng)), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),               &
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),      &
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                               line=__LINE__, file=FILENAME)) return
+      case ('pden')
+        call vInterpolation(ng, OCEAN(ng)%pden(IstrR:IendR,JstrR:JendR,1:N(ng)), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),               &
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),      &
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                               line=__LINE__, file=FILENAME)) return
+      case ('temp')
+        call vInterpolation(ng, OCEAN(ng)%t(IstrR:IendR,JstrR:JendR,1:N(ng),nstp(ng),itemp), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),               &
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),      &
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                               line=__LINE__, file=FILENAME)) return
+      case ('salt')
+        call vInterpolation(ng, OCEAN(ng)%t(IstrR:IendR,JstrR:JendR,1:N(ng),nstp(ng),isalt), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),&
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),&
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                               line=__LINE__, file=FILENAME)) return
+      case ('u')
+        call vInterpolation(ng, OCEAN(ng)%u(IstrR:IendR,JstrR:JendR,1:N(ng),nstp(ng)), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),&
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),&
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                               line=__LINE__, file=FILENAME)) return
+      case ('v')
+        call vInterpolation(ng, OCEAN(ng)%v(IstrR:IendR,JstrR:JendR,1:N(ng),nstp(ng)), &
+                            IstrR, IendR, JstrR, JendR, 1, N(ng),&
+                            GRID(ng)%z_r(IstrR:IendR,JstrR:JendR,1:N(ng)),&
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                               line=__LINE__, file=FILENAME)) return
+      case ('w')
+        call vInterpolation(ng, OCEAN(ng)%wvel(IstrR:IendR,JstrR:JendR,0:N(ng)), &
+                            IstrR, IendR, JstrR, JendR, 0, N(ng),&
+                            GRID(ng)%z_w(IstrR:IendR,JstrR:JendR,0:N(ng)),&
+                            zvar(IstrR:IendR,JstrR:JendR,1:kz), kz, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                               line=__LINE__, file=FILENAME)) return
+      case ('mask3d')
+        if (.not. allocated(mask3d)) then
+          allocate(mask3d(IstrR:IendR,JstrR:JendR))
+        end if
+!
+        do kk = 1, kz
+          mask3d = ZERO_R8
+          where(GRID(ng)%rmask(IstrR:IendR,JstrR:JendR) > 0.5d0) mask3d = 1
+          where(-GRID(ng)%h(IstrR:IendR,JstrR:JendR) > models(iocean)%levs(kk)) mask3d = 0
+          zvar(IstrR:IendR,JstrR:JendR,kk) = mask3d
+        end do
+      end select
+!
+!-----------------------------------------------------------------------
+!     Put data to export field
+!-----------------------------------------------------------------------
+!
+      do kk = 1, kz
+        do jj = JstrR, JendR
+          do ii= IstrR, IendR
+            ptr3d(ii,jj,kk) = zvar(ii,jj,kk)
+          end do
+        end do
+      end do
+!
+      end if
 !
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random

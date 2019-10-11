@@ -1,6 +1,6 @@
 !=======================================================================
 ! Regional Earth System Model (RegESM)
-! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "mod_esmf_wav.F90"
@@ -294,7 +294,7 @@
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
-      integer :: rc
+      integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
 !     Local variable declarations

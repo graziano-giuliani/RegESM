@@ -1,6 +1,6 @@
 !=======================================================================
 ! Regional Earth System Model (RegESM)
-! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "util/mod_config.F90"
@@ -646,6 +646,27 @@
         if (localPet == 0) then
           write(*,'(a)') 'CoProcessor NOT active.'
         end if
+!
+      end if
+!
+!-----------------------------------------------------------------------
+!     Read width of halo or ghost region
+!-----------------------------------------------------------------------
+!
+      if (models(Icopro)%modActive) then
+!
+      call ESMF_ConfigFindLabel(cf, 'CoProcessorHaloWidth:', rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_ConfigGetAttribute(cf, models(Icopro)%haloWidth, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      if (localPet == 0) then
+        write(*, fmt='(A,I2)') "Co-processing Halo/Ghost Width: ",      &
+              models(Icopro)%haloWidth
+      end if
 !
       end if
 !

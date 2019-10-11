@@ -1,6 +1,6 @@
 !=======================================================================
 ! Regional Earth System Model (RegESM)
-! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "mod_esmf_ocn_mit.F90"
@@ -464,6 +464,7 @@
       end if
 !
       if (cmpStartTime /= dummTime) then
+        if (localPet == 0) then
         call ESMF_TimePrint(cmpStartTime, options="string", rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
@@ -471,14 +472,16 @@
         call ESMF_TimePrint(dummTime, options="string", rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
+        end if
 !
-        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
-             msg='ESM and OCN start times do not match: '//             &
-             'please check the config files')
-        return
+!        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
+!             msg='ESM and OCN start times do not match: '//             &
+!             'please check the config files')
+!        return
       end if
 !
       if (cal /= esmCal) then
+        if (localPet == 0) then
         call ESMF_CalendarPrint(cal, options="calkindflag", rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
@@ -486,6 +489,7 @@
         call ESMF_CalendarPrint(esmCal, options="calkindflag", rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
+        end if
 !
         call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
              msg='ESM and OCN calendars do not match: '//               &
@@ -605,13 +609,14 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
       else
-        atCorrectTime = NUOPC_IsAtTime(field, currTime+timeStep, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-            line=__LINE__, file=FILENAME)) return
+!        atCorrectTime = NUOPC_IsAtTime(field, currTime+timeStep, rc=rc)
+!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+!            line=__LINE__, file=FILENAME)) return
+        atCorrectTime = .true.
 !
-        call print_timestamp(field, currTime+timeStep, localPet, "OCN", rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-            line=__LINE__, file=FILENAME)) return
+!        call print_timestamp(field, currTime+timeStep, localPet, "OCN", rc)
+!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+!            line=__LINE__, file=FILENAME)) return
       end if
 !
       if (.not. atCorrectTime) then
@@ -1359,11 +1364,11 @@
 !     Store routehandle to exchage halo region data
 !-----------------------------------------------------------------------
 !
-!      if (i == 1) then
-!      call ESMF_FieldHaloStore(field, routehandle=rh_halo, rc=rc)
-!      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-!                             line=__LINE__, file=FILENAME)) return
-!      end if
+      if (i == 1) then
+      call ESMF_FieldHaloStore(field, routehandle=rh_halo, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+      end if
 !
 !-----------------------------------------------------------------------
 !     Put data into state
@@ -1592,7 +1597,8 @@
 !-----------------------------------------------------------------------
 !
       integer :: i, j, ii, jj, bi, bj, iG, jG, imax, jmax, nr
-      integer :: id, iyear, iday, imonth, ihour, iunit
+      integer :: id, iunit
+      integer :: iyear, iday, imonth, ihour, iminute, isec
       integer :: LBi, UBi, LBj, UBj
       integer :: localPet, petCount, itemCount, localDECount
       character(ESMF_MAXSTR) :: cname, ofile
@@ -1635,7 +1641,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
       call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
-                        dd=iday, h=ihour, rc=rc)
+                        dd=iday, h=ihour, m=iminute, s=isec, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
@@ -1752,6 +1758,17 @@
           end do
         end do
       case ('nflx')
+        do jj = 1-OLy, sNy+OLy
+          do ii = 1-OLx, sNx+OLx
+            iG = myXGlobalLo-1+(bi-1)*sNx+ii
+            jG = myYGlobalLo-1+(bj-1)*sNy+jj
+            if ((iG > 0 .and. iG < imax) .and.                          &
+                (jG > 0 .and. jG < jmax) .and. ptr(iG,jG) < TOL_R8) then
+              hflux_ESMF(ii,jj,1,1) = (ptr(iG,jG)*sfac)+addo
+            end if
+          end do
+        end do
+      case ('nflz')
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -2000,7 +2017,7 @@
 !
       if (debugLevel == 3) then
         write(ofile,80) 'ocn_import', trim(itemNameList(i)),            &
-                        iyear, imonth, iday, ihour, localPet
+                     iyear, imonth, iday, ihour, iminute, isec
         call ESMF_FieldWrite(field, trim(ofile)//'.nc', rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
@@ -2024,7 +2041,9 @@
 #endif
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
  70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 80   format(A10,'_',A,'_',                                             &
+             I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
+
 !
       end subroutine OCN_Get
 !
@@ -2050,7 +2069,8 @@
 !-----------------------------------------------------------------------
 !
       integer :: bi, bj, iG, jG, imax, jmax
-      integer :: i, j, ii, jj, iunit, iyear, iday, imonth, ihour
+      integer :: i, j, ii, jj, iunit
+      integer :: iyear, iday, imonth, ihour, iminute, isec
       integer :: petCount, localPet, itemCount, localDECount
       character(ESMF_MAXSTR) :: cname, ofile
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
@@ -2088,7 +2108,7 @@
                              line=__LINE__, file=FILENAME)) return
 !
       call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
-                        dd=iday, h=ihour, rc=rc)
+                        dd=iday, h=ihour, m=iminute, s=isec, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
@@ -2216,7 +2236,7 @@
 !
       if (debugLevel == 3) then
         write(ofile,100) 'ocn_export', trim(itemNameList(i)),           &
-                        iyear, imonth, iday, ihour, localPet
+                     iyear, imonth, iday, ihour, iminute, isec
         call ESMF_FieldWrite(field, trim(ofile)//'.nc', rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
@@ -2236,7 +2256,9 @@
 !-----------------------------------------------------------------------
 !
  90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 100  format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 100  format(A10,'_',A,'_',                                             &
+             I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
+
 !
       end subroutine OCN_Put
 !

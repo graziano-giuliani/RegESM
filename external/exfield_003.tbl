@@ -1,0 +1,8 @@
+5 atm2ocn T
+taux:eastward_10m_wind_stress:2d:bilinear:cross:u:N/m2:m2/s2:cf3:0.0:F
+tauy:northward_10m_wind_stress:2d:bilinear:cross:v:N/m2:m2/s2:cf3:0.0:F
+swrd:shortwave_radiation:2d:bilinear:cross:cross:W/m^2:Cm/s:cf2:0.0:T
+sflx:water_flux_into_sea_water:2d:bilinear:cross:cross:kg/m^2s:m/s:0.001:0.0:T
+nflx:surface_heat_flux:2d:bilinear:cross:cross:W/m^2:Cm/s:cf2:0.0:T
+1 ocn2atm T
+sst:sea_surface_temperature:2d:bilinear:cross:cross:C:K:1.0:273.16:F
