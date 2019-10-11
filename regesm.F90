@@ -1,21 +1,8 @@
-!-----------------------------------------------------------------------
-!
-!     This file is part of ITU RegESM.
-!
-!     ITU RegESM is free software: you can redistribute it and/or modify
-!     it under the terms of the GNU General Public License as published by
-!     the Free Software Foundation, either version 3 of the License, or
-!     (at your option) any later version.
-!
-!     ITU RegESM is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!     GNU General Public License for more details.
-!
-!     You should have received a copy of the GNU General Public License
-!     along with ITU RegESM.  If not, see <http://www.gnu.org/licenses/>.
-!
-!-----------------------------------------------------------------------
+!=======================================================================
+! Regional Earth System Model (RegESM)
+! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Licensed under the MIT License.
+!=======================================================================
 #define FILENAME "regesm.F90"
 !
 !-----------------------------------------------------------------------
@@ -47,7 +34,7 @@
 !     Initialize ESMF framework
 !-----------------------------------------------------------------------
 !
-      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_MULTI, vm=vm,       &
+      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, vm=vm,       &
                            ioUnitLBound=20, ioUnitUBound=1000, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=__FILE__))                                &
@@ -99,6 +86,7 @@
 !     Initialize component
 !-----------------------------------------------------------------------
 !
+      call ESMF_VMBarrier(vm, rc=rc)
       call ESMF_GridCompInitialize(esmComp, userRc=urc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=__FILE__))                                &

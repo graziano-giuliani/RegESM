@@ -123,19 +123,28 @@ if eval "test x$RTM_PREFIX != xnone"; then
     AC_MSG_ERROR([check river routing model installation path $RTM_PREFIX])
   fi
 
-  NO_HD_SUPPORT=1
+  HD_SUPPORT=0
   AC_CHECK_FILE([$RTM_PREFIX/hdmain.o],
-		[AM_CPPFLAGS="-DNO_CHYM_SUPPORT $AM_CPPFLAGS"; NO_HD_SUPPORT=0; AC_MSG_NOTICE([compiling with river routing model - HD - support])])
-  NO_CHYM_SUPPORT=1
+		[AM_CPPFLAGS="-DHD_SUPPORT $AM_CPPFLAGS"; HD_SUPPORT=1; AC_MSG_NOTICE([compiling with river routing model - HD - support])])
+  CHYM_SUPPORT=0
   AC_CHECK_FILE([$RTM_PREFIX/chymmain.o],
-		[AM_CPPFLAGS="-DNO_HD_SUPPORT $AM_CPPFLAGS"; NO_CHYM_SUPPORT=0; AC_MSG_NOTICE([compiling with river routing model - CHYM - support])])
-  if eval "test x$NO_RTM_SUPPORT = x1 -a x$NO_CHYM_SUPPORT = x1"; then
+		[AM_CPPFLAGS="-DCHYM_SUPPORT $AM_CPPFLAGS"; CHYM_SUPPORT=1; AC_MSG_NOTICE([compiling with river routing model - CHYM - support])])
+  if eval "test x$HD_SUPPORT = x0 -a x$CHYM_SUPPORT = x0"; then
 	  AC_MSG_ERROR([required source file 'hdmain.o' or 'chymmain.o' is not found! river routing model should be installed with coupling support.])
   fi
+
+  NO_RTM_SUPPORT=0
+  if eval "test x$HD_SUPPORT = x0 -a x$CHYM_SUPPORT = x0"; then
+    NO_RTM_SUPPORT=1
+    AM_CPPFLAGS="-DNO_RTM_SUPPORT $AM_CPPFLAGS"
+  fi
+else
+  NO_RTM_SUPPORT=1
+  AM_CPPFLAGS="-DNO_RTM_SUPPORT $AM_CPPFLAGS"
 fi
 
-AM_CONDITIONAL(DO_COMPILE_HD, [test x"$NO_HD_SUPPORT" = x0])
-AM_CONDITIONAL(DO_COMPILE_CHYM, [test x"$NO_CHYM_SUPPORT" = x0])
+AM_CONDITIONAL(DO_COMPILE_HD, [test x"$HD_SUPPORT" = x1])
+AM_CONDITIONAL(DO_COMPILE_CHYM, [test x"$CHYM_SUPPORT" = x1])
 
 # check WAV
 AC_ARG_WITH([wav],

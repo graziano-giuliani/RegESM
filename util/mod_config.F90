@@ -1,21 +1,8 @@
-!-----------------------------------------------------------------------
-!
-!     This file is part of ITU RegESM.
-!
-!     ITU RegESM is free software: you can redistribute it and/or modify
-!     it under the terms of the GNU General Public License as published by
-!     the Free Software Foundation, either version 3 of the License, or
-!     (at your option) any later version.
-!
-!     ITU RegESM is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See thec
-!     GNU General Public License for more details.
-!
-!     You should have received a copy of the GNU General Public License
-!     along with ITU RegESM.  If not, see <http://www.gnu.org/licenses/>.
-!
-!-----------------------------------------------------------------------
+!=======================================================================
+! Regional Earth System Model (RegESM)
+! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Licensed under the MIT License.
+!=======================================================================
 #define FILENAME "util/mod_config.F90"
 !
 !-----------------------------------------------------------------------
@@ -32,6 +19,7 @@
       use NUOPC
 !
       use mod_types
+      use mod_shared
 !
       implicit none
       contains
@@ -139,6 +127,10 @@
       if (nModels .gt. 0) then
         if (.not. allocated(models)) allocate(models(nModels))
       end if
+
+      if (localPet == 0) then
+        write(*, fmt='(A,i2)') "PET number = ",nModels
+      end if
 !
 !-----------------------------------------------------------------------
 !     Set active components (if nPets > 0 active otherwise not)
@@ -171,7 +163,13 @@
         end if
 !
         models(i)%modActive = .false.
-        if (models(i)%nPets /= 0) models(i)%modActive = .true.
+        if (models(i)%nPets /= 0) then
+          models(i)%modActive = .true.
+          if (localPet == 0) then
+            write(*,'(a,a,a,i2,a)') 'Activate model ', trim(models(i)%name) , &
+                    ' with ', models(i)%nPets, ' PETs'
+          end if
+        end if
       end do
 !
 !-----------------------------------------------------------------------
@@ -182,18 +180,21 @@
                                    label='DebugLevel:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,i2)') 'Debug Level = ',debugLevel
+      end if
 !
 !-----------------------------------------------------------------------
 !     Set performance check flag
 !-----------------------------------------------------------------------
 !
-      !dumm = 0
-      enablePerfCheck = .false.
-      !call ESMF_ConfigGetAttribute(cf, dumm,                            &
-      !                             label='EnablePerfCheck:', rc=rc)
-      !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-      !    line=__LINE__, file=FILENAME)) return
-      !if ( dumm == 1 ) enablePerfCheck = .true.
+      call ESMF_ConfigGetAttribute(cf, enablePerfCheck,                 &
+                                   label='EnablePerfCheck:', rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,l2)') 'Performance Check = ',enablePerfCheck
+      end if
 !
 !-----------------------------------------------------------------------
 !     Set calendar
@@ -210,6 +211,9 @@
       esmCal = ESMF_CalendarCreate(cflag, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,a)') 'Calendar = ',trim(str)
+      end if
 !
 !-----------------------------------------------------------------------
 !     Set application clock
@@ -479,7 +483,9 @@
                                      label='RiverOpt:', rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
-!
+        if (localPet == 0 ) then
+          write(*,'(a,i2)') 'RiverOpt is ',riverOpt
+        end if
       end if
 !
 !-----------------------------------------------------------------------
@@ -548,6 +554,21 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
               line=__LINE__, file=FILENAME)) return
           end do
+          if (localPet == 0 .and. debugLevel > 1 ) then
+            write(*,'(a,i2,a,i2)') 'River ',i, ' active = ', &
+                    rivers(i)%isActive
+            write(*,'(a,f7.2)') 'Radius : ',rivers(i)%eradius
+            if ( rivers(i)%asIndex) then
+              write(*,'(a,i4)') 'I index  : ',rivers(i)%iindex
+              write(*,'(a,i4)') 'J index  : ',rivers(i)%jindex
+            else
+              write(*,'(a,f7.2)') 'Latitude  : ',rivers(i)%lat
+              write(*,'(a,f7.2)') 'Longitude : ',rivers(i)%lon
+            end if
+            write(*,'(a,i2)') 'Direction : ',rivers(i)%dir
+            write(*,'(a,i4)') 'Npoints : ',rivers(i)%npoints
+            write(*,'(a,12f5.2)') 'Monfac : ',rivers(i)%monfac
+          end if
         end do
       end if
 !
@@ -555,17 +576,39 @@
 !     Read name of co-processing script
 !-----------------------------------------------------------------------
 !
-      call ESMF_ConfigFindLabel(cf, 'CoProcessorScript:', rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
+        call ESMF_ConfigGetDim(cf, lineCount, columnCount,              &
+                               label='CoProcessorScript::', rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+            line=__LINE__, file=FILENAME)) return
 !
-      call ESMF_ConfigGetAttribute(cf, coproc_fname, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
+        call ESMF_ConfigFindLabel(cf, 'CoProcessorScript::', rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+            line=__LINE__, file=FILENAME)) return
 !
-      if (localPet == 0) then
-        write(*, fmt='(A12,A)') "Co-processing Script: ", trim(coproc_fname)
-      end if
+        if ( lineCount > 0 ) then
+          if (.not. allocated(coproc_fnames)) then
+            allocate(coproc_fnames(lineCount))
+          end if
+!
+          do i = 1, lineCount
+            call ESMF_ConfigNextLine(cf, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                line=__LINE__, file=FILENAME)) return
+!
+            call ESMF_ConfigGetAttribute(cf, coproc_fnames(i), rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                line=__LINE__, file=FILENAME)) return
+!
+            if (localPet == 0) then
+              write(*, fmt='(A,I3.3,A)') "Co-processing Pipeline [", i,   &
+                   "] = "//trim(coproc_fnames(i))
+            end if
+          end do
+        else
+          if (localPet == 0) then
+            write(*,'(a)') 'No CoProcessorScript'
+          end if
+        end if
 !
 !-----------------------------------------------------------------------
 !     Read co-processing component tiles in x and y direction
@@ -583,6 +626,10 @@
             line=__LINE__, file=FILENAME)) return
       end do
 !
+      if (any(models(Icopro)%tile == -1)) then
+        models(Icopro)%tile = auto_tile(models(Icopro)%nPets)
+      end if
+!
       if (models(Icopro)%nPets /=                                       &
           models(Icopro)%tile(1)*models(Icopro)%tile(2)) then
         call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
@@ -592,8 +639,33 @@
       end if
 !
       if (localPet == 0) then
-        write(*, fmt='(A12,I2,A,I2)') "Co-processing Tiles: ",          &
+        write(*, fmt='(A,I2,A,I2)') "Co-processing Tiles: ",            &
               models(Icopro)%tile(1),"x",models(Icopro)%tile(2)
+      end if
+      else
+        if (localPet == 0) then
+          write(*,'(a)') 'CoProcessor NOT active.'
+        end if
+!
+      end if
+!
+!-----------------------------------------------------------------------
+!     Read width of halo or ghost region
+!-----------------------------------------------------------------------
+!
+      if (models(Icopro)%modActive) then
+!
+      call ESMF_ConfigFindLabel(cf, 'CoProcessorHaloWidth:', rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_ConfigGetAttribute(cf, models(Icopro)%haloWidth, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      if (localPet == 0) then
+        write(*, fmt='(A,I2)') "Co-processing Halo/Ghost Width: ",      &
+              models(Icopro)%haloWidth
       end if
 !
       end if
@@ -1005,6 +1077,7 @@
         if (.not. models(i)%modActive) cycle
 !
         do j = 1, nf
+          if (.not. allocated(models(i)%exportField)) cycle
           lname = trim(models(i)%exportField(j)%long_name)
           sname = trim(models(i)%exportField(j)%short_name)
           units = trim(models(i)%exportField(j)%units)
@@ -1026,6 +1099,7 @@
 !
         nf = size(models(i)%importField)
         do j = 1, nf
+          if (.not. allocated(models(i)%importField)) cycle
           lname = trim(models(i)%importField(j)%long_name)
           sname = trim(models(i)%importField(j)%short_name)
           units = trim(models(i)%importField(j)%units)

@@ -1,3 +1,8 @@
+//=======================================================================
+// Regional Earth System Model (RegESM)
+// Copyright (c) 2013-2017 Ufuk Turuncoglu
+// Licensed under the MIT License.
+//=======================================================================
 #include "mpi.h"
 #include "grid.h"
 #include "vtkMPI.h"
@@ -52,16 +57,18 @@ namespace {
 
 //////////////////////////////////////////////////////////////////////
 
-extern "C" void my_coprocessorinitializewithpython_(int *fcomm, const char* pythonScriptName, const char strarr[][255], int *size) {
-  if (pythonScriptName != NULL) {
+extern "C" void my_coprocessorinitializewithpython_(int *fcomm, const char pythonScriptNames[][255], int *nscript, const char strarr[][255], int *size) {
+  if (pythonScriptNames != NULL) {
     if (!g_coprocessor) {
       g_coprocessor = vtkCPProcessor::New();
       MPI_Comm handle = MPI_Comm_f2c(*fcomm);
       vtkMPICommunicatorOpaqueComm *Comm = new vtkMPICommunicatorOpaqueComm(&handle);
       g_coprocessor->Initialize(*Comm);
-      vtkSmartPointer<vtkCPPythonScriptPipeline> pipeline = vtkSmartPointer<vtkCPPythonScriptPipeline>::New();
-      pipeline->Initialize(pythonScriptName);
-      g_coprocessor->AddPipeline(pipeline); 
+      for (int i = 0; i < *nscript; i++) {
+        vtkSmartPointer<vtkCPPythonScriptPipeline> pipeline = vtkSmartPointer<vtkCPPythonScriptPipeline>::New();
+        pipeline->Initialize(pythonScriptNames[i]);
+        g_coprocessor->AddPipeline(pipeline);
+      }
       //pipeline->FastDelete();
     }
 
@@ -178,8 +185,6 @@ extern "C" void create_grid(const char* name, int nProc, int myRank, int* dims, 
   grid->SetNPoints(nPoints);
   grid->SetLon(dims[0], nPoints, lonCoord);
   grid->SetLat(dims[1], nPoints, latCoord);
-  //grid->SetLat(dims[0], nPoints, latCoord);
-  //grid->SetLon(dims[1], nPoints, lonCoord);
   if (levCoord != 0) {
     grid->SetLev(dims[2], nPoints, levCoord);
   } 

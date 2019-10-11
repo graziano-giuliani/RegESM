@@ -1,22 +1,8 @@
-!-----------------------------------------------------------------------
-!
-!     This file is part of ITU RegESM.
-!
-!     ITU RegESM is free software: you can redistribute it and/or modify
-!     it under the terms of the GNU General Public License as published by
-!     the Free Software Foundation, either version 3 of the License, or
-!     (at your option) any later version.
-!
-!     ITU RegESM is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!     GNU General Public License for more details.
-!
-!     You should have received a copy of the GNU General Public License
-!     along with ITU RegESM.  If not, see <http://www.gnu.org/licenses/>.
-!
-!-----------------------------------------------------------------------
-!
+!=======================================================================
+! Regional Earth System Model (RegESM)
+! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Licensed under the MIT License.
+!=======================================================================
 #define FILENAME "util/mod_types.F90"
 !
 !-----------------------------------------------------------------------
@@ -128,6 +114,7 @@
         integer :: nPets
         logical :: modActive
         integer :: tile(2)
+        integer :: haloWidth
         integer :: nLevs
         real(ESMF_KIND_R8), allocatable :: levs(:)
         integer, allocatable :: petList(:)
@@ -241,7 +228,7 @@
 !-----------------------------------------------------------------------
 !
       character(ESMF_MAXSTR) :: config_fname="namelist.rc"
-      character(ESMF_MAXSTR) :: coproc_fname="tools/cop/allinputsgridwriter.py"
+      character(ESMF_MAXSTR), allocatable :: coproc_fnames(:)
       character(ESMF_MAXSTR) :: petLayoutOption
       type(ESMF_Time) :: esmStartTime
       type(ESMF_Time) :: esmRestartTime
@@ -256,8 +243,8 @@
       logical :: enablePerfCheck
       logical :: restarted
       integer :: riverOpt
-#ifdef NO_HD_SUPPORT
-      logical :: firstT
+#ifdef CHYM_SUPPORT
+      logical :: firstT = .true.
 #endif
 !
       contains

@@ -1,21 +1,8 @@
-!-----------------------------------------------------------------------
-!
-!     This file is part of ITU RegESM.
-!
-!     ITU RegESM is free software: you can redistribute it and/or modify
-!     it under the terms of the GNU General Public License as published by
-!     the Free Software Foundation, either version 3 of the License, or
-!     (at your option) any later version.
-!
-!     ITU RegESM is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!     GNU General Public License for more details.
-!
-!     You should have received a copy of the GNU General Public License
-!     along with ITU RegESM.  If not, see <http://www.gnu.org/licenses/>.
-!
-!-----------------------------------------------------------------------
+!=======================================================================
+! Regional Earth System Model (RegESM)
+! Copyright (c) 2013-2017 Ufuk Turuncoglu
+! Licensed under the MIT License.
+!=======================================================================
 #define FILENAME "mod_esmf_ocn_mit.F90"
 !
 !-----------------------------------------------------------------------
@@ -314,7 +301,7 @@
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp
-      integer :: rc
+      integer , intent(out) :: rc
 !
 !-----------------------------------------------------------------------
 !     Local variable declarations
@@ -1102,7 +1089,7 @@
 !     Find location of the rivers
 !-----------------------------------------------------------------------
 !
-#ifdef NO_CHYM_SUPPORT
+#ifdef HD_SUPPORT
       nr = size(rivers, dim=1)
       do i = 1, nr
         if (rivers(i)%isActive > 0) then
@@ -1161,7 +1148,7 @@
 !     Format definition
 !-----------------------------------------------------------------------
 !
- 20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I4.4,":",I4.4,"] - ",I4," ",A)
+ 20   format(" RIVER(",I2.2,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
  30   format(" PET(",I3.3,") - DE(",I2.2,") - ", A20, " : ", 4I8)
 !
       end subroutine OCN_SetGridArrays
@@ -1612,7 +1599,7 @@
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8) :: sfac, addo
       real(ESMF_KIND_R8), pointer :: ptr(:,:)
-#ifdef NO_HD_SUPPORT
+#ifdef CHYM_SUPPORT
       real(ESMF_KIND_R8), allocatable :: farrayDst(:,:)
 #endif
 !
@@ -1930,11 +1917,11 @@
           end do
         end do
       case ('rdis')
-#ifdef NO_HD_SUPPORT
+#ifdef CHYM_SUPPORT
         if (localPet .eq. 0) then
           allocate (farrayDst(Nx,Ny))
         else
-          allocate (farrayDst(0,0))
+          allocate (farrayDst(1,1))
         end if
         call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1944,7 +1931,7 @@
         UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
         LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)
         UBj = myYGlobalLo-1+(bj-1)*sNy+(sNy+OLy)
-#ifdef NO_HD_SUPPORT
+#ifdef CHYM_SUPPORT
         if (firstT) then
           call init_rivers(vm, farrayDst, Nx, Ny, rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
@@ -1971,8 +1958,9 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
        end if
+       deallocate(farrayDst)
 #endif
-#ifdef NO_CHYM_SUPPORT
+#ifdef HD_SUPPORT
         call put_river(vm, clock, LBi, UBi, LBj, UBj,                   &
                        ptr, sfac, addo, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -2031,8 +2019,8 @@
 !     Format definition
 !-----------------------------------------------------------------------
 !
-#ifdef NO_HD_SUPPORT
- 20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I4.4,":",I4.4,"] - ",I4," ",A)
+#ifdef CHYM_SUPPORT
+ 20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
 #endif
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
  70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
@@ -2394,12 +2382,7 @@
 !     Formats
 !-----------------------------------------------------------------------
 !
-#ifdef NO_CHYM_SUPPORT
- 110  format(' River (',I2.2,') Discharge [',A,'] : ',F15.6)
-#endif
-#ifdef NO_HD_SUPPORT
  110  format(' River (',I3.2,') Discharge [',A,'] : ',F15.6)
-#endif
 !
       end subroutine put_river
 !

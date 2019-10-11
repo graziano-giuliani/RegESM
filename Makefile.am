@@ -93,8 +93,8 @@ endif
 if DO_COMPILE_PARAVIEW
 COPLIBPTH = cop
 LIBS += -L$(COPLIBPTH) -lcop -L$(PVDIR)/lib `$(PVDIR)/bin/paraview-config --libs \
-        vtkCommonDataModel \
         vtkCommonCore \
+        vtkCommonDataModel \
         vtkPVCatalyst \
         vtkPVPythonCatalyst \
         vtkParallelMPI | cut -d ' ' -f3-`
@@ -103,8 +103,8 @@ CPPFLAGS += -I$(PVSRC)/VTK/Common/Core \
             -I$(PVSRC)/VTK/Common/DataModel \
             -I$(PVSRC)/CoProcessing/Catalyst \
             -I$(PVSRC)/CoProcessing/PythonCatalyst \
-            -I$(PVSRC)/VTK/Common/DataModel \
             -I$(PVSRC)/VTK/Parallel/MPI \
+            -I$(PVSRC)/VTK/IO/XMLParser \
             -I$(PVDIR)/VTK/Common/Core \
             -I$(PVDIR)/VTK/Utilities/KWIML \
             -I$(PVDIR)/VTK/Common/DataModel \
@@ -256,5 +256,5 @@ mod_esmf_cpl.o: mod_esmf_cpl.F90 mod_types.o mod_utils.o
 
 mod_esmf_esm.o: mod_esmf_esm.F90 mod_types.o $(OBJ) mod_esmf_cpl.o
 
-regesm.o: regesm.F90 $(OBJ) mod_esmf_esm.o mod_esmf_cpl.o $(UTILLIBPTH)/libesmutil.a 
+regesm.o: regesm.F90 $(OBJ) mod_esmf_esm.o mod_esmf_cpl.o $(UTILLIBPTH)/libesmutil.a $(noinst_LIBRARIES)
 	$(MPIFC) $(CPPFLAGS) $(FCFLAGS) -c $<
