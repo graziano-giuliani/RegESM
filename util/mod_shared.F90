@@ -289,13 +289,15 @@
       end subroutine get_ll
 !
 #ifdef CHYM_SUPPORT
-      subroutine init_rivers(vm,ptr, Nx, Ny, rc)
+      subroutine init_rivers(vm, ptr, Nx, Ny, rc)
       implicit none
 !
 !-----------------------------------------------------------------------
 !     Imported variable declarations
 !-----------------------------------------------------------------------
 !
+      integer, intent(in) :: Nx, Ny
+      real*8, dimension(:,:) , intent(in) :: ptr
       type(ESMF_VM), intent(in) :: vm
       integer, intent(inout) :: rc
 !
@@ -303,15 +305,13 @@
 !     Local variable declarations
 !-----------------------------------------------------------------------
 !
-      integer :: i, j, k, r, np, localPet, petCount, nRiver, Nx, Ny
-      integer :: conta,sNx,sNy,numsend
-      real*8, dimension(:,:) :: ptr
+      integer :: i, j, k, r, np, localPet, petCount, nRiver
+      integer :: numrivers, sNx, sNy, numsend
       integer :: ibuffer(1)
       real*8 :: dbuffer(1)
-      real*8,allocatable,dimension(:) :: dbuffer2
 !
       rc = ESMF_SUCCESS
-      conta = 0
+      numrivers = 0
 !      if (.not. allocated(ptr) .and. localPet == 0) allocate(ptr(Nx,Ny))
 !
 !
@@ -328,112 +328,122 @@
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
-      if (localPet == 0) then
-        do j=2,Ny-1
-          do i=2,Nx-1
-            if (ptr(i,j) .le. 1000000. .and. ptr(i,j) .ge. 0.) then
-              conta = conta + 1
+      if ( localPet == 0 ) then
+        do j = 2, Ny-1
+          do i = 2, Nx-1
+            if ( ptr(i,j) > 0.0 ) then
+              numrivers = numrivers + 1
             end if
           end do
         end do
       end if
-      ibuffer(1) = conta
+
+      ibuffer(1) = numrivers
       call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,            &
                             rootPet=0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
-      conta = ibuffer(1)
+      numrivers = ibuffer(1)
 
-      if (.not. allocated(rivers) .and. conta .gt. 0) then
-         allocate(rivers(conta))
-         firstT = .false.
+      if ( localPet == 0 ) then
+        write(6,*) 'NUMBER OF RIVERS IN INITRIVERS: ', numrivers
       end if
-      r = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                 &
-               mask=(models(Iocean)%mesh(:)%gtype == Icross))
 
-      if (localPet == 0 .and. conta .gt. 0) then
-        conta = 0
-        do j=2,Ny-1
-          do i=2,Nx-1
-            if (ptr(i,j) .le. 1000000. .and. ptr(i,j) .ge. 0.) then
-              conta  = conta + 1
-!              print*,'PTR(i,j):::::::::',ptr(i,j),'I,J:',i,j
-              rivers(conta)%isActive = 1
-              rivers(conta)%monfac = 1.0
-              rivers(conta)%eRadius = 50.
-              rivers(conta)%dir = 0    ! River mouth direction, to be
-                                       !  implemented
-              rivers(conta)%iindex = i
-              rivers(conta)%jindex = j
-              rivers(conta)%lon = models(Iocean)%mesh(r)%glon(i,j)
-              rivers(conta)%lat = models(Iocean)%mesh(r)%glat(i,j)
-            end if
+      if ( numrivers .gt. 0 ) then
+
+        if (.not. allocated(rivers)) allocate(rivers(numrivers))
+
+        if (localPet == 0 ) then
+          k = minloc(models(Iocean)%mesh(:)%gtype, dim=1, &
+                     mask=(models(Iocean)%mesh(:)%gtype == Icross))
+          r = 0
+          do j=2,Ny-1
+            do i=2,Nx-1
+              if ( ptr(i,j) > 0.0 ) then
+                r = r + 1
+!                print*,'PTR(i,j):::::::::',ptr(i,j),'I,J:',i,j
+                rivers(r)%isActive = 1
+                rivers(r)%monfac(:) = 1.0
+                rivers(r)%eRadius = 10.  !Laura x il Nord Adriatico, default 50.
+                rivers(r)%dir = 0 ! River mouth direction, to be implemented
+                rivers(r)%iindex = i
+                rivers(r)%jindex = j
+                rivers(r)%lon = models(Iocean)%mesh(k)%glon(i,j)
+                rivers(r)%lat = models(Iocean)%mesh(k)%glat(i,j)
+              end if
+            end do
           end do
-        end do
-      else if (localPet .ne. 0 .and. conta .gt. 0) then
-        do r = 1,conta
-          rivers(r)%isActive = ZERO_I4
-          rivers(r)%eRadius = ZERO_R8
-          rivers(r)%iindex = ZERO_I4
-          rivers(r)%jindex = ZERO_I4
-          rivers(conta)%dir = 0    ! River mouth direction, to be
-                                       !  implemented
-          rivers(r)%lon = ZERO_R8
-          rivers(r)%lat = ZERO_R8
-        end do
-      end if
-
-      if (.not. firstT) then
-      do r = 1, conta
-        ibuffer(1) = rivers(r)%isActive
-        call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%isActive = ibuffer(1)
-        if (.not. allocated(dbuffer2)) then
-          allocate(dbuffer2(12))
+        else
+          do r = 1, numrivers
+            rivers(r)%isActive = ZERO_I4
+            rivers(r)%eRadius = ZERO_R8
+            rivers(r)%iindex = ZERO_I4
+            rivers(r)%jindex = ZERO_I4
+            rivers(r)%dir = 0
+            rivers(r)%lon = ZERO_R8
+            rivers(r)%lat = ZERO_R8
+          end do
         end if
 
-        do i=1,12
-        dbuffer(1) = rivers(r)%monfac(i)
-        call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%monfac(i) = dbuffer(1)
+        do r = 1 , numrivers
+          ibuffer(1) = rivers(r)%isActive
+          call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%isActive = ibuffer(1)
+
+          do i = 1, 12
+            dbuffer(1) = rivers(r)%monfac(i)
+            call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,          &
+                                  rootPet=0, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                   line=__LINE__, file=FILENAME)) return
+            rivers(r)%monfac(i) = dbuffer(1)
+          end do
+
+          dbuffer(1) = rivers(r)%eRadius
+          call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%eRadius = dbuffer(1)
+
+          ibuffer(1) = rivers(r)%iindex
+          call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%iindex = ibuffer(1)
+
+          ibuffer = rivers(r)%jindex
+          call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%jindex = ibuffer(1)
+
+          dbuffer(1) = rivers(r)%lon
+          call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%lon = dbuffer(1)
+
+          dbuffer(1) = rivers(r)%lat
+          call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,          &
+                                rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%lat = dbuffer(1)
         end do
-        dbuffer(1) = rivers(r)%eRadius
-        call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%eRadius = dbuffer(1)
-        ibuffer(1) = rivers(r)%iindex
-        call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%iindex = ibuffer(1)
-        ibuffer = rivers(r)%jindex
-        call ESMF_VMBroadcast(vm, bcstData=ibuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%jindex = ibuffer(1)
-        dbuffer(1) = rivers(r)%lon
-        call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%lon = dbuffer(1)
-        dbuffer(1) = rivers(r)%lat
-        call ESMF_VMBroadcast(vm, bcstData=dbuffer, count=1,            &
-                              rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-        rivers(r)%lat = dbuffer(1)
-      end do
+      else
+        write(0,*) 'NO RIVERS FOUND!'
+        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,        &
+                 msg='River model cannot find any available river!')
+      end if
+      if (localPet == 0 ) then
+        write(6,*) 'RIVER INITIALIZATION COMPLETE.'
       end if
 
       end subroutine init_rivers
@@ -540,7 +550,7 @@
                   if (np > MAX_MAPPED_GRID) then
                     write(*,fmt='(A,I5,A)') "[error] - Try to reduce "//&
                           "effective radius for river [", r, "]"
-                    write(*,fmt='(A)') "[error] - Number of effected "//&
+                    write(*,fmt='(A,I5)')"[error] - Number of effected "//&
                           "ocean grid points greater than ",            &
                           MAX_MAPPED_GRID
                     call ESMF_Finalize(endflag=ESMF_END_ABORT)

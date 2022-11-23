@@ -758,8 +758,8 @@
 !-----------------------------------------------------------------------
 !
       if ( nproc < 4 ) then
-        cpus_per_dim(2) = 1
-        cpus_per_dim(1) = nproc
+        cpus_per_dim(1) = 1
+        cpus_per_dim(2) = nproc
       else if ( nproc >= 4 ) then
         cpus_per_dim(2) = (nint(sqrt(dble(nproc)))/2)*2
         if ( iy > int(1.5*dble(jx)) ) then
@@ -2259,8 +2259,8 @@
 !-----------------------------------------------------------------------
 !
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
- 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
+ 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4)
 !
       end subroutine ATM_Get
 !
@@ -2682,10 +2682,10 @@
 !                          (exportFields%psfc-ptop)*d_100, ptop*d_100,   &
 !                          mddom%ht(jce1:jce2,ice1:ice2), sigma,         &
 !                          jce1, jce2, ice1, ice2, kz)
-        call nonhydrost(hzvar, exportFields3d%t,                      &
-                          (exportFields%psfc-ptop)*d_100, ptop,         &
-                          mddom%ht(jce1:jce2,ice1:ice2)*regrav, sigma,  &
-                          jce1, jce2, ice1, ice2, kz)
+!       call nonhydrost(hzvar, exportFields3d%t,                      &
+!                         (exportFields%psfc-ptop)*d_100, ptop,         &
+!                         mddom%ht(jce1:jce2,ice1:ice2)*regrav, sigma,  &
+!                         jce1, jce2, ice1, ice2, kz)
       end if
 !
 !-----------------------------------------------------------------------
@@ -2701,33 +2701,40 @@
 !
       select case (trim(adjustl(itemNameList(i))))
       case ('tlev')
-        call intlinreg(zvar, exportFields3d%t, hzvar, sigma,           &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%t,      &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('qlev')
-        call intlinreg(zvar, exportFields3d%q, hzvar, sigma,           &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%q,      &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('ulev')
-        call intlinreg(zvar, exportFields3d%u, hzvar, sigma,           &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%u,      &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('vlev')
-        call intlinreg(zvar, exportFields3d%v, hzvar, sigma,           &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%v,      &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('wlev')
-        call intlinreg(zvar, exportFields3d%w, hzvar, sigma,           &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%w,      &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('cldfrc')
-        call intlinreg(zvar, exportFields3d%cldfrc, hzvar, sigma,      &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%cldfrc, &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       case ('cldlwc')
-        call intlinreg(zvar, exportFields3d%cldlwc, hzvar, sigma,      &
-                       jce1, jce2, ice1, ice2, kz,                     &
-                       models(Iatmos)%levs,nz)
+        call intlinreg(zvar, exportFields3d%cldlwc, &
+                       models(Iatmos)%levs,         &
+                       jce1, jce2, ice1, ice2, kz,  &
+                       hzvar,nz)
       end select
 !
 !-----------------------------------------------------------------------
@@ -2815,7 +2822,7 @@
 !-----------------------------------------------------------------------
 !
  90   format(A10,'_',A,'_',                                             &
-             I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
+             I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
  100  format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 !

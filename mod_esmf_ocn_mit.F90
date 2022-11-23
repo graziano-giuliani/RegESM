@@ -32,6 +32,9 @@
 !
       implicit none
       private
+#ifdef CHYM_SUPPORT
+      logical :: firstT = .true.
+#endif
 !
 !-----------------------------------------------------------------------
 !     Global module variables
@@ -1934,22 +1937,20 @@
           end do
         end do
       case ('rdis')
-#ifdef CHYM_SUPPORT
-        if (localPet .eq. 0) then
-          allocate (farrayDst(Nx,Ny))
-        else
-          allocate (farrayDst(1,1))
-        end if
-        call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-                               line=__LINE__, file=FILENAME)) return
-#endif
         LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
         UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
         LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)
         UBj = myYGlobalLo-1+(bj-1)*sNy+(sNy+OLy)
 #ifdef CHYM_SUPPORT
-        if (firstT) then
+        if ( firstT ) then
+          if (localPet .eq. 0) then
+            allocate (farrayDst(Nx,Ny))
+          else
+            allocate (farrayDst(1,1))
+          end if
+          call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                                 line=__LINE__, file=FILENAME)) return
           call init_rivers(vm, farrayDst, Nx, Ny, rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
@@ -1969,20 +1970,14 @@
           call map_rivers(vm, rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
-       else
-          call put_river(vm, clock, LBi, UBi, LBj, UBj, &
-                         ptr, sfac, addo, rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-                                 line=__LINE__, file=FILENAME)) return
-       end if
-       deallocate(farrayDst)
+          firstT = .false.
+          deallocate(farrayDst)
+        end if
 #endif
-#ifdef HD_SUPPORT
         call put_river(vm, clock, LBi, UBi, LBj, UBj,                   &
                        ptr, sfac, addo, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-#endif
       end select
 !
 !-----------------------------------------------------------------------
@@ -2040,7 +2035,7 @@
  20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
 #endif
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
- 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
+ 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
  80   format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 
@@ -2255,7 +2250,7 @@
 !     Format definition
 !-----------------------------------------------------------------------
 !
- 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
+ 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
  100  format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 

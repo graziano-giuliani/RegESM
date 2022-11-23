@@ -52,7 +52,8 @@
       integer(ESMF_KIND_I4), parameter :: MAPPED_MASK = 99
       integer(ESMF_KIND_I4), parameter :: UNMAPPED_MASK = 98
 !
-      integer, parameter :: MAX_MAPPED_GRID = 1000
+      integer, parameter :: MAX_MAPPED_GRID = 10000  
+!Laura per il Nord Adriatico, default MAX_MAPPED_GRID=1000
 !
 !-----------------------------------------------------------------------
 !     RTM river point data type
@@ -243,9 +244,6 @@
       logical :: enablePerfCheck
       logical :: restarted
       integer :: riverOpt
-#ifdef CHYM_SUPPORT
-      logical :: firstT = .true.
-#endif
 !
       contains
 !

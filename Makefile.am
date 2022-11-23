@@ -43,6 +43,7 @@ CPPFLAGS += -I$(ATM_PREFIX)/Main -I$(ATM_PREFIX)/Main/mpplib \
 libatm_a_LIBADD = $(wildcard $(ATM_PREFIX)/Main/*.o) \
                   $(wildcard $(ATM_PREFIX)/Main/*/*.o) \
                   $(wildcard $(ATM_PREFIX)/Main/*/*/*.o) \
+                  $(wildcard $(ATM_PREFIX)/external/*.o) \
                   $(wildcard $(ATM_PREFIX)/Share/*.o)
 endif
 if DO_COMPILE_WRF

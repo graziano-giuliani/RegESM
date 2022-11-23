@@ -553,9 +553,9 @@
                                  rc=rc)
 #ifdef CHYM_SUPPORT
       else if (iSrc == Iriver) then
+                                 !srcMaskValues=(/models(iSrc)%isOcean/),&
       call ESMF_FieldRegridStore(srcField=srcField, &
                                  dstField=dstField, &
-                                 srcMaskValues=(/models(iSrc)%isOcean/),&
                                  unmappedaction=unmap, &
                                  routeHandle=routeHandle, &
                                  regridmethod=regridMethod, &

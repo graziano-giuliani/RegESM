@@ -1217,8 +1217,8 @@
 !-----------------------------------------------------------------------
 !
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
- 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
+ 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4)
 !
       end subroutine RTM_Get
 !
@@ -1394,6 +1394,7 @@
 !-----------------------------------------------------------------------
 !
       call NUOPC_UpdateTimestamp(exportState, clock, rc=rc)
+      !call NUOPC_SetTimestamp(exportState, clock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
@@ -1422,8 +1423,8 @@
 !     Format definition
 !-----------------------------------------------------------------------
 !
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
+ 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4)
 !
       end subroutine RTM_Put
 !

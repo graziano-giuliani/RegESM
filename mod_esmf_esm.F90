@@ -54,6 +54,35 @@
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
+!     Set internal clock for application (gcomp). The time step must be
+!     set to the slowest time interval of the connector components
+!-----------------------------------------------------------------------
+!
+      restarted = .false.
+      if (esmStartTime /= esmRestartTime) then
+        restarted = .true.
+      end if
+!
+      if (restarted) then
+        esmClock = ESMF_ClockCreate(esmTimeStep,                        &
+                                    esmRestartTime,                     &
+                                    stopTime=esmStopTime,               &
+                                    name='ESM_clock', rc=rc)
+      else
+        esmClock = ESMF_ClockCreate(esmTimeStep,                        &
+                                    esmStartTime,                       &
+                                    stopTime=esmStopTime,               &
+                                    name='ESM_clock', rc=rc)
+      end if
+!
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_GridCompSet(gcomp, clock=esmClock, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+
+!-----------------------------------------------------------------------
 !     Register generic methods
 !-----------------------------------------------------------------------
 !
@@ -99,6 +128,7 @@
       type(ESMF_CplComp) :: connector
 !
       rc = ESMF_SUCCESS
+!
 !
 !-----------------------------------------------------------------------
 !     SetServices for model components
@@ -170,36 +200,6 @@
           end if
         end do
       end do
-!
-!-----------------------------------------------------------------------
-!     Set internal clock for application (gcomp). The time step must be
-!     set to the slowest time interval of the connector components
-!-----------------------------------------------------------------------
-!
-      restarted = .false.
-      if (esmStartTime /= esmRestartTime) then
-        restarted = .true.
-      end if
-!
-      if (restarted) then
-        esmClock = ESMF_ClockCreate(esmTimeStep,                        &
-                                    esmRestartTime,                     &
-                                    stopTime=esmStopTime,               &
-                                    name='ESM_clock', rc=rc)
-      else
-        esmClock = ESMF_ClockCreate(esmTimeStep,                        &
-                                    esmStartTime,                       &
-                                    stopTime=esmStopTime,               &
-                                    name='ESM_clock', rc=rc)
-      end if
-!
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
-!
-      call ESMF_GridCompSet(gcomp, clock=esmClock, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
-!
       end subroutine ESM_SetModelServices
 !
       subroutine ESM_SetRunSequence(gcomp, rc)

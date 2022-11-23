@@ -166,7 +166,7 @@
         if (models(i)%nPets /= 0) then
           models(i)%modActive = .true.
           if (localPet == 0) then
-            write(*,'(a,a,a,i2,a)') 'Activate model ', trim(models(i)%name) , &
+            write(*,'(a,a,a,i4,a)') 'Activate model ', trim(models(i)%name) , &
                     ' with ', models(i)%nPets, ' PETs'
           end if
         end if
@@ -290,7 +290,7 @@
               (i == Iwavee) .or. (i == Icopro)) then
             models(i)%petList = (/ (k, k = 0, petCount-1) /)
           else if (i == Iriver) then
-            models(i)%petList = (/ (k, k = petCount-1, petCount-1) /)
+            models(i)%petList(1) = petCount-1
           end if
         end do
       case (ipar) ! concurent
@@ -506,6 +506,7 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
 !
+#ifndef CHYM_SUPPORT
         if (.not. allocated(rivers)) allocate(rivers(lineCount))
 !
         do i = 1, lineCount
@@ -574,6 +575,7 @@
             write(*,'(a,12f5.2)') 'Monfac : ',rivers(i)%monfac
           end if
         end do
+#endif
       end if
 !
 !-----------------------------------------------------------------------

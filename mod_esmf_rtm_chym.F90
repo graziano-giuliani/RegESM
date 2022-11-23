@@ -171,6 +171,7 @@
       type(ESMF_State) :: importState
       type(ESMF_State) :: exportState
       type(ESMF_Clock) :: clock
+      type(ESMF_Time) :: currTime
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
@@ -180,6 +181,7 @@
       integer :: comm, localPet, petCount
       type(ESMF_VM) :: vm
       type(ESMF_Time) :: startTime
+      integer :: iyear, iday, imonth, ihour
 !
       rc = ESMF_SUCCESS
 !
@@ -195,12 +197,21 @@
                       mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
+
+      call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
+                        dd=iday, h=ihour, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
 !     Initialize the gridded component
 !-----------------------------------------------------------------------
 !
-      call RTM_Initialize()
+      call RTM_Initialize(imonth)
 !
 !-----------------------------------------------------------------------
 !     Set-up grid and load coordinate data
@@ -324,15 +335,17 @@
           write(*,20) trim(str1), trim(str2), phase, istart, iend
         end if
       end if
-!
-!-----------------------------------------------------------------------
-!     Put export fields in case of restart run
-!-----------------------------------------------------------------------
-!
-        call RTM_Put(gcomp, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+
       end if
+!
+!-----------------------------------------------------------------------
+!     Put export fields
+!-----------------------------------------------------------------------
+!
+
+      call RTM_Put(gcomp, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                             line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
 !     Formats
@@ -513,10 +526,10 @@
       if (.not. allocated(lat1d)) allocate(lat1d(nbc))
 !
       do i = 0, nlc-1
-        lon1d(i+1) = 14.0d0+0.12d0*i
+        lon1d(i+1) = -6.97d0+0.06d0*i
       end do
       do i = 0, nbc-1
-        lat1d(i+1) = -26.0d0+0.12d0*i
+        lat1d(i+1) = 27.05d0+0.06d0*i
       end do
 !
       do i = 1, nbc
@@ -581,6 +594,7 @@
       end subroutine RTM_SetGridArrays
 !
       subroutine RTM_SetStates(gcomp, rc)
+      use mod_chym_param, only : nlc,nbc,chym_dis
       implicit none
 !
 !-----------------------------------------------------------------------
@@ -594,7 +608,8 @@
 !     Local variable declarations
 !-----------------------------------------------------------------------
 !
-      integer :: i, j, k, localPet, petCount, itemCount, localDECount
+      integer :: i, j, k, n, m
+      integer :: localPet, petCount, itemCount, localDECount
       real(ESMF_KIND_R8), dimension(:,:), pointer :: ptr2d
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
 !
@@ -823,8 +838,6 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_chym_param, only : runoff, drain
-!
       implicit none
 !
 !-----------------------------------------------------------------------
@@ -840,6 +853,7 @@
 !
       real*8  :: dstart, dend
       integer :: istart, iend, phase, localPet, petCount
+      integer :: iyear, iday, imonth, ihour
       character(ESMF_MAXSTR) :: cname, msgString, str1, str2
 !
       type(ESMF_VM) :: vm
@@ -940,12 +954,16 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
+      call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
+                        dd=iday, h=ihour, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
 !     Run RTM component
 !-----------------------------------------------------------------------
 !
-      call RTM_Run(istart, iend ,restarted)
+      call RTM_Run(istart, iend, restarted, imonth, iday)
 !
 !-----------------------------------------------------------------------
 !     Put export fields
@@ -999,8 +1017,7 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_chym_param, only : runoff, drain
-      use mod_chym_param, only : nlc, nbc, chym_runoff, chym_drain
+      use mod_chym_param, only : nlc, nbc, chym_runoff, chym_surf
 !
       implicit none
 !
@@ -1153,9 +1170,9 @@
         do m = 1, nbc
           do n = 1, nlc
             if (ptr(n,m) < 0.0d0 .or. ptr(n,m) > 1.0d0) then
-              chym_drain(n,m) = 0.0d0
+              chym_surf(n,m) = 0.0d0
             else
-              chym_drain(n,m) = (ptr(n,m)*sfac)+addo
+              chym_surf(n,m) = (ptr(n,m)*sfac)+addo
             end if
           end do
         end do
@@ -1212,8 +1229,8 @@
 !-----------------------------------------------------------------------
 !
  60   format(' PET(',I3,') - DE(',I2,') - ', A20, ' : ', 4I8)
- 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 70   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
+ 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4)
 !
       end subroutine RTM_Get
 !
@@ -1389,6 +1406,7 @@
 !-----------------------------------------------------------------------
 !
       call NUOPC_UpdateTimestamp(exportState, clock, rc=rc)
+      !call NUOPC_SetTimestamp(exportState, clock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
@@ -1417,8 +1435,8 @@
 !     Format definition
 !-----------------------------------------------------------------------
 !
- 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I1)
- 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2)
+ 80   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
+ 90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4)
 !
       end subroutine RTM_Put
 !
