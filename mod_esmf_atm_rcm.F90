@@ -2834,10 +2834,11 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_constants, only : degrad
+      use mod_constants, only : degrad , mathpi, raddeg, halfpi
+      use mod_constants, only : earthrad
       use mod_atm_interface, only : mddom
       use mod_dynparam, only : iproj
-      use mod_dynparam, only : clon, clat, plon, plat, xcone
+      use mod_dynparam, only : clon, clat, plon, plat, xcone, ds
       use mod_dynparam, only : ici1, ici2, jci1, jci2
 !
       implicit none
@@ -2857,6 +2858,8 @@
       real*8 :: x, xs, xc, d, us, vs, sindel, cosdel
       real*8 :: pollam, polphi, polcphi, polsphi
       real*8 :: zarg1, zarg2, znorm, zphi, zrla, zrlap
+      real*8 :: phi0, lam0, phi, lam, rotlam, rotphi, dlam, drot
+      real*8 :: f5, f6, f7, f8
 !
       if (iproj == 'ROTMER' .or. iproj == 'NORMER') then ! ROTMER, Rotated Mercator: NORMER, Normal  Mercator
         if (plat > 0.0d0) then
@@ -2885,6 +2888,41 @@
 !
             us = u(j,i)*cosdel+v(j,i)*sindel
             vs = -u(j,i)*sindel+v(j,i)*cosdel
+            u(j,i) = us
+            v(j,i) = vs
+          end do
+        end do
+      else if (iproj == 'ROTLLR' ) then
+        drot = raddeg * ds / earthrad
+        if ( plon < 0.0d0 ) then
+          lam0 = plon + mathpi
+        else if ( plon > 0.0d0 ) then
+          lam0 = plon - mathpi
+        else
+          lam0 = 0.0d0
+        end if
+        if ( plat > 0.0d0 ) then
+          phi0 = halfpi-plat
+        else if ( plat < 0.0d0 ) then
+          phi0 = -(halfpi+plat)
+        else
+          phi0 = 0.0d0
+        end if
+        do i = ici1, ici2
+          phi = degrad*mddom%dlat(j,i)
+          rotphi = degrad*(phi0+(i-1)*drot)
+          do j = jci1, jci2
+            lam = degrad*mddom%dlon(j,i)
+            rotlam = degrad*(lam0+(j-1)*drot)
+            dlam = lam - lam0
+            f5 = -(sin(phi0)*sin(rotlam))/cos(phi)
+            f6 = (cos(phi0)*cos(rotphi) - &
+                  sin(phi0)*sin(rotphi)*cos(rotlam))/cos(phi)
+            f7 = cos(rotphi)/(sin(dlam)*sin(phi0))
+            f8 = -(cos(dlam)*sin(phi0)*sin(phi) + &
+                   cos(phi0)*cos(phi))/cos(rotphi)
+            vs = f5 * u(j,i) + f6 * v(j,i)
+            us = f7 * (v(j,i) + vs*f8)
             u(j,i) = us
             v(j,i) = vs
           end do

@@ -56,24 +56,31 @@ AC_SUBST(ATM_PREFIX)
 
 if eval "test x$ATM_PREFIX != xnone"; then
   if eval "! test -d $ATM_PREFIX"; then
-    AC_MSG_ERROR([check atmosphere model installation path $ATM_PREFIX])
-  fi
+    if eval "test x$ATM_PREFIX == xera5"; then
+      NO_ERA5_SUPPORT=0
+      AC_MSG_NOTICE([compiling with atmosphere model - ERA5 - support])
+    else
+      AC_MSG_ERROR([check atmosphere model installation path $ATM_PREFIX])
+    fi
+  else
+    NO_ERA5_SUPPORT=1
+    # check RegCM model is installed with coupling support or not?
+    NO_RCM_SUPPORT=1
+    AC_CHECK_FILE([$ATM_PREFIX/Main/mod_update.o],
+                  [NO_RCM_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - RegCM - support])])
 
-  # check RegCM model is installed with coupling support or not?
-  NO_RCM_SUPPORT=1
-  AC_CHECK_FILE([$ATM_PREFIX/Main/mod_update.o],
-                [NO_RCM_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - RegCM - support])])
+    # check WRF model is installed with coupling support or not?
+    NO_WRF_SUPPORT=1
+    AC_CHECK_FILE([$ATM_PREFIX/main/real_em.o],
+                  [NO_WRF_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - WRF - support])])
 
-  # check WRF model is installed with coupling support or not?
-  NO_WRF_SUPPORT=1
-  AC_CHECK_FILE([$ATM_PREFIX/main/real_em.o],
-                [NO_WRF_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - WRF - support])])
-
-  if eval "test x$NO_RCM_SUPPORT = x1 -a x$NO_WRF_SUPPORT = x1"; then
-    AC_MSG_ERROR([required source files 'mod_update.o' or 'real_em.o' are not found! atmosphere model should be installed with coupling support.])
+    if eval "test x$NO_RCM_SUPPORT = x1 -a x$NO_WRF_SUPPORT = x1"; then
+      AC_MSG_ERROR([required source files 'mod_update.o' or 'real_em.o' are not found! atmosphere model should be installed with coupling support.])
+    fi
   fi
 fi
 
+AM_CONDITIONAL(DO_COMPILE_ERA5, [test x"$NO_ERA5_SUPPORT" = x0])
 AM_CONDITIONAL(DO_COMPILE_RCM, [test x"$NO_RCM_SUPPORT" = x0])
 AM_CONDITIONAL(DO_COMPILE_WRF, [test x"$NO_WRF_SUPPORT" = x0])
 

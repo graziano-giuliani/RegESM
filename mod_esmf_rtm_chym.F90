@@ -211,7 +211,7 @@
 !     Initialize the gridded component
 !-----------------------------------------------------------------------
 !
-      call RTM_Initialize(imonth)
+      call RTM_Initialize(imonth,iday)
 !
 !-----------------------------------------------------------------------
 !     Set-up grid and load coordinate data
