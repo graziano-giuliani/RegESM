@@ -43,6 +43,7 @@ CPPFLAGS += -I$(ATM_PREFIX)/Main -I$(ATM_PREFIX)/Main/mpplib \
 libatm_a_LIBADD = $(wildcard $(ATM_PREFIX)/Main/*.o) \
                   $(wildcard $(ATM_PREFIX)/Main/*/*.o) \
                   $(wildcard $(ATM_PREFIX)/Main/*/*/*.o) \
+                  $(wildcard $(ATM_PREFIX)/external/*.o) \
                   $(wildcard $(ATM_PREFIX)/Share/*.o)
 endif
 if DO_COMPILE_WRF
@@ -92,7 +93,12 @@ LIBS += ${PWD}/librtm.a
 CPPFLAGS += -I$(RTM_PREFIX)
 noinst_LIBRARIES += librtm.a
 librtm_a_SOURCES =
+if DO_COMPILE_HD
 skip_files = $(RTM_PREFIX)/hdmain.o
+endif
+if DO_COMPILE_CHYM
+skip_files = $(RTM_PREFIX)/chymmain.o
+endif
 librtm_a_LIBADD = $(filter-out $(skip_files), $(wildcard $(RTM_PREFIX)/*.o))
 endif
 
@@ -158,12 +164,17 @@ regesm_x_SOURCES = regesm.F90 mod_esmf_esm.F90 mod_esmf_cpl.F90
 if DO_COMPILE_LIBATM
 if DO_COMPILE_RCM
 regesm_x_SOURCES += mod_esmf_atm_rcm.F90
-endif
+else
 if DO_COMPILE_WRF
 regesm_x_SOURCES += mod_esmf_atm_wrf.F90
 endif
+endif
+if DO_COMPILE_ERA5
+regesm_x_SOURCES += mod_esmf_atm_era5.F90
+else
 else
 regesm_x_SOURCES += mod_esmf_atm_void.F90
+endif
 endif
 
 if DO_COMPILE_LIBOCN
@@ -178,7 +189,12 @@ regesm_x_SOURCES += mod_esmf_ocn_void.F90
 endif
 
 if DO_COMPILE_LIBRTM
-regesm_x_SOURCES += mod_esmf_rtm.F90
+if DO_COMPILE_HD
+regesm_x_SOURCES += mod_esmf_rtm_hd.F90
+endif
+if DO_COMPILE_CHYM
+regesm_x_SOURCES += mod_esmf_rtm_chym.F90
+endif
 else
 regesm_x_SOURCES += mod_esmf_rtm_void.F90
 endif
@@ -220,15 +236,21 @@ if DO_COMPILE_LIBATM
 if DO_COMPILE_RCM
 mod_esmf_atm_rcm.o: mod_esmf_atm_rcm.F90 mod_types.o mod_shared.o
 OBJ+=mod_esmf_atm_rcm.o
-endif
+else
 if DO_COMPILE_WRF
 mod_esmf_atm_wrf.o: mod_esmf_atm_wrf.F90 mod_types.o mod_shared.o
 #mod_esmf_atm_wrf.o: modify_libatm mod_esmf_atm_wrf.F90 mod_types.o mod_shared.o
 OBJ+=mod_esmf_atm_wrf.o
 endif
+endif
+else
+if DO_COMPILE_ERA5
+mod_esmf_atm_era5.o: mod_esmf_atm_era5.F90 mod_types.o mod_shared.o
+OBJ+=mod_esmf_atm_era5.o
 else
 mod_esmf_atm_void.o: mod_esmf_atm_void.F90
 OBJ+=mod_esmf_atm_void.o
+endif
 endif
 
 if DO_COMPILE_LIBOCN
@@ -251,8 +273,14 @@ OBJ+=mod_esmf_ocn_void.o
 endif
 
 if DO_COMPILE_LIBRTM
-mod_esmf_rtm.o: mod_esmf_rtm.F90 mod_types.o mod_shared.o
-OBJ+=mod_esmf_rtm.o
+if DO_COMPILE_HD
+mod_esmf_rtm_hd.o: mod_esmf_rtm_hd.F90 mod_types.o mod_shared.o
+OBJ+=mod_esmf_rtm_hd.o
+endif
+if DO_COMPILE_CHYM
+mod_esmf_rtm_chym.o: mod_esmf_rtm_chym.F90 mod_types.o mod_shared.o
+OBJ+=mod_esmf_rtm_chym.o
+endif
 else
 mod_esmf_rtm_void.o: mod_esmf_rtm_void.F90
 OBJ+=mod_esmf_rtm_void.o
@@ -281,5 +309,5 @@ mod_esmf_cpl.o: mod_esmf_cpl.F90 mod_types.o mod_utils.o
 
 mod_esmf_esm.o: mod_esmf_esm.F90 mod_types.o $(OBJ) mod_esmf_cpl.o
 
-regesm.o: regesm.F90 $(OBJ) mod_esmf_esm.o mod_esmf_cpl.o $(UTILLIBPTH)/libesmutil.a
+regesm.o: regesm.F90 $(OBJ) mod_esmf_esm.o mod_esmf_cpl.o $(UTILLIBPTH)/libesmutil.a $(noinst_LIBRARIES)
 	$(MPIFC) $(CPPFLAGS) $(FCFLAGS) -c $<

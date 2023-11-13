@@ -3,16 +3,16 @@
 ! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
-#define FILENAME "util/mod_config.F90" 
+#define FILENAME "util/mod_config.F90"
 !
 !-----------------------------------------------------------------------
-!     Module for ESM configuration file 
+!     Module for ESM configuration file
 !-----------------------------------------------------------------------
 !
       module mod_config
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -28,14 +28,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM), intent(in) :: vm
-      integer, intent(out) :: rc 
+      integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: time(6)
@@ -59,7 +59,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Read configuration file 
+!     Read configuration file
 !-----------------------------------------------------------------------
 !
       inquire(file=trim(config_fname), exist=file_exists)
@@ -75,9 +75,9 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Get run mode (concurrent vs. sequential) 
+!     Get run mode (concurrent vs. sequential)
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_ConfigFindLabel(cf, 'PETLayoutOption:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -89,15 +89,15 @@
       runMod = Iseq
       if (trim(petLayoutOption) == 'concurrent') runMod = Ipar
       if (localPet == 0) then
-        write(*, fmt='(A12,A)') "PET Layout: ", trim(RUNNDES(runMod)) 
+        write(*, fmt='(A12,A)') "PET Layout: ", trim(RUNNDES(runMod))
       end if
 !
 !-----------------------------------------------------------------------
-!     Get coupling type 
+!     Get coupling type
 !-----------------------------------------------------------------------
-!        
+!
       cplType = 1
-! 
+!
       call ESMF_ConfigGetAttribute(cf, cplType,                         &
                                      label='CouplingType:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -113,13 +113,13 @@
                      "set to explicit (1) or semi-implicit (2)! "//     &
                      "exiting ..."
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
-        end if 
+        end if
       end if
 !
 !-----------------------------------------------------------------------
-!     Get number of component (or model) 
+!     Get number of component (or model)
 !-----------------------------------------------------------------------
-!        
+!
       nModels = ESMF_ConfigGetLen(cf, label='PETs:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -127,9 +127,13 @@
       if (nModels .gt. 0) then
         if (.not. allocated(models)) allocate(models(nModels))
       end if
+
+      if (localPet == 0) then
+        write(*, fmt='(A,i2)') "PET number = ",nModels
+      end if
 !
 !-----------------------------------------------------------------------
-!     Set active components (if nPets > 0 active otherwise not) 
+!     Set active components (if nPets > 0 active otherwise not)
 !-----------------------------------------------------------------------
 !
       call ESMF_ConfigFindLabel(cf, 'PETs:', rc=rc)
@@ -141,7 +145,7 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
 !
-        ! check: force river routing model will use single PET      
+        ! check: force river routing model will use single PET
         if (i == Iriver .and. models(i)%nPets /= 0) then
           models(i)%nPets = models(i)%nPets/abs(models(i)%nPets)
         end if
@@ -159,17 +163,26 @@
         end if
 !
         models(i)%modActive = .false.
-        if (models(i)%nPets /= 0) models(i)%modActive = .true.
+        if (models(i)%nPets /= 0) then
+          models(i)%modActive = .true.
+          if (localPet == 0) then
+            write(*,'(a,a,a,i4,a)') 'Activate model ', trim(models(i)%name) , &
+                    ' with ', models(i)%nPets, ' PETs'
+          end if
+        end if
       end do
 !
 !-----------------------------------------------------------------------
-!     Set debug level 
+!     Set debug level
 !-----------------------------------------------------------------------
 !
       call ESMF_ConfigGetAttribute(cf, debugLevel,                      &
                                    label='DebugLevel:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,i2)') 'Debug Level = ',debugLevel
+      end if
 !
 !-----------------------------------------------------------------------
 !     Set performance check flag
@@ -179,9 +192,12 @@
                                    label='EnablePerfCheck:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,l2)') 'Performance Check = ',enablePerfCheck
+      end if
 !
 !-----------------------------------------------------------------------
-!     Set calendar 
+!     Set calendar
 !-----------------------------------------------------------------------
 !
       call ESMF_ConfigGetAttribute(cf, str, label='Calendar:', rc=rc)
@@ -195,9 +211,12 @@
       esmCal = ESMF_CalendarCreate(cflag, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
+      if (localPet == 0) then
+        write(*,'(a,a)') 'Calendar = ',trim(str)
+      end if
 !
 !-----------------------------------------------------------------------
-!     Set application clock 
+!     Set application clock
 !-----------------------------------------------------------------------
 !
       call ESMF_ConfigGetAttribute(cf, time, count=6,                   &
@@ -250,7 +269,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Assign PETs to model components 
+!     Assign PETs to model components
 !-----------------------------------------------------------------------
 !
       select case (runMod)
@@ -271,9 +290,9 @@
               (i == Iwavee) .or. (i == Icopro)) then
             models(i)%petList = (/ (k, k = 0, petCount-1) /)
           else if (i == Iriver) then
-            models(i)%petList = (/ (k, k = petCount-1, petCount-1) /)
+            models(i)%petList(1) = petCount-1
           end if
-        end do 
+        end do
       case (ipar) ! concurent
         k = -1
         do i = 1, nModels
@@ -284,14 +303,14 @@
             allocate(models(i)%petList(p))
           end if
 !
-          do j = 1, p 
+          do j = 1, p
             k = k+1
             if (i == Iatmos) then
-              models(i)%petList(j) = k 
+              models(i)%petList(j) = k
             else if (i == Iocean) then
-              models(i)%petList(j) = k 
+              models(i)%petList(j) = k
             else if (i == Iwavee) then
-              models(i)%petList(j) = k 
+              models(i)%petList(j) = k
             else if (i == Icopro) then
               models(i)%petList(j) = k
             else if (i == Iriver) then
@@ -313,7 +332,7 @@
       end select
 !
 !-----------------------------------------------------------------------
-!     Debug: write list of active components 
+!     Debug: write list of active components
 !-----------------------------------------------------------------------
 !
       if (localPet == 0) then
@@ -330,7 +349,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Assign PETs to connectors 
+!     Assign PETs to connectors
 !-----------------------------------------------------------------------
 !
       if (.not. allocated(connectors)) then
@@ -360,7 +379,7 @@
               petList(1:size(models(i)%petList)) = models(i)%petList
               petList(size(models(i)%petList)+1:) = models(j)%petList
             end if
-!            
+!
             ! assign PETs to connector
             connectors(i,j)%nPets = np
             if (.not. allocated(connectors(i,j)%petList)) then
@@ -378,7 +397,7 @@
 !     Fix active connectors (put exceptions in here)
 !     - no interaction between RTM-ATM and OCN-RTM components
 !     - no interaction between RTM-WAV and WAV-RTM components
-!     - no interaction between COP-ATM, COP-OCN, COP-RTM and COP-WAV   
+!     - no interaction between COP-ATM, COP-OCN, COP-RTM and COP-WAV
 !     - OCN-WAV and WAV-OCN coupling is not implemented yet !!!
 !-----------------------------------------------------------------------
 !
@@ -400,19 +419,19 @@
       connectors(:,:)%modInteraction = Ioverall
 !
       connectors(Iatmos,Iocean)%modInteraction = Ioverocn
-      connectors(Iocean,Iatmos)%modInteraction = Ioverocn      
+      connectors(Iocean,Iatmos)%modInteraction = Ioverocn
       connectors(Iatmos,Iriver)%modInteraction = Ioverlnd
       connectors(Iriver,Iocean)%modInteraction = Ioverlnd
       connectors(Iocean,Iwavee)%modInteraction = Ioverocn
-      connectors(Iwavee,Iocean)%modInteraction = Ioverocn      
+      connectors(Iwavee,Iocean)%modInteraction = Ioverocn
       connectors(Iatmos,Iwavee)%modInteraction = Ioverocn
-      connectors(Iwavee,Iatmos)%modInteraction = Ioverocn      
+      connectors(Iwavee,Iatmos)%modInteraction = Ioverocn
 !
 !-----------------------------------------------------------------------
 !     Initialize extrapolation option
 !-----------------------------------------------------------------------
 !
-      connectors(:,:)%modExtrapolation = .false. 
+      connectors(:,:)%modExtrapolation = .false.
 !
 !-----------------------------------------------------------------------
 !     Debug: write list of active connectors
@@ -444,7 +463,7 @@
 !
       do i = 1, nModels
         call ESMF_ConfigNextLine(cf, rc=rc)
-        do j = 1, nModels      
+        do j = 1, nModels
           call ESMF_ConfigGetAttribute(cf, connectors(i,j)%divDT, rc=rc)
           if (localPet == 0 .and. connectors(i,j)%modActive) then
           write(*,20) trim(connectors(i,j)%name), connectors(i,j)%divDT
@@ -460,7 +479,7 @@
       call read_field_table('exfield.tbl', localPet, rc)
 !
 !-----------------------------------------------------------------------
-!     Read river option (only active when RTM is activated) 
+!     Read river option (only active when RTM is activated)
 !-----------------------------------------------------------------------
 !
       if (models(Iriver)%modActive) then
@@ -468,14 +487,16 @@
                                      label='RiverOpt:', rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
-!
+        if (localPet == 0 ) then
+          write(*,'(a,i2)') 'RiverOpt is ',riverOpt
+        end if
       end if
 !
 !-----------------------------------------------------------------------
-!     Read river list for coupling (only active when RTM is activated) 
+!     Read river list for coupling (only active when RTM is activated)
 !-----------------------------------------------------------------------
 !
-      if (models(Iriver)%modActive) then  
+      if (models(Iriver)%modActive) then
         call ESMF_ConfigGetDim(cf, lineCount, columnCount,              &
                                label='RiverList::', rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -485,6 +506,7 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
 !
+#ifndef CHYM_SUPPORT
         if (.not. allocated(rivers)) allocate(rivers(lineCount))
 !
         do i = 1, lineCount
@@ -496,7 +518,7 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
               line=__LINE__, file=FILENAME)) return
           rivers(i)%asIndex = .false.
-          if (dumm == 0) rivers(i)%asIndex = .true. 
+          if (dumm == 0) rivers(i)%asIndex = .true.
 !
           call ESMF_ConfigGetAttribute(cf, rivers(i)%isActive, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
@@ -522,7 +544,7 @@
           call ESMF_ConfigGetAttribute(cf, rivers(i)%lat, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
               line=__LINE__, file=FILENAME)) return
-          end if 
+          end if
 !
           call ESMF_ConfigGetAttribute(cf, rivers(i)%dir, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
@@ -537,7 +559,23 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
               line=__LINE__, file=FILENAME)) return
           end do
+          if (localPet == 0 .and. debugLevel > 1 ) then
+            write(*,'(a,i2,a,i2)') 'River ',i, ' active = ', &
+                    rivers(i)%isActive
+            write(*,'(a,f7.2)') 'Radius : ',rivers(i)%eradius
+            if ( rivers(i)%asIndex) then
+              write(*,'(a,i4)') 'I index  : ',rivers(i)%iindex
+              write(*,'(a,i4)') 'J index  : ',rivers(i)%jindex
+            else
+              write(*,'(a,f7.2)') 'Latitude  : ',rivers(i)%lat
+              write(*,'(a,f7.2)') 'Longitude : ',rivers(i)%lon
+            end if
+            write(*,'(a,i2)') 'Direction : ',rivers(i)%dir
+            write(*,'(a,i4)') 'Npoints : ',rivers(i)%npoints
+            write(*,'(a,12f5.2)') 'Monfac : ',rivers(i)%monfac
+          end if
         end do
+#endif
       end if
 !
 !-----------------------------------------------------------------------
@@ -553,27 +591,33 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
 !
-        if (.not. allocated(coproc_fnames)) then
-          allocate(coproc_fnames(lineCount))
+        if ( lineCount > 0 ) then
+          if (.not. allocated(coproc_fnames)) then
+            allocate(coproc_fnames(lineCount))
+          end if
+!
+          do i = 1, lineCount
+            call ESMF_ConfigNextLine(cf, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                line=__LINE__, file=FILENAME)) return
+!
+            call ESMF_ConfigGetAttribute(cf, coproc_fnames(i), rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                line=__LINE__, file=FILENAME)) return
+!
+            if (localPet == 0) then
+              write(*, fmt='(A,I3.3,A)') "Co-processing Pipeline [", i,   &
+                   "] = "//trim(coproc_fnames(i))
+            end if
+          end do
+        else
+          if (localPet == 0) then
+            write(*,'(a)') 'No CoProcessorScript'
+          end if
         end if
 !
-        do i = 1, lineCount
-          call ESMF_ConfigNextLine(cf, rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-              line=__LINE__, file=FILENAME)) return
-!
-          call ESMF_ConfigGetAttribute(cf, coproc_fnames(i), rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-              line=__LINE__, file=FILENAME)) return
-!
-          if (localPet == 0) then
-            write(*, fmt='(A,I3.3,A)') "Co-processing Pipeline [", i,   &
-                 "] = "//trim(coproc_fnames(i))
-          end if
-        end do
-!
 !-----------------------------------------------------------------------
-!     Read co-processing component tiles in x and y direction 
+!     Read co-processing component tiles in x and y direction
 !-----------------------------------------------------------------------
 !
       if (models(Icopro)%modActive) then
@@ -604,11 +648,15 @@
         write(*, fmt='(A,I2,A,I2)') "Co-processing Tiles: ",            &
               models(Icopro)%tile(1),"x",models(Icopro)%tile(2)
       end if
+      else
+        if (localPet == 0) then
+          write(*,'(a)') 'CoProcessor NOT active.'
+        end if
 !
       end if
 !
 !-----------------------------------------------------------------------
-!     Read width of halo or ghost region 
+!     Read width of halo or ghost region
 !-----------------------------------------------------------------------
 !
       if (models(Icopro)%modActive) then
@@ -626,7 +674,28 @@
               models(Icopro)%haloWidth
       end if
 !
-      end if 
+      end if
+!
+!-----------------------------------------------------------------------
+!     Read width of halo or ghost region
+!-----------------------------------------------------------------------
+!
+      if (models(Icopro)%modActive) then
+!
+      call ESMF_ConfigFindLabel(cf, 'CoProcessorHaloWidth:', rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      call ESMF_ConfigGetAttribute(cf, models(Icopro)%haloWidth, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+          line=__LINE__, file=FILENAME)) return
+!
+      if (localPet == 0) then
+        write(*, fmt='(A,I2)') "Co-processing Halo/Ghost Width: ",      &
+              models(Icopro)%haloWidth
+      end if
+!
+      end if
 !
 !-----------------------------------------------------------------------
 !     Read vertical levels for model components
@@ -643,7 +712,7 @@
       if (models(Iatmos)%nLevs .gt. 0) then
         if (.not. allocated(models(Iatmos)%levs)) then
           allocate(models(Iatmos)%levs(models(Iatmos)%nLevs))
-        end if  
+        end if
       end if
 !
       call ESMF_ConfigFindLabel(cf, 'AtmLevs:', rc=rc)
@@ -689,10 +758,10 @@
         write(*, fmt=trim(fmt_123)) "OCN LEVS = ",  models(Iocean)%levs
       end if
 !
-      end if 
+      end if
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  20   format(A10,1X,'DT DIVIDER: ',I3)
@@ -703,7 +772,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       character(len=*), intent(in) :: ifile
@@ -711,7 +780,7 @@
       integer, intent(out) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: iunit = 10
@@ -736,7 +805,7 @@
           ! read header
           read(iunit,*,iostat=ios1) nf, str, extp
           if (ios1 /= 0) exit
-          ! define gridded components for import and export 
+          ! define gridded components for import and export
           select case (trim(str))
             case('atm2ocn')
               i = Iatmos
@@ -776,8 +845,8 @@
               j = Icopro
             case default
               write(*,*) '[error] -- Undefined components: '//trim(str)
-              call ESMF_Finalize(endflag=ESMF_END_ABORT)  
-          end select   
+              call ESMF_Finalize(endflag=ESMF_END_ABORT)
+          end select
 !
           connectors(i,j)%modExtrapolation = extp
 !
@@ -787,8 +856,8 @@
           end if
 !
           ! loop over fields
-          do k = 0, nf-1 
-            ! read data line 
+          do k = 0, nf-1
+            ! read data line
             read(iunit,fmt='(A)',iostat=ios2) str
             if (ios2 /= 0) exit
             ! split fields
@@ -844,12 +913,12 @@
                   flag = .false.
                 end if
               end do
-            end if 
+            end if
             ! add import field to the list
             if (flag) then
               call add_field(models(j)%importField, dum, .false.)
               ! print out
-              if (debugLevel > 0 .and. localPet == 0) then 
+              if (debugLevel > 0 .and. localPet == 0) then
               n = ubound(models(j)%importField, dim=1)
               write(*,30) k, n,                                         &
                  adjustl(trim(models(j)%importField(n)%short_name)),    &
@@ -874,7 +943,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  30   format(2I3,1X,A6,1X,A32,1X,I2,1X,A10,1X,A10,1X,A10,               &
@@ -886,7 +955,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESM_Field), allocatable, intent(inout) :: field(:)
@@ -894,14 +963,14 @@
       logical, intent(in) :: exflag
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
-!     
-      integer :: n 
+!
+      integer :: n
       type(ESM_Field), allocatable :: dum(:)
 !
 !-----------------------------------------------------------------------
-!     Resize input list 
+!     Resize input list
 !-----------------------------------------------------------------------
 !
       if (allocated(field)) then
@@ -918,7 +987,7 @@
       end if
 !
 !-----------------------------------------------------------------------
-!     Add new data to the list 
+!     Add new data to the list
 !-----------------------------------------------------------------------
 !
       field(n)%fid = n
@@ -927,7 +996,7 @@
 
       if (trim(str(3)) == '2d' .or. trim(str(3)) == '2D') then
         field(n)%rank = 2
-      else if (trim(str(3)) == '3d' .or. trim(str(3)) == '3D') then 
+      else if (trim(str(3)) == '3d' .or. trim(str(3)) == '3D') then
         field(n)%rank = 3
       end if
 
@@ -943,7 +1012,7 @@
         field(n)%itype = Inone
       end if
 
-      if (exflag) then 
+      if (exflag) then
         if (trim(str(5)) == 'cross') then
           field(n)%gtype = Icross
         else if (trim(str(5)) == 'dot') then
@@ -990,7 +1059,7 @@
 
       read(str(10),*) field(n)%add_offset
 
-      if (trim(str(11)) == 'T' .or. trim(str(11)) == 't') then     
+      if (trim(str(11)) == 'T' .or. trim(str(11)) == 't') then
         field(n)%enable_integral_adj = .true.
       else
         field(n)%enable_integral_adj = .false.
@@ -1002,14 +1071,14 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_VM), intent(in) :: vm
       integer, intent(inout) :: rc
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations 
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: i, j, nf, localPet, petCount
@@ -1027,7 +1096,7 @@
           line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Add required fields to NUOPC field dictionary 
+!     Add required fields to NUOPC field dictionary
 !-----------------------------------------------------------------------
 !
       do i = 1, nModels
@@ -1079,7 +1148,7 @@
       end do
 !
 !-----------------------------------------------------------------------
-!     Format definition 
+!     Format definition
 !-----------------------------------------------------------------------
 !
  40   format(A27, I3, " ", A)

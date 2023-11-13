@@ -6,13 +6,13 @@
 #define FILENAME "mod_esmf_atm_void.F90"
 !
 !-----------------------------------------------------------------------
-!     ATM gridded component code 
+!     ATM gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_atm
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -26,7 +26,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: ATM_SetServices
@@ -37,7 +37,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp

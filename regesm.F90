@@ -12,18 +12,18 @@
       program regesm
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
 !
       use mod_config
-      use mod_esmf_esm, only : ESM_SetServices 
+      use mod_esmf_esm, only : ESM_SetServices
 !
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Local variable declarations  
+!     Local variable declarations
 !-----------------------------------------------------------------------
 !
       integer :: rc, urc
@@ -34,14 +34,16 @@
 !     Initialize ESMF framework
 !-----------------------------------------------------------------------
 !
-      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_MULTI, vm=vm,       &
+      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, vm=vm,       &
                            ioUnitLBound=20, ioUnitUBound=1000, rc=rc)
+      !call ESMF_Initialize(vm=vm,       &
+      !                     ioUnitLBound=20, ioUnitUBound=1000, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=__FILE__))                                &
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Create component 
+!     Create component
 !-----------------------------------------------------------------------
 !
       esmComp = ESMF_GridCompCreate(name="regesm", rc=rc)
@@ -50,7 +52,7 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Read main configuration file 
+!     Read main configuration file
 !-----------------------------------------------------------------------
 !
       call read_config(vm, rc)
@@ -59,7 +61,7 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Add additional fields to NUOPC field dictionary 
+!     Add additional fields to NUOPC field dictionary
 !-----------------------------------------------------------------------
 !
       call set_field_dir(vm, rc)
@@ -68,7 +70,7 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Register component 
+!     Register component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompSetServices(esmComp,                            &
@@ -83,9 +85,10 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Initialize component 
+!     Initialize component
 !-----------------------------------------------------------------------
 !
+      call ESMF_VMBarrier(vm, rc=rc)
       call ESMF_GridCompInitialize(esmComp, userRc=urc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=__FILE__))                                &
@@ -104,7 +107,7 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Run component 
+!     Run component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompRun(esmComp, userRc=urc, rc=rc)
@@ -116,7 +119,7 @@
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !
 !-----------------------------------------------------------------------
-!     Finalize component 
+!     Finalize component
 !-----------------------------------------------------------------------
 !
       call ESMF_GridCompFinalize(esmComp, userRc=urc, rc=rc)
@@ -126,18 +129,18 @@
       if (ESMF_LogFoundError(rcToCheck=urc, msg=ESMF_LOGERR_PASSTHRU,   &
           line=__LINE__, file=__FILE__))                                &
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
-! 
+!
 !-----------------------------------------------------------------------
 !     Destroy the earth system Component
 !-----------------------------------------------------------------------
-! 
+!
       call ESMF_GridCompDestroy(esmComp, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=__FILE__)) &
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
-! 
+!
 !-----------------------------------------------------------------------
-!     Finalize ESMF framework 
+!     Finalize ESMF framework
 !-----------------------------------------------------------------------
 !
       call ESMF_Finalize(rc=rc)

@@ -6,13 +6,13 @@
 #define FILENAME "mod_esmf_wav_void.F90"
 !
 !-----------------------------------------------------------------------
-!     WAV gridded component code 
+!     WAV gridded component code
 !-----------------------------------------------------------------------
 !
       module mod_esmf_wav
 !
 !-----------------------------------------------------------------------
-!     Used module declarations 
+!     Used module declarations
 !-----------------------------------------------------------------------
 !
       use ESMF
@@ -26,7 +26,7 @@
       private
 !
 !-----------------------------------------------------------------------
-!     Public subroutines 
+!     Public subroutines
 !-----------------------------------------------------------------------
 !
       public :: WAV_SetServices
@@ -37,7 +37,7 @@
       implicit none
 !
 !-----------------------------------------------------------------------
-!     Imported variable declarations 
+!     Imported variable declarations
 !-----------------------------------------------------------------------
 !
       type(ESMF_GridComp) :: gcomp

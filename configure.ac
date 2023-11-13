@@ -56,24 +56,31 @@ AC_SUBST(ATM_PREFIX)
 
 if eval "test x$ATM_PREFIX != xnone"; then
   if eval "! test -d $ATM_PREFIX"; then
-    AC_MSG_ERROR([check atmosphere model installation path $ATM_PREFIX])
-  fi
+    if eval "test x$ATM_PREFIX == xera5"; then
+      NO_ERA5_SUPPORT=0
+      AC_MSG_NOTICE([compiling with atmosphere model - ERA5 - support])
+    else
+      AC_MSG_ERROR([check atmosphere model installation path $ATM_PREFIX])
+    fi
+  else
+    NO_ERA5_SUPPORT=1
+    # check RegCM model is installed with coupling support or not?
+    NO_RCM_SUPPORT=1
+    AC_CHECK_FILE([$ATM_PREFIX/Main/mod_update.o],
+                  [NO_RCM_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - RegCM - support])])
 
-  # check RegCM model is installed with coupling support or not?
-  NO_RCM_SUPPORT=1
-  AC_CHECK_FILE([$ATM_PREFIX/Main/mod_update.o],
-                [NO_RCM_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - RegCM - support])])
+    # check WRF model is installed with coupling support or not?
+    NO_WRF_SUPPORT=1
+    AC_CHECK_FILE([$ATM_PREFIX/main/real_em.o],
+                  [NO_WRF_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - WRF - support])])
 
-  # check WRF model is installed with coupling support or not?
-  NO_WRF_SUPPORT=1
-  AC_CHECK_FILE([$ATM_PREFIX/main/real_em.o],
-                [NO_WRF_SUPPORT=0; AC_MSG_NOTICE([compiling with atmosphere model - WRF - support])])
-
-  if eval "test x$NO_RCM_SUPPORT = x1 -a x$NO_WRF_SUPPORT = x1"; then
-    AC_MSG_ERROR([required source files 'mod_update.o' or 'real_em.o' are not found! atmosphere model should be installed with coupling support.])
+    if eval "test x$NO_RCM_SUPPORT = x1 -a x$NO_WRF_SUPPORT = x1"; then
+      AC_MSG_ERROR([required source files 'mod_update.o' or 'real_em.o' are not found! atmosphere model should be installed with coupling support.])
+    fi
   fi
 fi
 
+AM_CONDITIONAL(DO_COMPILE_ERA5, [test x"$NO_ERA5_SUPPORT" = x0])
 AM_CONDITIONAL(DO_COMPILE_RCM, [test x"$NO_RCM_SUPPORT" = x0])
 AM_CONDITIONAL(DO_COMPILE_WRF, [test x"$NO_WRF_SUPPORT" = x0])
 
@@ -89,7 +96,7 @@ AC_SUBST(OCN_PREFIX)
 if eval "test x$OCN_PREFIX != xnone"; then
   # check installation path exist or not?  
   if eval "! test -d $OCN_PREFIX"; then
-    AC_MSG_ERROR([check ocean model installation path $RTM_PREFIX])
+    AC_MSG_ERROR([check ocean model installation path $OCN_PREFIX])
   fi
 
   # check ROMS model is installed with coupling support or not?
@@ -138,13 +145,28 @@ if eval "test x$RTM_PREFIX != xnone"; then
     AC_MSG_ERROR([check river routing model installation path $RTM_PREFIX])
   fi
 
-  NO_RTM_SUPPORT=1
+  HD_SUPPORT=0
   AC_CHECK_FILE([$RTM_PREFIX/hdmain.o],
-                [NO_RTM_SUPPORT=0; AC_MSG_NOTICE([compiling with river routing model - HD - support])])
-  if eval "test x$NO_RTM_SUPPORT = x1"; then
-    AC_MSG_ERROR([required source file 'hdmain.o' is not found! river routing model should be installed with coupling support.])
+		[AM_CPPFLAGS="-DHD_SUPPORT $AM_CPPFLAGS"; HD_SUPPORT=1; AC_MSG_NOTICE([compiling with river routing model - HD - support])])
+  CHYM_SUPPORT=0
+  AC_CHECK_FILE([$RTM_PREFIX/chymmain.o],
+		[AM_CPPFLAGS="-DCHYM_SUPPORT $AM_CPPFLAGS"; CHYM_SUPPORT=1; AC_MSG_NOTICE([compiling with river routing model - CHYM - support])])
+  if eval "test x$HD_SUPPORT = x0 -a x$CHYM_SUPPORT = x0"; then
+	  AC_MSG_ERROR([required source file 'hdmain.o' or 'chymmain.o' is not found! river routing model should be installed with coupling support.])
   fi
+
+  NO_RTM_SUPPORT=0
+  if eval "test x$HD_SUPPORT = x0 -a x$CHYM_SUPPORT = x0"; then
+    NO_RTM_SUPPORT=1
+    AM_CPPFLAGS="-DNO_RTM_SUPPORT $AM_CPPFLAGS"
+  fi
+else
+  NO_RTM_SUPPORT=1
+  AM_CPPFLAGS="-DNO_RTM_SUPPORT $AM_CPPFLAGS"
 fi
+
+AM_CONDITIONAL(DO_COMPILE_HD, [test x"$HD_SUPPORT" = x1])
+AM_CONDITIONAL(DO_COMPILE_CHYM, [test x"$CHYM_SUPPORT" = x1])
 
 # check WAV
 AC_ARG_WITH([wav],

@@ -3,7 +3,7 @@
 ! Copyright (c) 2013-2019 Ufuk Turuncoglu
 ! Licensed under the MIT License.
 !=======================================================================
-#define FILENAME "mod_esmf_atm_rcm.F90"
+#define FILENAME "mod_esmf_atm_era5.F90"
 !
 !-----------------------------------------------------------------------
 !     ATM gridded component code
@@ -2362,13 +2362,6 @@
                              line=__LINE__, file=FILENAME)) return
 !
 !-----------------------------------------------------------------------
-!     Rotate wind on a rectangular north-south east-west oriented grid
-!-----------------------------------------------------------------------
-!
-      call uvrot(exportFields%wndu, exportFields%wndv)
-      call uvrot(exportFields%taux, exportFields%tauy)
-!
-!-----------------------------------------------------------------------
 !     Loop over export fields
 !-----------------------------------------------------------------------
 !
@@ -2827,131 +2820,5 @@
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 !
       end subroutine ATM_Put
-!
-      subroutine uvrot(u, v)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
-      use mod_constants, only : degrad , mathpi, raddeg, halfpi
-      use mod_constants, only : erkm
-      use mod_atm_interface, only : mddom
-      use mod_dynparam, only : iproj
-      use mod_dynparam, only : clon, clat, plon, plat, xcone, ds
-      use mod_dynparam, only : ici1, ici2, jci1, jci2
-!
-      implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
-      real*8, intent(inout) :: u(jci1:jci2,ici1:ici2)
-      real*8, intent(inout) :: v(jci1:jci2,ici1:ici2)
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
-      integer*4 :: i, j, ii, jj
-      real*8 :: x, xs, xc, d, us, vs, sindel, cosdel
-      real*8 :: pollam, polphi, polcphi, polsphi
-      real*8 :: zarg1, zarg2, znorm, zphi, zrla, zrlap
-      real*8 :: dlam , phi, lam, rotlam, rotphi, delta
-      real*8 :: f5, f6, f7, f8
-!
-      if (iproj == 'ROTMER' .or. iproj == 'NORMER') then ! ROTMER, Rotated Mercator: NORMER, Normal  Mercator
-        if (plat > 0.0d0) then
-          pollam = plon+180.0d0
-          polphi = 90.0d0-plat
-        else
-          polphi = 90.0d0+plat
-          pollam = plon
-        end if
-        if (pollam > 180.0d0) pollam = pollam-360.0d0
-!
-        polcphi = dcos(degrad*polphi)
-        polsphi = dsin(degrad*polphi)
-!
-        do j = jci1, jci2
-          do i = ici1, ici2
-            zphi = mddom%dlat(j,i)*degrad
-            zrla = mddom%dlon(j,i)*degrad
-            if (mddom%dlat(j,i) > 89.999999D0) zrla = 0.0d0
-            zrlap = pollam*degrad-zrla
-            zarg1 = polcphi*dsin(zrlap)
-            zarg2 = polsphi*dcos(zphi)-polcphi*dsin(zphi)*dcos(zrlap)
-            znorm = 1.0d0/dsqrt(zarg1**2+zarg2**2)
-            sindel = zarg1*znorm
-            cosdel = zarg2*znorm
-!
-            us = u(j,i)*cosdel+v(j,i)*sindel
-            vs = -u(j,i)*sindel+v(j,i)*cosdel
-            u(j,i) = us
-            v(j,i) = vs
-          end do
-        end do
-      else if (iproj == 'ROTLLR' ) then
-        if ( abs(plat-90.0) < 0.001 ) return
-        pollam = degrad*plon
-        polphi = degrad*plat
-        do i = ici1, ici2
-          do j = jci1, jci2
-            phi = degrad*mddom%dlat(j,i)
-            lam = degrad*mddom%dlon(j,i)
-            dlam = pollam - lam
-            zarg1 = cos(polphi)*sin(dlam)
-            zarg2 = cos(phi)*sin(polphi)-sin(phi)*cos(polphi)*cos(dlam)
-            delta = atan(zarg1/zarg2)
-            cosdel = cos(delta)
-            sindel = sin(delta)
-            us = u(j,i)*cosdel+v(j,i)*sindel
-            vs = -u(j,i)*sindel+v(j,i)*cosdel
-            u(j,i) = us
-            v(j,i) = vs
-          end do
-        end do
-      else ! LAMCON, Lambert conformal
-        do i = ici1, ici2
-          do j = jci1, jci2
-            if ((clon >= 0.0d0 .and. mddom%xlon(j,i) >= 0.0d0) .or.     &
-                (clon < 0.0d0 .and. mddom%xlon(j,i) < 0.0d0)) then
-              x = (clon-mddom%xlon(j,i))*degrad*xcone
-            else
-              if (clon >= 0.0d0) then
-                if (abs(clon-(mddom%xlon(j,i)+360.0d0)) <               &
-                    abs(clon-mddom%xlon(j,i))) then
-                  x = (clon-(mddom%xlon(j,i)+360.0d0))*degrad*xcone
-                else
-                  x = (clon-mddom%xlon(j,i))*degrad*xcone
-                end if
-              else
-                if (abs(clon-(mddom%xlon(j,i)-360.0d0)) <               &
-                    abs(clon-mddom%xlon(j,i))) then
-                  x = (clon-(mddom%xlon(j,i)-360.0d0))*degrad*xcone
-                else
-                  x = (clon-mddom%xlon(j,i))*degrad*xcone
-                end if
-              end if
-            end if
-!
-            xs = sin(x)
-            xc = cos(x)
-!
-            if (clat >= 0.0d0) then
-              d = u(j,i)*xc-v(j,i)*xs
-              v(j,i) = u(j,i)*xs+v(j,i)*xc
-              u(j,i) = d
-            else
-              d = u(j,i)*xc+v(j,i)*xs
-              v(j,i) = v(j,i)*xc-u(j,i)*xs
-              u(j,i) = d
-            end if
-          end do
-        end do
-      end if
-!
-      end subroutine uvrot
 !
       end module mod_esmf_atm
