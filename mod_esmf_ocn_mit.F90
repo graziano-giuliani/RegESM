@@ -1963,6 +1963,9 @@
           call init_rivers(vm, farrayDst, Nx, Ny, rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
+          call map_rivers(vm, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
           nr = size(rivers, dim=1)
           do ii = 1, nr
             if (rivers(ii)%isActive > 0) then
@@ -1976,9 +1979,6 @@
               end if
             end if
           end do
-          call map_rivers(vm, rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-                                 line=__LINE__, file=FILENAME)) return
           firstT = .false.
           deallocate(farrayDst)
         end if
