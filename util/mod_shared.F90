@@ -309,6 +309,7 @@
       integer :: numrivers, sNx, sNy, numsend
       integer :: ibuffer(1)
       real*8 :: dbuffer(1)
+      logical , dimension(Nx,Ny) :: is_river
 !
       rc = ESMF_SUCCESS
       numrivers = 0
@@ -329,10 +330,22 @@
                              line=__LINE__, file=FILENAME)) return
 !
       if ( localPet == 0 ) then
+        is_river = .false.
         do j = 2, Ny-1
           do i = 2, Nx-1
             if ( ptr(i,j) > 0.0 ) then
-              numrivers = numrivers + 1
+              is_river(i,j) = .true.
+            end if
+          end do
+        end do
+        do j = 2, Ny-1
+          do i = 2, Nx-1
+            if ( is_river(i,j) ) then
+              if ( count( is_river(i-1:i+1,j-1:j+1) ) == 1 ) then
+                numrivers = numrivers + 1
+              else
+                is_river(i,j) = .false.
+              end if
             end if
           end do
         end do
@@ -359,7 +372,7 @@
           r = 0
           do j=2,Ny-1
             do i=2,Nx-1
-              if ( ptr(i,j) > 0.0 ) then
+              if ( is_river(i,j) ) then
                 r = r + 1
 !                print*,'PTR(i,j):::::::::',ptr(i,j),'I,J:',i,j
                 rivers(r)%isActive = 1

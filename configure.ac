@@ -251,6 +251,15 @@ if eval "test x$DEBUG = x1"; then
     AC_SUBST(FCFLAGS)
     AC_SUBST(CXXFLAGS)
   fi
+  if eval "test x"$FC" = xifx"; then
+    FCFLAGS="-O0 -g \
+             -check arg_temp_created,bounds,format,output_conversion,uninit \
+             -traceback -warn all -fp-model precise -fp-model source -ftz \
+             -fimf-arch-consistency=true $FCFLAGS"
+    CXXFLAGS="-O0 -g"
+    AC_SUBST(FCFLAGS)
+    AC_SUBST(CXXFLAGS)
+  fi
   if eval "test x"$CXX" = xicpc"; then
     CXXFLAGS="-O0 -g -Wall -Wcheck -std=c++11"
     AC_SUBST(CXXFLAGS)
@@ -280,6 +289,10 @@ else
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xifort"; then
+    FCFLAGS="-O3 -fp-model precise -fp-model source -ip $FCFLAGS"
+    AC_SUBST(FCFLAGS)
+  fi
+  if eval "test x"$FC" = xifx"; then
     FCFLAGS="-O3 -fp-model precise -fp-model source -ip $FCFLAGS"
     AC_SUBST(FCFLAGS)
   fi

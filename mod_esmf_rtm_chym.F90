@@ -363,7 +363,8 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_chym_param, only : nlc,nbc,chym_lsm, chym_area
+      use mod_chym_param, only : nlc,nbc,lat0,lon0,fscal
+      use mod_chym_param, only : chym_lsm, chym_area
 !
       implicit none
 !
@@ -526,10 +527,10 @@
       if (.not. allocated(lat1d)) allocate(lat1d(nbc))
 !
       do i = 0, nlc-1
-        lon1d(i+1) = -6.97d0+0.06d0*i
+        lon1d(i+1) = lon0+fscal*i
       end do
       do i = 0, nbc-1
-        lat1d(i+1) = 27.05d0+0.06d0*i
+        lat1d(i+1) = lat0+fscal*i
       end do
 !
       do i = 1, nbc
