@@ -54,6 +54,7 @@
   - River Routing Component (RTM)
 
     rdis  - river discharge (m^3/s)
+    rmsk  - river position binary mask (for MIT-CHyM) (1)
 
   - Wave Component (WAV)
   

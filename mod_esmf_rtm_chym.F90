@@ -363,7 +363,8 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_chym_param, only : nlc,nbc,lat0,lon0,fscal
+      use mod_chym_param, only : nlc,nbc
+      use mod_chym_param, only : chym_lat, chym_lon
       use mod_chym_param, only : chym_lsm, chym_area
 !
       implicit none
@@ -385,7 +386,6 @@
       type(ESMF_StaggerLoc) :: staggerLoc
       integer, pointer :: ptrM(:,:)
       real(ESMF_KIND_R8), pointer :: ptrX(:,:), ptrY(:,:), ptrA(:,:)
-      real(ESMF_KIND_R8), allocatable :: lon1d(:), lat1d(:)
       real(ESMF_KIND_R8), parameter :: umfang = 360.0d0
       character (len=40) :: name
 !
@@ -523,28 +523,11 @@
 !     Fill the pointers
 !-----------------------------------------------------------------------
 !
-      if (.not. allocated(lon1d)) allocate(lon1d(nlc))
-      if (.not. allocated(lat1d)) allocate(lat1d(nbc))
-!
-      do i = 0, nlc-1
-        lon1d(i+1) = lon0+fscal*i
-      end do
-      do i = 0, nbc-1
-        lat1d(i+1) = lat0+fscal*i
-      end do
-!
-      do i = 1, nbc
-        ptrX(:,i) = lon1d
-      end do
-      do i = 1, nlc
-        ptrY(i,:) = lat1d
-      end do
+      ptrX = chym_lon
+      ptrY = chym_lat
       ptrM = chym_lsm
       ptrA = chym_area
-!
-      if (allocated(lon1d)) deallocate(lon1d)
-      if (allocated(lat1d)) deallocate(lat1d)
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random
 !     part in the memory
@@ -1241,7 +1224,7 @@
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_chym_param, only : nlc, nbc, chym_dis
+      use mod_chym_param, only : nlc, nbc, chym_dis, chym_lsm
 !
       implicit none
 !
@@ -1372,6 +1355,12 @@
         do m = 1, nbc
           do n = 1, nlc
             ptr(n,m) = chym_dis(n,m)
+          end do
+        end do
+      case ('rmsk')
+        do m = 1, nbc
+          do n = 1, nlc
+            ptr(n,m) = chym_lsm(n,m)
           end do
         end do
       end select

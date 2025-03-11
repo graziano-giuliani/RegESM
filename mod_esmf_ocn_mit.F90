@@ -1945,12 +1945,8 @@
             end if
           end do
         end do
-      case ('rdis')
-        LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
-        UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
-        LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)
-        UBj = myYGlobalLo-1+(bj-1)*sNy+(sNy+OLy)
 #ifdef CHYM_SUPPORT
+      case ('rmsk')
         if ( firstT ) then
           if (localPet .eq. 0) then
             allocate (farrayDst(Nx,Ny))
@@ -1983,6 +1979,11 @@
           deallocate(farrayDst)
         end if
 #endif
+      case ('rdis')
+        LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
+        UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
+        LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)
+        UBj = myYGlobalLo-1+(bj-1)*sNy+(sNy+OLy)
         call put_river(vm, clock, LBi, UBi, LBj, UBj,                   &
                        ptr, sfac, addo, rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
