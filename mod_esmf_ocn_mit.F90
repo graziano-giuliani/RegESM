@@ -1746,6 +1746,43 @@
 !
       where (isnan(ptr)) ptr = MISSING_R8
 !
+#ifdef CHYM_SUPPORT
+      if ( firstT ) then
+        select case (trim(adjustl(itemNameList(i))))
+        case ('rmsk')
+          if (localPet .eq. 0) then
+            allocate (farrayDst(Nx,Ny))
+          else
+            allocate (farrayDst(1,1))
+          end if
+          call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                                 line=__LINE__, file=FILENAME)) return
+          call init_rivers(vm, farrayDst, Nx, Ny, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          call map_rivers(vm, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                 line=__LINE__, file=FILENAME)) return
+          nr = size(rivers, dim=1)
+          do ii = 1, nr
+            if (rivers(ii)%isActive > 0) then
+              rivers(ii)%rootPet = findPet(vm, rivers(ii)%iindex, &
+                                           rivers(ii)%jindex, rc)
+              if (localPet == 0) then
+                write(*,20) ii, rivers(ii)%dir, rivers(ii)%eRadius,  &
+                        rivers(ii)%lon, rivers(ii)%lat, &
+                        rivers(ii)%iindex, rivers(ii)%jindex, &
+                        rivers(ii)%rootPet, 'ACTIVE'
+              end if
+            end if
+          end do
+          deallocate(farrayDst)
+          firstT = .false.
+        end select
+      end if
+#endif
+
       select case (trim(adjustl(itemNameList(i))))
       case ('taux')
         do jj = 1-OLy, sNy+OLy
@@ -1945,40 +1982,6 @@
             end if
           end do
         end do
-#ifdef CHYM_SUPPORT
-      case ('rmsk')
-        if ( firstT ) then
-          if (localPet .eq. 0) then
-            allocate (farrayDst(Nx,Ny))
-          else
-            allocate (farrayDst(1,1))
-          end if
-          call ESMF_FieldGather(field, farrayDst, rootPet=0, rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-                                 line=__LINE__, file=FILENAME)) return
-          call init_rivers(vm, farrayDst, Nx, Ny, rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-                                 line=__LINE__, file=FILENAME)) return
-          call map_rivers(vm, rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-                                 line=__LINE__, file=FILENAME)) return
-          nr = size(rivers, dim=1)
-          do ii = 1, nr
-            if (rivers(ii)%isActive > 0) then
-              rivers(ii)%rootPet = findPet(vm, rivers(ii)%iindex, &
-                                           rivers(ii)%jindex, rc)
-              if (localPet == 0) then
-                write(*,20) ii, rivers(ii)%dir, rivers(ii)%eRadius,  &
-                        rivers(ii)%lon, rivers(ii)%lat, &
-                        rivers(ii)%iindex, rivers(ii)%jindex, &
-                        rivers(ii)%rootPet, 'ACTIVE'
-              end if
-            end if
-          end do
-          firstT = .false.
-          deallocate(farrayDst)
-        end if
-#endif
       case ('rdis')
         LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
         UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
