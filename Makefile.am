@@ -259,8 +259,8 @@ mod_esmf_ocn_roms.o: mod_esmf_ocn_roms.F90 mod_types.o mod_shared.o
 OBJ+=mod_esmf_ocn_roms.o
 endif
 if DO_COMPILE_MIT
-mod_mit_gcm.F90: $(OCN_PREFIX)/DUMMY.f
-	tools/other/create.sh $(OCN_PREFIX)/DUMMY.f | \
+mod_mit_gcm.F90: $(OCN_PREFIX)/ENEA.f
+	tools/other/create.sh $(OCN_PREFIX)/ENEA.f | \
         $(AWK) -f tools/other/awk.prog | $(SED) -e 's/\([0-9]\) d \([0-9]\)/\1d\2/g' > mod_mit_gcm.F90	
 
 mod_esmf_ocn_mit.o: mod_esmf_ocn_mit.F90 mod_types.o mod_shared.o mod_mit_gcm.o
