@@ -34,7 +34,7 @@
 !     Initialize ESMF framework
 !-----------------------------------------------------------------------
 !
-      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, vm=vm,       &
+      call ESMF_Initialize(logkindflag=ESMF_LOGKIND_SINGLE, vm=vm,      &
                            ioUnitLBound=20, ioUnitUBound=1000, rc=rc)
       !call ESMF_Initialize(vm=vm,       &
       !                     ioUnitLBound=20, ioUnitUBound=1000, rc=rc)

@@ -1395,8 +1395,7 @@
 !     on all the Fields in export state
 !-----------------------------------------------------------------------
 !
-      call NUOPC_UpdateTimestamp(exportState, clock, rc=rc)
-      !call NUOPC_SetTimestamp(exportState, clock, rc=rc)
+      call NUOPC_UpdateTimestamp(exportState, 0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !

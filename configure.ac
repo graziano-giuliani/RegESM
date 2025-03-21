@@ -252,9 +252,9 @@ if eval "test x$DEBUG = x1"; then
     AC_SUBST(CXXFLAGS)
   fi
   if eval "test x"$FC" = xifx"; then
-    FCFLAGS="-O0 -g \
-             -check arg_temp_created,bounds,format,output_conversion,uninit \
-             -traceback -warn all -fp-model precise -fp-model source -ftz \
+    FCFLAGS="-O0 -g -qopenmp \
+             -check bounds -traceback -warn all -fp-model precise \
+	     -fp-model source -ftz \
              -fimf-arch-consistency=true $FCFLAGS"
     CXXFLAGS="-O0 -g"
     AC_SUBST(FCFLAGS)
@@ -293,7 +293,7 @@ else
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xifx"; then
-    FCFLAGS="-O3 -fp-model precise -fp-model source $FCFLAGS"
+    FCFLAGS="-O3 -fp-model precise -fp-model source -qopenmp $FCFLAGS"
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xxlf2003"; then
