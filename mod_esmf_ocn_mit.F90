@@ -4,81 +4,74 @@
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "mod_esmf_ocn_mit.F90"
-!
+
 !-----------------------------------------------------------------------
-!     OCN gridded component code
+! OCN gridded component code
 !-----------------------------------------------------------------------
-!
+
 module mod_esmf_ocn
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
-      use ESMF
-      use NUOPC
-      use NUOPC_Model,                                                  &
-          NUOPC_SetServices          => SetServices,                    &
-          NUOPC_Label_Advance        => label_Advance,                  &
-          NUOPC_Label_DataInitialize => label_DataInitialize,           &
-          NUOPC_Label_SetClock       => label_SetClock,                 &
-          NUOPC_Label_CheckImport    => label_CheckImport
-!
-      use mod_types
-      use mod_shared
-!
-      use mod_mit_gcm, only : sNx, sNy, nSx, nSy, OLx, OLy, Nx, Ny,     &
-                              nPx, nPy, myXGlobalLo, myYGlobalLo
-!
-      implicit none
-      private
+
+  use ESMF
+  use NUOPC
+  use NUOPC_Model,                                                  &
+      NUOPC_SetServices          => SetServices,                    &
+      NUOPC_Label_Advance        => label_Advance,                  &
+      NUOPC_Label_DataInitialize => label_DataInitialize,           &
+      NUOPC_Label_SetClock       => label_SetClock,                 &
+      NUOPC_Label_CheckImport    => label_CheckImport
+
+  use mod_types
+  use mod_shared
+
+  use mod_mit_gcm, only : sNx, sNy, nSx, nSy, OLx, OLy, Nx, Ny,     &
+                          nPx, nPy, myXGlobalLo, myYGlobalLo
+
+  implicit none
+  private
+
 #ifdef CHYM_SUPPORT
-      logical :: firstT = .true.
+  logical :: firstT = .true.
 #endif
-!
+
 !-----------------------------------------------------------------------
-!     Global module variables
+! Global module variables
 !-----------------------------------------------------------------------
-!
-      real*8  :: myTime = 0.0d0
-      integer :: iLoop = 0
-      integer :: myIter = 0
-      integer, allocatable :: mpi_myXGlobalLo(:), mpi_myYGlobalLo(:)
-!
-      type(ESMF_RouteHandle) :: rh_halo
-!
+
+  real(8)  :: myTime = 0.0d0
+  integer :: iLoop = 0
+  integer :: myIter = 0
+  integer, allocatable :: mpi_myXGlobalLo(:), mpi_myYGlobalLo(:)
+
+  type(ESMF_RouteHandle) :: rh_halo
+
 !-----------------------------------------------------------------------
-!     Public subroutines
+! Public subroutines
 !-----------------------------------------------------------------------
-!
-      public :: OCN_SetServices
-!
-      contains
-!
-      subroutine OCN_SetServices(gcomp, rc)
+
+  public :: OCN_SetServices
+
+  contains
+
+    subroutine OCN_SetServices(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Register NUOPC generic routines
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Register initialize routine (P 1/2) for specific implementation
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_CompSetEntryPoint(gcomp,                               &
                                    methodflag=ESMF_METHOD_INITIALIZE,   &
                                    phaseLabelList=(/"IPDv00p1"/),       &
@@ -86,7 +79,7 @@ module mod_esmf_ocn
                                    rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call NUOPC_CompSetEntryPoint(gcomp,                               &
                                    methodflag=ESMF_METHOD_INITIALIZE,   &
                                    phaseLabelList=(/"IPDv00p2"/),       &
@@ -94,74 +87,66 @@ module mod_esmf_ocn
                                    rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Attach phase independent specializing methods
 !     Setting the slow and fast model clocks
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_CompSpecialize(gcomp,                                  &
                                 specLabel=NUOPC_Label_DataInitialize,   &
                                 specRoutine=OCN_DataInit, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_Label_SetClock,  &
                                 specRoutine=OCN_SetClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call NUOPC_CompSpecialize(gcomp,                                  &
                                 specLabel=NUOPC_Label_CheckImport,      &
                                 specPhaseLabel="RunPhase1",             &
                                 specRoutine=OCN_CheckImport, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_Label_Advance,   &
                                 specRoutine=OCN_ModelAdvance, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Register finalize routine
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompSetEntryPoint(gcomp,                            &
                                       methodflag=ESMF_METHOD_FINALIZE,  &
                                       userRoutine=OCN_SetFinalize,      &
                                       rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
-      end subroutine OCN_SetServices
-!
-      subroutine OCN_SetInitializeP1(gcomp, importState, exportState,   &
-                                     clock, rc)
+
+    end subroutine OCN_SetServices
+
+    subroutine OCN_SetInitializeP1(gcomp, importState, exportState,   &
+                                   clock, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       type(ESMF_State) :: importState
       type(ESMF_State) :: exportState
       type(ESMF_Clock) :: clock
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Set import fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, ubound(models(Iocean)%importField, dim=1)
         call NUOPC_Advertise(importState,                               &
              StandardName=trim(models(Iocean)%importField(i)%long_name),&
@@ -169,11 +154,11 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Set export fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, ubound(models(Iocean)%exportField, dim=1)
         call NUOPC_Advertise(exportState,                               &
              StandardName=trim(models(Iocean)%exportField(i)%long_name),&
@@ -181,105 +166,89 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end do
-!
-      end subroutine OCN_SetInitializeP1
-!
-      subroutine OCN_SetInitializeP2(gcomp, importState, exportState,   &
-                                     clock, rc)
+
+    end subroutine OCN_SetInitializeP1
+
+    subroutine OCN_SetInitializeP2(gcomp, importState, exportState,   &
+                                   clock, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       type(ESMF_State) :: importState
       type(ESMF_State) :: exportState
       type(ESMF_Clock) :: clock
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: myThid = 1
       integer :: comm, localPet, petCount
       character(ESMF_MAXSTR) :: gname
-!
+
       type(ESMF_VM) :: vm
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, name=gname, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount,         &
                       mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Initialize the gridded component
 !-----------------------------------------------------------------------
-!
+
       call MIT_INIT(comm, iLoop, myTime, myIter, myThid)
-!
+
 !-----------------------------------------------------------------------
 !     Set-up grid and load coordinate data
 !-----------------------------------------------------------------------
-!
+
       call OCN_SetGridArrays(gcomp, petCount, localPet, rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Set-up fields and register to import/export states
 !-----------------------------------------------------------------------
-!
+
       call OCN_SetStates(gcomp, rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
-      end subroutine OCN_SetInitializeP2
-!
-      subroutine OCN_DataInit(gcomp, rc)
+
+    end subroutine OCN_SetInitializeP2
+
+    subroutine OCN_DataInit(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_Clock) :: clock
       type(ESMF_Time) :: currTime
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component clock
 !-----------------------------------------------------------------------
-!
+
      call ESMF_GridCompGet(gcomp, clock=clock, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                             line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Put export fields (only for restart run)
 !-----------------------------------------------------------------------
-!
+
       if (restarted .and. currTime == esmRestartTime) then
         call OCN_Put(gcomp, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -312,11 +281,11 @@ module mod_esmf_ocn
       type(ESMF_Calendar) :: cal
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -324,11 +293,11 @@ module mod_esmf_ocn
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create gridded component clock
 !-----------------------------------------------------------------------
-!
+
       if (trim(TheCalendar) == 'gregorian') then
         ref_year=1582
         ref_month=10
@@ -353,11 +322,11 @@ module mod_esmf_ocn
 
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Set reference time
 !-----------------------------------------------------------------------
-!
+
       call ESMF_TimeSet(cmpRefTime,                                     &
                         yy=ref_year,                                    &
                         mm=ref_month,                                   &
@@ -369,11 +338,11 @@ module mod_esmf_ocn
                         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Set start time
 !-----------------------------------------------------------------------
-!
+
       str_year = startdate_1/10000
       str_month = mod(startdate_1/100,100)
       str_day = mod(startdate_1,100)
@@ -408,11 +377,11 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set stop time
 !-----------------------------------------------------------------------
-!
+
       end_year = startdate_2/10000
       if (end_year == 0) then
         end_year = 2100
@@ -437,11 +406,11 @@ module mod_esmf_ocn
                         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get component clock
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, clock=cmpClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -450,11 +419,11 @@ module mod_esmf_ocn
                          currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Compare driver time vs. component time
 !-----------------------------------------------------------------------
-!
+
       if (restarted) then
         dummTime = esmRestartTime
       else
@@ -493,11 +462,11 @@ module mod_esmf_ocn
              'please check the config files')
         return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Modify component clock time step
 !-----------------------------------------------------------------------
-!
+
       fac1 = maxval(connectors(Iocean,:)%divDT,mask=models(:)%modActive)
       fac2 = maxval(connectors(:,Iocean)%divDT,mask=models(:)%modActive)
       maxdiv = max(fac1, fac2)
@@ -528,11 +497,11 @@ module mod_esmf_ocn
       type(ESMF_State) :: importState
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query component for the driverClock
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_ModelGet(gcomp, driverClock=driverClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -544,28 +513,28 @@ module mod_esmf_ocn
       call ESMF_VMGet(vm, localPet=localPet, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get the start time and current time out of the clock
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ClockGet(driverClock, startTime=startTime,              &
                          currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query component for its importState
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, importState=importState, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get list of import fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -577,11 +546,11 @@ module mod_esmf_ocn
       call ESMF_StateGet(importState, itemNameList=itemNameList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Check fields in the importState (fast time step)
 !-----------------------------------------------------------------------
-!
+
       if (itemCount > 0) then
       call ESMF_StateGet(importState, itemName=trim(itemNameList(1)),   &
                          field=field, rc=rc)
@@ -601,7 +570,7 @@ module mod_esmf_ocn
 !        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
 !            line=__LINE__, file=FILENAME)) return
         atCorrectTime = .true.
-!
+
 !        call print_timestamp(field, currTime+timeStep, localPet, "OCN", rc)
 !        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
 !            line=__LINE__, file=FILENAME)) return
@@ -616,11 +585,11 @@ module mod_esmf_ocn
         return
       end if
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Check fields in the importState (slow time step)
 !-----------------------------------------------------------------------
-!
+
       if (models(Iriver)%modActive) then
         call ESMF_StateGet(importState, itemName="rdis",                  &
                            field=field, rc=rc)
@@ -644,7 +613,6 @@ module mod_esmf_ocn
 
     subroutine OCN_SetGridArrays(gcomp, petCount, localPet, rc)
       use mod_mit_gcm, only : xC, yC, xG, yG, maskC, maskW, maskS, rA
-
       implicit none
 
       type(ESMF_GridComp), intent(inout) :: gcomp
@@ -667,19 +635,19 @@ module mod_esmf_ocn
       integer, allocatable :: deBlockList(:,:,:)
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, vm=vm, name=cname, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Collect bottom-left X-index and bottom-left Y-index
 !-----------------------------------------------------------------------
-!
+
       if (.not. allocated(mpi_myXGlobalLo)) then
         allocate(mpi_myXGlobalLo(nPx*nPy))
         allocate(mpi_myYGlobalLo(nPx*nPy))
@@ -700,11 +668,11 @@ module mod_esmf_ocn
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get limits of the grid arrays (based on PET and nest level)
 !-----------------------------------------------------------------------
-!
+
       if (.not.allocated(deBlockList)) then
         allocate(deBlockList(2,2,nPx*nPy))
       end if
@@ -717,22 +685,22 @@ module mod_esmf_ocn
         deBlockList(2,1,tile+1) = mpi_myYGlobalLo(tile+1)
         deBlockList(2,2,tile+1) = mpi_myYGlobalLo(tile+1)+sNy-1
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Create ESMF DistGrid based on model domain decomposition
 !-----------------------------------------------------------------------
-!
+
       distGrid = ESMF_DistGridCreate(minIndex=(/ 1, 1 /),               &
                                      maxIndex=(/ Nx, Ny /),             &
                                      deBlockList=deBlockList,           &
                                      rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Define data structure for component grid
 !-----------------------------------------------------------------------
-!
+
       if (.not. allocated(models(Iocean)%mesh)) then
         allocate(models(Iocean)%mesh(4))
         models(Iocean)%mesh(1)%gtype = Icross
@@ -740,13 +708,13 @@ module mod_esmf_ocn
         models(Iocean)%mesh(3)%gtype = Iupoint
         models(Iocean)%mesh(4)%gtype = Ivpoint
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set staggering type
 !-----------------------------------------------------------------------
-!
+
       do p = 1, 4
-!
+
       if (models(Iocean)%mesh(p)%gtype == Iupoint) then
         staggerLoc = ESMF_STAGGERLOC_EDGE1
       else if (models(Iocean)%mesh(p)%gtype == Ivpoint) then
@@ -756,11 +724,11 @@ module mod_esmf_ocn
       else if (models(Iocean)%mesh(p)%gtype == Idot) then
         staggerLoc = ESMF_STAGGERLOC_CORNER
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Create ESMF Grid
 !-----------------------------------------------------------------------
-!
+
       if (p == 1) then
       models(Iocean)%grid = ESMF_GridCreate(distgrid=distGrid,          &
                                             indexflag=ESMF_INDEX_GLOBAL,&
@@ -769,21 +737,21 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Allocate coordinates
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridAddCoord(models(Iocean)%grid,                       &
                              staggerLoc=staggerLoc,                     &
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Allocate items for masking (not for cell corners)
 !-----------------------------------------------------------------------
-!
+
       if (models(Iocean)%mesh(p)%gtype /= Idot) then
       call ESMF_GridAddItem(models(Iocean)%grid,                        &
                             staggerLoc=staggerLoc,                      &
@@ -792,18 +760,18 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set mask value for land and ocean
 !-----------------------------------------------------------------------
-!
+
       models(Iocean)%isLand = 0
       models(Iocean)%isOcean = 1
-!
+
 !-----------------------------------------------------------------------
 !     Allocate items for grid area (only for cell center)
 !-----------------------------------------------------------------------
-!
+
       if (models(Iocean)%mesh(p)%gtype == Icross) then
       call ESMF_GridAddItem(models(Iocean)%grid,                        &
                             staggerLoc=staggerLoc,                      &
@@ -812,21 +780,21 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get pointers and set coordinates for the grid
 !-----------------------------------------------------------------------
-!
+
       do j = 0, localDECount-1
       call ESMF_GridGetCoord(models(Iocean)%grid,                       &
                              localDE=j,                                 &
@@ -836,7 +804,7 @@ module mod_esmf_ocn
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_GridGetCoord(models(Iocean)%grid,                       &
                              localDE=j,                                 &
                              staggerLoc=staggerLoc,                     &
@@ -845,7 +813,7 @@ module mod_esmf_ocn
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (models(Iocean)%mesh(p)%gtype /= Idot) then
       call ESMF_GridGetItem (models(Iocean)%grid,                       &
                              localDE=j,                                 &
@@ -856,7 +824,7 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
       if (models(Iocean)%mesh(p)%gtype == Icross) then
       call ESMF_GridGetItem (models(Iocean)%grid,                       &
                              localDE=j,                                 &
@@ -867,23 +835,23 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write size of pointers
 !-----------------------------------------------------------------------
-!
+
       name = GRIDDES(models(Iocean)%mesh(p)%gtype)
-!
+
       if (debugLevel > 0) then
         write(*,30) localPet, 0, adjustl("PTR/OCN/GRD/"//name),         &
                     lbound(ptrX, dim=1), ubound(ptrX, dim=1),           &
                     lbound(ptrX, dim=2), ubound(ptrX, dim=2)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Fill the pointers
 !-----------------------------------------------------------------------
-!
+
       bj = 1
       bi = 1
       if (models(Iocean)%mesh(p)%gtype == Idot) then
@@ -927,43 +895,43 @@ module mod_esmf_ocn
           end do
         end do
       end if
-!
+
       if (debugLevel > 0) then
         write(*,30) localPet, j, adjustl("DAT/OCN/GRD/"//name),         &
                     lbound(xG, dim=1), ubound(xG, dim=1),               &
                     lbound(xG, dim=2), ubound(xG, dim=2)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Create temporary arrays.
 !-----------------------------------------------------------------------
-!
+
        if (models(Iocean)%mesh(p)%gtype == Icross) then
         arrX = ESMF_ArrayCreate(distGrid, ptrX,                         &
                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
-!
+
         arrY = ESMF_ArrayCreate(distGrid, ptrY,                         &
                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
-!
+
         arrM = ESMF_ArrayCreate(distGrid, ptrM,                         &
                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
-!
+
         arrA = ESMF_ArrayCreate(distGrid, ptrA,                         &
                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
        end if
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointers
 !-----------------------------------------------------------------------
-!
+
       if (associated(ptrY)) then
         nullify(ptrY)
       end if
@@ -977,19 +945,19 @@ module mod_esmf_ocn
         nullify(ptrA)
       end if
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Assign grid to gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompSet(gcomp, grid=models(Iocean)%grid, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write out component grid in VTK format
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 1) then
       call ESMF_GridWriteVTK(models(Iocean)%grid,                       &
                          filename="ocean_"//                            &
@@ -1001,16 +969,16 @@ module mod_esmf_ocn
                              line=__LINE__, file=FILENAME)) return
       end if
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Collect data from arrays to first PET of the component
 !-----------------------------------------------------------------------
-!
+
       if (models(Iriver)%modActive) then
-!
+
       i = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                   &
                  mask=(models(Iocean)%mesh(:)%gtype == Icross))
-!
+
       if (localPet == 0) then
         allocate(models(Iocean)%mesh(i)%glon(Nx,Ny))
         allocate(models(Iocean)%mesh(i)%glat(Nx,Ny))
@@ -1022,51 +990,51 @@ module mod_esmf_ocn
         allocate(models(Iocean)%mesh(i)%gmsk(0,0))
         allocate(models(Iocean)%mesh(i)%gare(0,0))
       end if
-!
+
       call ESMF_ArrayGather(arrX, farray=models(Iocean)%mesh(i)%glon,   &
                             rootPet=0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayGather(arrY, farray=models(Iocean)%mesh(i)%glat,   &
                             rootPet=0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayGather(arrM, farray=models(Iocean)%mesh(i)%gmsk,   &
                             rootPet=0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayGather(arrA, farray=models(Iocean)%mesh(i)%gare,   &
                             rootPet=0, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Destroy temporary arrays
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ArrayDestroy(arrX, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayDestroy(arrY, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayDestroy(arrM, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ArrayDestroy(arrA, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Find location of the rivers
 !-----------------------------------------------------------------------
-!
+
 #ifdef HD_SUPPORT
       nr = size(rivers, dim=1)
       do i = 1, nr
@@ -1081,10 +1049,10 @@ module mod_esmf_ocn
           if (ESMF_LogFoundError(rcToCheck=rc,                          &
                                  msg=ESMF_LOGERR_PASSTHRU,              &
                                  line=__LINE__, file=FILENAME)) return
-!
+
           rivers(i)%rootPet = findPet(vm, rivers(i)%iindex,             &
                                       rivers(i)%jindex, rc)
-!
+
           if (localPet == 0) then
             write(*,20) i, rivers(i)%dir, rivers(i)%eRadius,            &
                         rivers(i)%lon, rivers(i)%lat,                   &
@@ -1101,7 +1069,7 @@ module mod_esmf_ocn
             rivers(i)%lat = ZERO_R8
             rivers(i)%rootPet = ZERO_I4
           end if
-!
+
           if (localPet == 0) then
             write(*,20) i, rivers(i)%dir, rivers(i)%eRadius,            &
                         rivers(i)%lon, rivers(i)%lat,                   &
@@ -1110,109 +1078,101 @@ module mod_esmf_ocn
           end if
         end if
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Map ocean grid points to rivers defined by RTM component
 !-----------------------------------------------------------------------
-!
+
       call map_rivers(vm, rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 #endif
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
  20   format(" RIVER(",I2.2,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
  30   format(" PET(",I4.4,") - DE(",I2.2,") - ", A20, " : ", 4I8)
-!
-      end subroutine OCN_SetGridArrays
-!
-      subroutine OCN_SetStates(gcomp, rc)
+
+    end subroutine OCN_SetGridArrays
+
+    subroutine OCN_SetStates(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp), intent(in) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, k, itemCount, localDECount, localPet, petCount
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
-      real*8, dimension(:,:), pointer :: ptr2d
-!
+      real(8), dimension(:,:), pointer :: ptr2d
+
       type(ESMF_VM) :: vm
       type(ESMF_Field) :: field
       type(ESMF_ArraySpec) :: arraySpec
       type(ESMF_StaggerLoc) :: staggerLoc
       type(ESMF_State) :: importState, exportState
-!
+
 !-----------------------------------------------------------------------
 !     Get information about gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, importState=importState,             &
                             exportState=exportState, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Set array descriptor
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ArraySpecSet(arraySpec, typekind=ESMF_TYPEKIND_R8,      &
                              rank=2, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount,                      &
                         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get list of export fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
       end if
       call ESMF_StateGet(exportState, itemNameList=itemNameList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create export fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, itemCount
       k = get_varid(models(Iocean)%exportField, trim(itemNameList(i)))
-!
+
 !-----------------------------------------------------------------------
 !     Set staggering type
 !-----------------------------------------------------------------------
-!
+
       if (models(Iocean)%exportField(k)%gtype == Iupoint) then
         staggerLoc = ESMF_STAGGERLOC_EDGE1
       else if (models(Iocean)%exportField(k)%gtype == Ivpoint) then
@@ -1222,11 +1182,11 @@ module mod_esmf_ocn
       else if (models(Iocean)%exportField(k)%gtype == Idot) then
         staggerLoc = ESMF_STAGGERLOC_CORNER
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Create field
 !-----------------------------------------------------------------------
-!
+
       field = ESMF_FieldCreate(models(Iocean)%grid,                     &
                                arraySpec,                               &
                                staggerloc=staggerLoc,                   &
@@ -1235,79 +1195,79 @@ module mod_esmf_ocn
                                rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Put initial data into state
 !-----------------------------------------------------------------------
-!
+
       do j = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !     Get pointer from field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Initialize pointer
 !-----------------------------------------------------------------------
-!
+
       ptr2d = MISSING_R8
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random
 !     part in the memory
 !-----------------------------------------------------------------------
-!
+
       if (associated(ptr2d)) then
         nullify(ptr2d)
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Add field export state
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_Realize(exportState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Deallocate arrays
 !-----------------------------------------------------------------------
-!
+
       if (allocated(itemNameList)) deallocate(itemNameList)
-!
+
 !-----------------------------------------------------------------------
 !     Get list of import fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
       end if
       call ESMF_StateGet(importState, itemNameList=itemNameList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create import fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, itemCount
       k = get_varid(models(Iocean)%importField, trim(itemNameList(i)))
-!
+
 !-----------------------------------------------------------------------
 !     Set staggering type
 !-----------------------------------------------------------------------
-!
+
       if (models(Iocean)%importField(k)%gtype == Iupoint) then
         staggerLoc = ESMF_STAGGERLOC_EDGE1
       else if (models(Iocean)%importField(k)%gtype == Ivpoint) then
@@ -1317,11 +1277,11 @@ module mod_esmf_ocn
       else if (models(Iocean)%importField(k)%gtype == Idot) then
         staggerLoc = ESMF_STAGGERLOC_CORNER
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Create field
 !-----------------------------------------------------------------------
-!
+
       field = ESMF_FieldCreate(models(Iocean)%grid,                     &
                                arraySpec,                               &
                                totalLWidth=(/OLx,OLy/),                 &
@@ -1332,222 +1292,196 @@ module mod_esmf_ocn
                                rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Store routehandle to exchage halo region data
 !-----------------------------------------------------------------------
-!
+
       if (i == 1) then
       call ESMF_FieldHaloStore(field, routehandle=rh_halo, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Put data into state
 !-----------------------------------------------------------------------
-!
+
       do j = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !     Get pointer from field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, localDe=j, farrayPtr=ptr2d, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Initialize pointer
 !-----------------------------------------------------------------------
-!
+
       ptr2d = MISSING_R8
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random
 !     part in the memory
 !-----------------------------------------------------------------------
-!
+
       if (associated(ptr2d)) then
         nullify(ptr2d)
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Add field import state
 !-----------------------------------------------------------------------
-!
+
       call NUOPC_Realize(importState, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Deallocate arrays
 !-----------------------------------------------------------------------
-!
+
       if (allocated(itemNameList)) deallocate(itemNameList)
-!
-      end subroutine OCN_SetStates
-!
-      subroutine OCN_ModelAdvance(gcomp, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+
+    end subroutine OCN_SetStates
+
+    subroutine OCN_ModelAdvance(gcomp, rc)
       use mod_mit_gcm, only : deltaT
-!
+
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
-      real*8 :: trun
+
+      real(8) :: trun
       integer :: myThid = 1
       integer :: localPet, petCount, phase, iter
       character(ESMF_MAXSTR) :: str1, str2
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
       type(ESMF_TimeInterval) :: timeStep
       type(ESMF_Time) :: startTime, stopTime, currTime
       type(ESMF_State) :: importState, exportState
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, clock=clock, importState=importState,&
                             exportState=exportState, currentPhase=phase,&
                             vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get start, stop and current time and time step
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ClockGet(clock, timeStep=timeStep, startTime=startTime, &
                          stopTime=stopTime, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get time interval
 !-----------------------------------------------------------------------
-!
+
       call ESMF_TimeIntervalGet(timeStep, s_r8=trun, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write time information
 !-----------------------------------------------------------------------
-!
+
       iter = int(trun/deltaT)
-!
+
       if (debugLevel >= 0 .and. localPet == 0) then
         call ESMF_TimeGet(currTime,                                     &
                           timeStringISOFrac=str1, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_TimeGet(currTime+timeStep,                            &
                           timeStringISOFrac=str2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
-!
+
         if (debugLevel == 0) then
           write(*,40) trim(str1), trim(str2), phase
         else
           write(*,50) trim(str1), trim(str2), phase, dble(iter)
         end if
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get import fields
 !-----------------------------------------------------------------------
-!
+
       if ((currTime /= startTime) .or. restarted) then
         call OCN_Get(gcomp, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Run OCN component
 !-----------------------------------------------------------------------
-!
+
       call MIT_RUN(iter, iLoop, myTime, myIter, myThid)
-!
+
 !-----------------------------------------------------------------------
 !     Put export fields
 !-----------------------------------------------------------------------
-!
+
       call OCN_Put(gcomp, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Formats
 !-----------------------------------------------------------------------
-!
+
  40   format(' Running OCN Component: ',A,' --> ',A,' Phase: ',I1)
  50   format(' Running OCN Component: ',A,' --> ',A,' Phase: ',I1,      &
              ' [', E12.2, ']')
-!
-      end subroutine OCN_ModelAdvance
-!
-      subroutine OCN_SetFinalize(gcomp, importState, exportState,       &
-                                 clock, rc)
+
+    end subroutine OCN_ModelAdvance
+
+    subroutine OCN_SetFinalize(gcomp, importState, exportState,       &
+                               clock, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       type(ESMF_State) :: importState
       type(ESMF_State) :: exportState
       type(ESMF_Clock) :: clock
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Call model finalize routines
 !-----------------------------------------------------------------------
-!
+
       call MIT_FINALIZE()
-!
-      end subroutine OCN_SetFinalize
-!
-      subroutine OCN_Get(gcomp, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+
+    end subroutine OCN_SetFinalize
+
+    subroutine OCN_Get(gcomp, rc)
       use mod_mit_gcm, only : ustress_ESMF, vstress_ESMF, hflux_ESMF,   &
                               sflux_ESMF, swflux_ESMF, atemp_ESMF,      &
                               aqh_ESMF, lwflux_ESMF, evap_ESMF,         &
@@ -1555,20 +1489,12 @@ module mod_esmf_ocn
                               swdown_ESMF, lwdown_ESMF, apressure_ESMF, &
                               snowprecip_ESMF, uwind_ESMF, vwind_ESMF
       use mod_mit_gcm, only : xG, yG
-!
+
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, ii, jj, bi, bj, iG, jG, imax, jmax, nr
       integer :: id, iunit
       integer :: iyear, iday, imonth, ihour, iminute, isec
@@ -1581,61 +1507,61 @@ module mod_esmf_ocn
 #ifdef CHYM_SUPPORT
       real(ESMF_KIND_R8), allocatable :: farrayDst(:,:)
 #endif
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
       type(ESMF_Time) :: currTime
       type(ESMF_Field) :: field
       type(ESMF_State) :: importState
       type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)
-!
+
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
                             importState=importState, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get current time
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 2) then
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
                         dd=iday, h=ihour, m=iminute, s=isec, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get list of import fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
       end if
@@ -1646,42 +1572,42 @@ module mod_esmf_ocn
                          itemTypeList=itemTypeList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Loop over excahange fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, itemCount
-!
+
       id = get_varid(models(Iocean)%importField, itemNameList(i))
-!
+
 !-----------------------------------------------------------------------
 !     Get field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(importState, trim(itemNameList(i)),            &
                          field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Loop over decomposition elements (DEs)
 !-----------------------------------------------------------------------
-!
+
       do j = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !     Get pointer /from field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write size of pointers
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 1) then
       write(*,60) localPet, j, adjustl("PTR/OCN/IMP/"//itemNameList(i)),&
                   lbound(ptr, dim=1), ubound(ptr, dim=1),               &
@@ -1692,21 +1618,21 @@ module mod_esmf_ocn
                   lbound(ustress_ESMF, dim=2),                          &
                   ubound(ustress_ESMF, dim=2)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Put data to OCN component variable
 !-----------------------------------------------------------------------
-!
+
       sfac = models(Iocean)%importField(id)%scale_factor
       addo = models(Iocean)%importField(id)%add_offset
-!
+
       bi = 1
       bj = 1
       imax = Nx+1
       jmax = Ny+1
-!
+
       where (isnan(ptr)) ptr = MISSING_R8
-!
+
 #ifdef CHYM_SUPPORT
       if ( firstT ) then
         select case (trim(adjustl(itemNameList(i))))
@@ -1953,11 +1879,11 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end select
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write field in ASCII format
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel == 4) then
         write(ofile,70) 'ocn_import', trim(itemNameList(i)),            &
                         iyear, imonth, iday, ihour, localPet, j
@@ -1968,22 +1894,22 @@ module mod_esmf_ocn
                           localPet, iunit, "PTR/OCN/IMP")
         close(unit=iunit)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random
 !     part in the memory
 !-----------------------------------------------------------------------
-!
+
       if (associated(ptr)) then
         nullify(ptr)
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel == 3) then
         write(ofile,80) 'ocn_import', trim(itemNameList(i)),            &
                      iyear, imonth, iday, ihour, iminute, isec
@@ -1991,20 +1917,20 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Deallocate arrays
 !-----------------------------------------------------------------------
-!
+
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
 #ifdef CHYM_SUPPORT
  20   format(" RIVER(",I4.4,") - ",I4,3F8.2," [",I3.3,":",I3.3,"] - ",I4," ",A)
 #endif
@@ -2039,11 +1965,11 @@ module mod_esmf_ocn
       type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get gridded component
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridCompGet(gcomp, name=cname, clock=clock,             &
                             exportState=exportState, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -2052,11 +1978,11 @@ module mod_esmf_ocn
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get current time
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 2) then
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -2067,24 +1993,24 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(models(Iocean)%grid,                            &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get list of export fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(exportState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
       end if
@@ -2095,60 +2021,60 @@ module mod_esmf_ocn
                          itemTypeList=itemTypeList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Loop over export fields
 !-----------------------------------------------------------------------
-!
+
       do i = 1, itemCount
-!
+
 !-----------------------------------------------------------------------
 !     Get export field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_StateGet(exportState, trim(itemNameList(i)),            &
                          field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Perform halo region update
 !-----------------------------------------------------------------------
-!
+
 !      call ESMF_FieldHalo(field, routehandle=rh_halo,                   &
 !                          checkflag=.false., rc=rc)
 !      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
 !                             line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Loop over decomposition elements (DEs)
 !-----------------------------------------------------------------------
-!
+
       do j = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !     Get pointer
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, localDE=j, farrayPtr=ptr, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Set initial value to missing
 !-----------------------------------------------------------------------
-!
+
       ptr = MISSING_R8
-!
+
 !-----------------------------------------------------------------------
 !     Put data to export field
 !-----------------------------------------------------------------------
-!
+
       bi = 1
       bj = 1
       imax = Nx+1
       jmax = Ny+1
-!
+
       select case (trim(adjustl(itemNameList(i))))
       case ('mask2d')
         do jj = 1, sNy
@@ -2223,11 +2149,11 @@ module mod_esmf_ocn
           end do
         end do
       end select
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write field in ASCII format
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel == 4) then
         iunit = localPet
         write(ofile,90) 'ocn_export', trim(itemNameList(i)),            &
@@ -2237,22 +2163,22 @@ module mod_esmf_ocn
                           localPet, iunit, "PTR/OCN/EXP")
         close(unit=iunit)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Nullify pointer to make sure that it does not point on a random
 !     part in the memory
 !-----------------------------------------------------------------------
-!
+
       if (associated(ptr)) then
         nullify(ptr)
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write field in netCDF format
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel == 3) then
         write(ofile,100) 'ocn_export', trim(itemNameList(i)),           &
                      iyear, imonth, iday, ihour, iminute, isec
@@ -2260,20 +2186,20 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
+
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Deallocate arrays
 !-----------------------------------------------------------------------
-!
+
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
  90   format(A10,'_',A,'_',I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I4.4,'_',I1)
  100  format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
@@ -2294,7 +2220,7 @@ module mod_esmf_ocn
       real(ESMF_KIND_R8), intent(in) :: sfac, addo
       integer, intent(inout) :: rc
 
-      real*8 :: rdis(1)
+      real(8) :: rdis(1)
       integer :: i, j, k, r, ii, jj, iG, jG, bi, bj
       integer :: mm, ng, np, nr, localPet, petCount
       character(ESMF_MAXSTR) :: str
@@ -2302,19 +2228,19 @@ module mod_esmf_ocn
       type(ESMF_Time) :: currTime
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query clock and time
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -2322,11 +2248,11 @@ module mod_esmf_ocn
       call ESMF_TimeGet(currTime, mm=mm, timeStringISOFrac=str, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Fill array with river discharge data
 !-----------------------------------------------------------------------
-!
+
       ! reinitialize temporary river discharge array
       runoff_ESMF(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy) = ZERO_R8
 
@@ -2404,11 +2330,11 @@ module mod_esmf_ocn
           end if
         end if
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Formats
 !-----------------------------------------------------------------------
-!
+
  110  format(' River (',I3.2,') Discharge [',A,'] : ',F15.6)
 
     end subroutine put_river
@@ -2425,19 +2351,19 @@ module mod_esmf_ocn
       integer :: petCount, localPet, rootPet, sendData(1)
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Find rootPET that has river discharge data
 !-----------------------------------------------------------------------
-!
+
       bj = 1
       bi = 1
 
@@ -2453,11 +2379,11 @@ module mod_esmf_ocn
           end do
         end do
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Broadcast rootPET data to PETs
 !-----------------------------------------------------------------------
-!
+
       sendData(1) = rootPet
       call ESMF_VMBroadcast(vm, bcstData=sendData, count=1,             &
                             rootPet=rootPet, rc=rc)

@@ -5,11 +5,11 @@
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "util/mod_config.F90"
-!
+
 !-----------------------------------------------------------------------
 ! Module for ESM configuration file
 !-----------------------------------------------------------------------
-!
+
 module mod_config
   use ESMF
   use NUOPC
@@ -38,19 +38,19 @@ module mod_config
     type(ESMF_CalKind_Flag) :: cflag
 
     rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !   Query gridded component
 !-----------------------------------------------------------------------
-!
+
     call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !   Read configuration file
 !-----------------------------------------------------------------------
-!
+
     inquire(file=trim(config_fname), exist=file_exists)
 
     if (file_exists) then
@@ -62,11 +62,11 @@ module mod_config
       call ESMF_ConfigLoadFile(cf, trim(config_fname), rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get run mode (concurrent vs. sequential)
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigFindLabel(cf, 'PETLayoutOption:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -80,11 +80,11 @@ module mod_config
       if (localPet == 0) then
         write(*, fmt='(A12,A)') "PET Layout: ", trim(RUNNDES(runMod))
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get coupling type
 !-----------------------------------------------------------------------
-!
+
       cplType = 1
 
       call ESMF_ConfigGetAttribute(cf, cplType,                         &
@@ -104,11 +104,11 @@ module mod_config
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
         end if
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Get number of component (or model)
 !-----------------------------------------------------------------------
-!
+
       nModels = ESMF_ConfigGetLen(cf, label='PETs:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -120,11 +120,11 @@ module mod_config
       if (localPet == 0) then
         write(*, fmt='(A,i2)') "PET number = ",nModels
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set active components (if nPets > 0 active otherwise not)
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigFindLabel(cf, 'PETs:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -160,11 +160,11 @@ module mod_config
           end if
         end if
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Set debug level
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigGetAttribute(cf, debugLevel,                      &
                                  label='DebugLevel:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -172,11 +172,11 @@ module mod_config
       if (localPet == 0) then
         write(*,'(a,i2)') 'Debug Level = ',debugLevel
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set performance check flag
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigGetAttribute(cf, enablePerfCheck,                 &
                                  label='EnablePerfCheck:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -184,11 +184,11 @@ module mod_config
       if (localPet == 0) then
         write(*,'(a,l2)') 'Performance Check = ',enablePerfCheck
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set calendar
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigGetAttribute(cf, str, label='Calendar:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -203,11 +203,11 @@ module mod_config
       if (localPet == 0) then
         write(*,'(a,a)') 'Calendar = ',trim(str)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Set application clock
 !-----------------------------------------------------------------------
-!
+
       call ESMF_ConfigGetAttribute(cf, time, count=6,                   &
                                    label='StartTime:', rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -256,11 +256,11 @@ module mod_config
                  " is not available! exiting ..."
       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Assign PETs to model components
 !-----------------------------------------------------------------------
-!
+
     select case (runMod)
       case (iseq) ! sequential
         do i = 1, nModels
@@ -319,11 +319,11 @@ module mod_config
              trim(petLayoutOption))
         return
     end select
-!
+
 !-----------------------------------------------------------------------
 !   Debug: write list of active components
 !-----------------------------------------------------------------------
-!
+
     if (localPet == 0) then
       do i = 1, nModels
         if (models(i)%modActive) then
@@ -336,11 +336,11 @@ module mod_config
         end if
       end do
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Assign PETs to connectors
 !-----------------------------------------------------------------------
-!
+
     if (.not. allocated(connectors)) then
       allocate(connectors(nModels, nModels))
     end if
@@ -381,7 +381,7 @@ module mod_config
         end if
       end do
     end do
-!
+
 !-----------------------------------------------------------------------
 !   Fix active connectors (put exceptions in here)
 !     - no interaction between RTM-ATM and OCN-RTM components
@@ -389,7 +389,7 @@ module mod_config
 !     - no interaction between COP-ATM, COP-OCN, COP-RTM and COP-WAV
 !     - OCN-WAV and WAV-OCN coupling is not implemented yet !!!
 !-----------------------------------------------------------------------
-!
+
     connectors(Iriver,Iatmos)%modActive = .false.
     connectors(Iocean,Iriver)%modActive = .false.
     connectors(Iriver,Iwavee)%modActive = .false.
@@ -400,11 +400,11 @@ module mod_config
     connectors(Icopro,Iocean)%modActive = .false.
     connectors(Icopro,Iriver)%modActive = .false.
     connectors(Icopro,Iwavee)%modActive = .false.
-!
+
 !-----------------------------------------------------------------------
 !   Set interface for connector
 !-----------------------------------------------------------------------
-!
+
     connectors(:,:)%modInteraction = Ioverall
 
     connectors(Iatmos,Iocean)%modInteraction = Ioverocn
@@ -415,17 +415,17 @@ module mod_config
     connectors(Iwavee,Iocean)%modInteraction = Ioverocn
     connectors(Iatmos,Iwavee)%modInteraction = Ioverocn
     connectors(Iwavee,Iatmos)%modInteraction = Ioverocn
-!
+
 !-----------------------------------------------------------------------
 !   Initialize extrapolation option
 !-----------------------------------------------------------------------
-!
+
     connectors(:,:)%modExtrapolation = .false.
-!
+
 !-----------------------------------------------------------------------
 !   Debug: write list of active connectors
 !-----------------------------------------------------------------------
-!
+
     if (localPet == 0) then
       do i = 1, nModels
         do j = 1, nModels
@@ -440,12 +440,12 @@ module mod_config
         end do
       end do
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read time step divider for data exchange among models
 !   Coupling interval could be different among components
 !-----------------------------------------------------------------------
-!
+
     call ESMF_ConfigFindLabel(cf, 'DividerForTStep::', rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
         line=__LINE__, file=FILENAME)) return
@@ -459,18 +459,18 @@ module mod_config
         end if
       end do
     end do
-!
+
 !-----------------------------------------------------------------------
 !   Read exchange field table (based on active components)
 !     - must be in same directory with executable
 !-----------------------------------------------------------------------
-!
+
     call read_field_table('exfield.tbl', localPet, rc)
-!
+
 !-----------------------------------------------------------------------
 !   Read river option (only active when RTM is activated)
 !-----------------------------------------------------------------------
-!
+
     if (models(Iriver)%modActive) then
       call ESMF_ConfigGetAttribute(cf, riverOpt,                      &
                                    label='RiverOpt:', rc=rc)
@@ -480,11 +480,11 @@ module mod_config
         write(*,'(a,i2)') 'RiverOpt is ',riverOpt
       end if
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read river list for coupling (only active when RTM is activated)
 !-----------------------------------------------------------------------
-!
+
     if (models(Iriver)%modActive) then
       call ESMF_ConfigGetDim(cf, lineCount, columnCount,              &
                              label='RiverList::', rc=rc)
@@ -566,11 +566,11 @@ module mod_config
       end do
 #endif
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read name of co-processing script
 !-----------------------------------------------------------------------
-!
+
     call ESMF_ConfigGetDim(cf, lineCount, columnCount,              &
                            label='CoProcessorScript::', rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -604,11 +604,11 @@ module mod_config
         write(*,'(a)') 'No CoProcessorScript'
       end if
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read co-processing component tiles in x and y direction
 !-----------------------------------------------------------------------
-!
+
     if (models(Icopro)%modActive) then
 
       call ESMF_ConfigFindLabel(cf, 'CoProcessorTile:', rc=rc)
@@ -642,11 +642,11 @@ module mod_config
         write(*,'(a)') 'CoProcessor NOT active.'
       end if
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read width of halo or ghost region
 !-----------------------------------------------------------------------
-!
+
     if (models(Icopro)%modActive) then
 
       call ESMF_ConfigFindLabel(cf, 'CoProcessorHaloWidth:', rc=rc)
@@ -663,11 +663,11 @@ module mod_config
       end if
 
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read width of halo or ghost region
 !-----------------------------------------------------------------------
-!
+
     if (models(Icopro)%modActive) then
 
       call ESMF_ConfigFindLabel(cf, 'CoProcessorHaloWidth:', rc=rc)
@@ -684,12 +684,12 @@ module mod_config
       end if
 
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Read vertical levels for model components
 !   Only valid if co-processing component is activated
 !-----------------------------------------------------------------------
-!
+
     if (models(Icopro)%modActive) then
 
       models(Iatmos)%nLevs = ESMF_ConfigGetLen(cf,                      &
@@ -747,11 +747,11 @@ module mod_config
       end if
 
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Format definition
 !-----------------------------------------------------------------------
-!
+
  20 format(A10,1X,'DT DIVIDER: ',I3)
 
   end subroutine read_config
@@ -770,11 +770,11 @@ module mod_config
     logical :: flag
 
     rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !   Read field table
 !-----------------------------------------------------------------------
-!
+
     inquire(file=trim(ifile), exist=file_exists)
 
     if (file_exists) then
@@ -920,11 +920,11 @@ module mod_config
                  "' is not available! exiting ..."
       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Format definition
 !-----------------------------------------------------------------------
-!
+
  30 format(2I3,1X,A6,1X,A32,1X,I2,1X,A10,1X,A10,1X,A10,               &
            1X,A10,1X,2E15.4,1X,L,1X,A7)
 
@@ -938,11 +938,11 @@ module mod_config
 
     integer :: n
     type(ESM_Field), allocatable :: dum(:)
-!
+
 !-----------------------------------------------------------------------
 !   Resize input list
 !-----------------------------------------------------------------------
-!
+
     if (allocated(field)) then
       n = size(field, dim=1)
       allocate(dum(n))
@@ -955,11 +955,11 @@ module mod_config
       n = 1
       allocate(field(n))
     end if
-!
+
 !-----------------------------------------------------------------------
 !   Add new data to the list
 !-----------------------------------------------------------------------
-!
+
     field(n)%fid = n
     field(n)%short_name = trim(str(1))
     field(n)%long_name = trim(str(2))
@@ -1047,19 +1047,19 @@ module mod_config
     character(ESMF_MAXSTR) :: lname, sname, units
 
     rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !   Query gridded component
 !-----------------------------------------------------------------------
-!
+
     call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
         line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !   Add required fields to NUOPC field dictionary
 !-----------------------------------------------------------------------
-!
+
     do i = 1, nModels
       nf = size(models(i)%exportField)
       if (.not. models(i)%modActive) cycle
@@ -1107,11 +1107,11 @@ module mod_config
         end if
       end do
     end do
-!
+
 !-----------------------------------------------------------------------
 !   Format definition
 !-----------------------------------------------------------------------
-!
+
  40 format(A27, I3, " ", A)
 
   end subroutine set_field_dir

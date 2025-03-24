@@ -169,12 +169,8 @@ if DO_COMPILE_WRF
 regesm_x_SOURCES += mod_esmf_atm_wrf.F90
 endif
 endif
-if DO_COMPILE_ERA5
-regesm_x_SOURCES += mod_esmf_atm_era5.F90
-else
 else
 regesm_x_SOURCES += mod_esmf_atm_void.F90
-endif
 endif
 
 if DO_COMPILE_LIBOCN
@@ -244,13 +240,8 @@ OBJ+=mod_esmf_atm_wrf.o
 endif
 endif
 else
-if DO_COMPILE_ERA5
-mod_esmf_atm_era5.o: mod_esmf_atm_era5.F90 mod_types.o mod_shared.o
-OBJ+=mod_esmf_atm_era5.o
-else
 mod_esmf_atm_void.o: mod_esmf_atm_void.F90
 OBJ+=mod_esmf_atm_void.o
-endif
 endif
 
 if DO_COMPILE_LIBOCN

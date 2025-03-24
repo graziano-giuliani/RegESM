@@ -4,23 +4,23 @@
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "util/mod_types.F90"
-!
+
 !-----------------------------------------------------------------------
 ! Module for user defined types
 !-----------------------------------------------------------------------
-!
+
 module mod_types
 
-    use ESMF
-    use NUOPC
+  use ESMF
+  use NUOPC
 
-    implicit none
-!
+  implicit none
+
 !-----------------------------------------------------------------------
 !   Constants
 !     cf3 - 1/rhow (rhow is reference density of seawater in kg/m3)
 !-----------------------------------------------------------------------
-!
+
     real(ESMF_KIND_R8), parameter :: cp = 3985.0d0
     real(ESMF_KIND_R8), parameter :: rho0 = 1025.0d0
     real(ESMF_KIND_R8), parameter :: cf1 = rho0*cp
@@ -48,13 +48,13 @@ module mod_types
     integer(ESMF_KIND_I4), parameter :: MAPPED_MASK = 99
     integer(ESMF_KIND_I4), parameter :: UNMAPPED_MASK = 98
 
-    integer, parameter :: MAX_MAPPED_GRID = 10000  
+    integer, parameter :: MAX_MAPPED_GRID = 10000
 !Laura per il Nord Adriatico, default MAX_MAPPED_GRID=1000
-!
+
 !-----------------------------------------------------------------------
 !   RTM river point data type
 !-----------------------------------------------------------------------
-!
+
     type RTM_River
       logical :: asIndex
       integer :: isActive
@@ -69,11 +69,11 @@ module mod_types
       real(ESMF_KIND_R8)  :: mapArea
       real(ESMF_KIND_R8)  :: mapTable(3,MAX_MAPPED_GRID) ! i, j and weight
     end type RTM_River
-!
+
 !-----------------------------------------------------------------------
 !   ESM generic field data type
 !-----------------------------------------------------------------------
-!
+
     type ESM_Field
       integer :: fid
       integer :: rank
@@ -88,11 +88,11 @@ module mod_types
       logical :: enable_integral_adj
       type(ESMF_RouteHandle) :: rhandle
     end type ESM_Field
-!
+
 !-----------------------------------------------------------------------
 !   ESM generic mesh data type
 !-----------------------------------------------------------------------
-!
+
     type ESM_Mesh
       integer :: gid
       integer :: gtype
@@ -101,11 +101,11 @@ module mod_types
       real(ESMF_KIND_R8), allocatable :: gare(:,:)
       integer(ESMF_KIND_I4), allocatable :: gmsk(:,:)
     end type ESM_Mesh
-!
+
 !-----------------------------------------------------------------------
 !   ESM high-level generic model data type
 !-----------------------------------------------------------------------
-!
+
     type ESM_Model
       character(len=100) :: name
       integer :: nPets
@@ -123,11 +123,11 @@ module mod_types
       type(ESMF_Grid) :: grid
       type(ESMF_Grid) :: grid3d
     end type ESM_Model
-!
+
 !-----------------------------------------------------------------------
 !   ESM high-level generic connector data type
 !-----------------------------------------------------------------------
-!
+
     type ESM_Conn
       character(len=100) :: name
       integer :: divDT
@@ -137,45 +137,45 @@ module mod_types
       integer :: modInteraction
       integer, allocatable :: petList(:)
     end type ESM_Conn
-!
+
 !-----------------------------------------------------------------------
 !   ESM grided component (models) holder
 !-----------------------------------------------------------------------
-!
+
     type(ESM_Model), allocatable, target :: models(:)
-!
+
 !-----------------------------------------------------------------------
 !   ESM connector (coupler) holder
 !-----------------------------------------------------------------------
-!
+
     type(ESM_Conn), allocatable, target :: connectors(:,:)
-!
+
 !-----------------------------------------------------------------------
 !   Number of gridded component or model
 !-----------------------------------------------------------------------
-!
+
     integer :: nModels
-!
+
 !-----------------------------------------------------------------------
 !   ESM model indices
 !-----------------------------------------------------------------------
-!
+
     character(len=3) :: COMPDES(5) = (/'ATM','OCN','RTM','WAV','COP'/)
     integer, parameter :: Iatmos = 1
     integer, parameter :: Iocean = 2
     integer, parameter :: Iriver = 3
     integer, parameter :: Iwavee = 4
     integer, parameter :: Icopro = 5
-!
+
 !-----------------------------------------------------------------------
 !   Interaction interfaces
 !-----------------------------------------------------------------------
-!
+
     character(len=3) :: IFACEDES(3) = (/'LND','OCN','ALL'/)
     integer, parameter :: Ioverlnd = 1
     integer, parameter :: Ioverocn = 2
     integer, parameter :: Ioverall = 3
-!
+
 !-----------------------------------------------------------------------
 !     Staggered grid point indices
 !     d --------- d   d --- v --- d
@@ -186,7 +186,7 @@ module mod_types
 !     Arakawa - B     Arakawa - C
 !     RegCM           ROMS (c = rho, d = psi)
 !-----------------------------------------------------------------------
-!
+
     character(len=6) :: GRIDDES(0:4) = &
         (/'N/A   ','CROSS ','DOT   ','U     ','V     '/)
     integer, parameter :: Inan    = 0
@@ -194,36 +194,36 @@ module mod_types
     integer, parameter :: Idot    = 2
     integer, parameter :: Iupoint = 3
     integer, parameter :: Ivpoint = 4
-!
+
 !-----------------------------------------------------------------------
 !   Interpolation type
 !-----------------------------------------------------------------------
-!
+
     character(len=4) :: INTPDES(0:4) = (/'NONE','BLIN','CONS','NS2D', 'ND2S'/)
     integer, parameter :: Inone  = 0
     integer, parameter :: Ibilin = 1
     integer, parameter :: Iconsv = 2
     integer, parameter :: Instod = 3
     integer, parameter :: Indtos = 4
-!
+
 !-----------------------------------------------------------------------
 !   Running mode
 !-----------------------------------------------------------------------
-!
-    character(len=11) :: RUNNDES(2) = (/'SEQUENTIAL ','CONCURRENT '/)
+
+    character(len=10) :: RUNNDES(2) = (/'SEQUENTIAL','CONCURRENT'/)
     integer, parameter :: Iseq = 1
     integer, parameter :: Ipar = 2
-!
+
 !-----------------------------------------------------------------------
 !   ESM connector (coupler) holder
 !-----------------------------------------------------------------------
-!
+
     type(RTM_River), allocatable, target :: rivers(:)
-!
+
 !-----------------------------------------------------------------------
 !   ESM model parameters
 !-----------------------------------------------------------------------
-!
+
     character(ESMF_MAXSTR) :: config_fname="namelist.rc"
     character(ESMF_MAXSTR), allocatable :: coproc_fnames(:)
     character(ESMF_MAXSTR) :: petLayoutOption
@@ -242,11 +242,11 @@ module mod_types
     integer :: riverOpt
 
     contains
-!
+
 !-----------------------------------------------------------------------
-!     Find index of specified field
+!   Find index of specified field
 !-----------------------------------------------------------------------
-!
+
     integer function get_varid(list, key)
       implicit none
 

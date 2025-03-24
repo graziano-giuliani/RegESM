@@ -4,37 +4,28 @@
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "util/mod_shared.F90"
-!
+
 !-----------------------------------------------------------------------
-!     Module file for generic utilities
+! Module file for generic utilities
 !-----------------------------------------------------------------------
-!
+
 module mod_shared
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
   use mod_types
-!
+
   implicit none
-!
-!-----------------------------------------------------------------------
-!     Interfaces
-!-----------------------------------------------------------------------
-!
+
   interface gc_latlon
     module procedure gc_latlon_r8
   end interface gc_latlon
 
   contains
-!
+
 !-----------------------------------------------------------------------
-!     Calculate distance between grid points and given origin (plon,plat)
-!     Haversine Formula (from R.W. Sinnott, "Virtues of the Haversine",
-!     Sky and Telescope, vol. 68, no. 2, 1984, p. 159) - km
+!   Calculate distance between grid points and given origin (plon,plat)
+!   Haversine Formula (from R.W. Sinnott, "Virtues of the Haversine",
+!   Sky and Telescope, vol. 68, no. 2, 1984, p. 159) - km
 !-----------------------------------------------------------------------
-!
+
     subroutine gc_latlon_r8(plon, plat, imin, imax, jmin, jmax,       &
                             lon, lat, distance)
       implicit none
@@ -72,11 +63,11 @@ module mod_shared
 
       integer :: i, j
       character(100) :: fmt_123
-!
+
 !-----------------------------------------------------------------------
 !     Write data
 !-----------------------------------------------------------------------
-!
+
       write(id, fmt="('PET(',I2,') - ',A)") pet, trim(header)
 
       write(fmt_123, fmt="('(/, 5X, ', I3, 'I10)')") (imax-imin)+1
@@ -102,20 +93,20 @@ module mod_shared
       real(8) :: mdistance
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query grid index belongs to cross points and upper and lower
 !     limit of the coordinate  arrays
 !-----------------------------------------------------------------------
-!
+
       k = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                   &
                  mask=(models(Iocean)%mesh(:)%gtype == Icross))
 
@@ -123,28 +114,28 @@ module mod_shared
       imax = ubound(models(Iocean)%mesh(k)%glon, dim=1)
       jmin = lbound(models(Iocean)%mesh(k)%glon, dim=2)
       jmax = ubound(models(Iocean)%mesh(k)%glon, dim=2)
-!
+
 !-----------------------------------------------------------------------
 !     Allocate variables.
 !-----------------------------------------------------------------------
-!
+
       if (.not. allocated(distance)) then
         allocate(distance(imin:imax,jmin:jmax))
         distance = ZERO_R8
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Calculate distance (in km) between given point and grids.
 !-----------------------------------------------------------------------
-!
+
       call gc_latlon(plon, plat, imin, imax, jmin, jmax,                &
                      models(Iocean)%mesh(k)%glon,                       &
                      models(Iocean)%mesh(k)%glat, distance)
-!
+
 !-----------------------------------------------------------------------
 !     Get local minimum distance and location.
 !-----------------------------------------------------------------------
-!
+
       mdistance = minval(distance, mask=(models(Iocean)%mesh(k)%gmsk == &
                          models(Iocean)%isLand))
 
@@ -159,12 +150,12 @@ module mod_shared
           end if
         end do
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Broadcast grid indices of grid point that has the mininum distance
 !     to the diven point across the PETs
 !-----------------------------------------------------------------------
-!
+
       sendData = ZERO_I4
       sendData(1) = i
       sendData(2) = j
@@ -174,11 +165,11 @@ module mod_shared
                              line=__LINE__, file=FILENAME)) return
       i = sendData(1)
       j = sendData(2)
-!
+
 !-----------------------------------------------------------------------
 !     Deallocated temporary variables
 !-----------------------------------------------------------------------
-!
+
       if (allocated(distance)) deallocate(distance)
 
     end subroutine get_ij
@@ -196,32 +187,32 @@ module mod_shared
       real(8) :: sendData(2)
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query grid index belongs to cross points and upper and lower
 !     limit of the coordinate  arrays
 !-----------------------------------------------------------------------
-!
+
       k = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                   &
                  mask=(models(Iocean)%mesh(:)%gtype == Icross))
-!
+
       imin = lbound(models(Iocean)%mesh(k)%glon, dim=1)
       imax = ubound(models(Iocean)%mesh(k)%glon, dim=1)
       jmin = lbound(models(Iocean)%mesh(k)%glon, dim=2)
       jmax = ubound(models(Iocean)%mesh(k)%glon, dim=2)
-!
+
 !-----------------------------------------------------------------------
 !     Get latitude and longitude values of specified grid point
 !-----------------------------------------------------------------------
-!
+
       plon = MISSING_R8
       plat = MISSING_R8
 
@@ -234,11 +225,11 @@ module mod_shared
           end if
         end do
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Broadcast coordinate pair using global VM
 !-----------------------------------------------------------------------
-!
+
       sendData = ZERO_R8
       sendData(1) = plon
       sendData(2) = plat
@@ -256,23 +247,23 @@ module mod_shared
       implicit none
 
       integer, intent(in) :: Nx, Ny
-      real*8, dimension(:,:) , intent(in) :: ptr
+      real(8), dimension(:,:) , intent(in) :: ptr
       type(ESMF_VM), intent(in) :: vm
       integer, intent(inout) :: rc
 
       integer :: i, j, k, r, localPet, petCount
       integer :: numrivers
       integer :: ibuffer(1)
-      real*8 :: dbuffer(1)
+      real(8) :: dbuffer(1)
       logical , dimension(Nx,Ny) :: is_river
 
       rc = ESMF_SUCCESS
       numrivers = 0
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -408,14 +399,14 @@ module mod_shared
 
     end subroutine init_rivers
 #endif
-!
+
 !-----------------------------------------------------------------------
 !   Map closest ocean grids to the river points
 !   The effective radius is used to find the set of ocean grids
 !   The algorithm runs on PET = 0 beacuse only root PET
 !   has global view of grid coordinates
 !-----------------------------------------------------------------------
-!
+
     subroutine map_rivers(vm, rc)
       implicit none
       type(ESMF_VM), intent(in) :: vm
@@ -428,11 +419,11 @@ module mod_shared
       real(8) :: totalArea, dbuffer1(1)
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -538,11 +529,11 @@ module mod_shared
           rivers(r)%mapTable(:,:) = MISSING_R8
         end do
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Broadcast map data
 !-----------------------------------------------------------------------
-!
+
       do r = 1, nRiver
         if (rivers(r)%isActive > 0) then
           ! broadcast number of grid effected by each river
@@ -596,19 +587,19 @@ module mod_shared
       character(ESMF_MAXSTR) :: fname, str1, str2
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Get field name
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, name=fname, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get field TimeStamp attribute
 !-----------------------------------------------------------------------
-!
+
       call ESMF_AttributeGet(field, name="TimeStamp",                   &
                              valueList=vl1, convention="NUOPC",         &
                              purpose="Instance", rc=rc)
@@ -616,22 +607,22 @@ module mod_shared
           line=__LINE__, file=FILENAME)) return
 
       write(str1,10) vl1(1), vl1(2), vl1(3), vl1(4), vl1(5), vl1(6)
-!
+
 !-----------------------------------------------------------------------
 !     Get current time
 !-----------------------------------------------------------------------
-!
+
       call ESMF_TimeGet(ctime, yy=vl2(1), mm=vl2(2), dd=vl2(3),         &
                         h=vl2(4), m=vl2(5), s=vl2(6), rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
 
       write(str2,10) vl2(1), vl2(2), vl2(3), vl2(4), vl2(5), vl2(6)
-!
+
 !-----------------------------------------------------------------------
 !     Print out
 !-----------------------------------------------------------------------
-!
+
       if (localPet == 0) then
         if (trim(str1) /= trim(str2)) then
           write(*,20) trim(str), trim(str1), trim(str2),                &
@@ -640,21 +631,21 @@ module mod_shared
           write(*,30) trim(str), trim(str1), to_upper(trim(fname))
         end if
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
 10    format(I4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 20    format(A,': TIMESTAMP = ',A,' /= ',A,' FOR ',A,' ERROR !!!')
 30    format(A,': TIMESTAMP = ',A,' FOR ',A)
 
     end subroutine print_timestamp
-!
+
 !-----------------------------------------------------------------------
 !   Capitalize each letter if it is lowecase
 !-----------------------------------------------------------------------
-!
+
     pure function to_upper (str) result (string)
       implicit none
 
@@ -670,11 +661,11 @@ module mod_shared
         if (ic > 0) string(i:i) = cap(ic:ic)
       end do
     end function to_upper
-!
+
 !-----------------------------------------------------------------------
 !   Lowercase any letter if uppercase
 !-----------------------------------------------------------------------
-!
+
     pure function to_lower (str) result (string)
       implicit none
 
@@ -691,11 +682,11 @@ module mod_shared
         if (ic > 0) string(i:i) = low(ic:ic)
       end do
     end function to_lower
-!
+
 !-----------------------------------------------------------------------
 !   Replace text with replacement in the given string
 !-----------------------------------------------------------------------
-!
+
     function replace_str (str, text, repl) result (string)
       implicit none
 

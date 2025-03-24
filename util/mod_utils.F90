@@ -4,27 +4,19 @@
 ! Licensed under the MIT License.
 !=======================================================================
 #define FILENAME "util/mod_utils.F90"
-!
+
 !-----------------------------------------------------------------------
-!     Module file for generic utilities
+! Module file for generic utilities
 !-----------------------------------------------------------------------
-!
+
 module mod_utils
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+
   use ESMF
 
   use mod_types
 
   implicit none
-!
-!-----------------------------------------------------------------------
-! Interfaces
-!-----------------------------------------------------------------------
-!
+
   interface UTIL_VMGlobalBroadcast
     module procedure UTIL_VMGlobalBroadcastI4
   end interface UTIL_VMGlobalBroadcast
@@ -58,11 +50,11 @@ module mod_utils
       type(ESMF_StaggerLoc) :: sLoc
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Create dummy fields
 !-----------------------------------------------------------------------
-!
+
       fname = 'const_1'
       aField = UTIL_FieldCreate(srcField, fname, ONE_R8,                &
                                 srcLandMask, rc)
@@ -79,12 +71,12 @@ module mod_utils
       cField = UTIL_FieldCreate(dstField, fname, ZERO_R8, -1, rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create 1st routehandle
 !     Used to find the boundary of the destination grid
 !-----------------------------------------------------------------------
-!
+
       unmap = ESMF_UNMAPPEDACTION_IGNORE
       if (srcMId == Iatmos) then
         regridMethod = ESMF_REGRIDMETHOD_NEAREST_STOD
@@ -106,23 +98,23 @@ module mod_utils
                                  rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Perform regrid using 1st routehandle
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldRegrid(aField, bField, routeHandle,                &
                             zeroregion=ESMF_REGION_EMPTY,               &
                             termorderflag=ESMF_TERMORDER_SRCSEQ,        &
                             rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create 2nd routehandle
 !     Used to find the unmapped grid cells
 !-----------------------------------------------------------------------
-!
+
       unmap = ESMF_UNMAPPEDACTION_IGNORE
       regridMethod = ESMF_REGRIDMETHOD_BILINEAR
 
@@ -138,40 +130,40 @@ module mod_utils
                                  rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Perform regrid using 2nd routehandle
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldRegrid(aField, cField, routeHandle,                &
                             zeroregion=ESMF_REGION_TOTAL,               &
                             termorderflag=ESMF_TERMORDER_SRCSEQ,        &
                             rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query result field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(cField, grid=grid, staggerloc=sLoc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs in the grid
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(grid, localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
       do k = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from fields
 !-----------------------------------------------------------------------
-!
+
         call ESMF_FieldGet(bField, localDe=k, farrayPtr=bdy2d, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
@@ -181,20 +173,20 @@ module mod_utils
                            computationalUBound=cUbnd, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=msk2d, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Modify masking to split mapped and unmapped grid cells
 !-----------------------------------------------------------------------
-!
+
         do i = cLbnd(1), cUbnd(1)
           do j = cLbnd(2), cUbnd(2)
             if ((bdy2d(i,j) < TOL_R8).and.(msk2d(i,j) /= dstLandMask)) then
@@ -206,12 +198,12 @@ module mod_utils
             end if
           end do
         end do
-!
+
 !-----------------------------------------------------------------------
 !       Nullify pointer to make sure that it does not point on a random
 !       part in the memory
 !-----------------------------------------------------------------------
-!
+
         if (associated(ptr2d)) then
           nullify(ptr2d)
         end if
@@ -223,11 +215,11 @@ module mod_utils
         end if
 
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Remove temporary fields
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldDestroy(aField, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -265,29 +257,29 @@ module mod_utils
       type(ESMF_StaggerLoc) :: staggerLoc
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, arrayspec=arraySpec,                    &
                          grid=grid, staggerloc=staggerLoc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Query grid
 !-----------------------------------------------------------------------
-!
+
       call ESMF_GridGet(grid, distgrid=distGrid,                        &
                         localDECount=localDECount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Allocate arrays for totalLWidth, totalUWidth and query field
 !-----------------------------------------------------------------------
-!
+
       if (.not. allocated(tlw)) then
         allocate(tlw(2,localDECount))
         allocate(tuw(2,localDECount))
@@ -296,11 +288,11 @@ module mod_utils
       call ESMF_FieldGet(field, totalLWidth=tlw, totalUWidth=tuw, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Create field from base field attributes
 !-----------------------------------------------------------------------
-!
+
       if (localDECount == 1) then
         UTIL_FieldCreate = ESMF_FieldCreate(grid, arraySpec,            &
                                             staggerloc=staggerLoc,      &
@@ -316,31 +308,31 @@ module mod_utils
           line=__LINE__, file=FILENAME)) return
 
       do k = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from field
 !-----------------------------------------------------------------------
-!
+
         call ESMF_FieldGet(UTIL_FieldCreate, localDe=k, farrayPtr=ptr2d,  &
                            computationalLBound=cLbnd,                     &
                            computationalUBound=cUbnd, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK,                   &
                               staggerloc=staggerLoc,                      &
                               localDe=k, farrayPtr=msk2d, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Initialize pointer
 !-----------------------------------------------------------------------
-!
+
         do i = cLbnd(1), cUbnd(1)
           do j = cLbnd(2), cUbnd(2)
             if (msk2d(i,j) /= dstLandMask) then
@@ -350,12 +342,12 @@ module mod_utils
             end if
           end do
         end do
-!
+
 !-----------------------------------------------------------------------
 !       Nullify pointer to make sure that it does not point on a random
 !       part in the memory
 !-----------------------------------------------------------------------
-!
+
         if (associated(ptr2d)) then
           nullify(ptr2d)
         end if
@@ -364,20 +356,20 @@ module mod_utils
         end if
 
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Deallocate temporary fields
 !-----------------------------------------------------------------------
-!
+
       if (allocated(tlw)) then
         deallocate(tlw)
         deallocate(tuw)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Check consistency of the created field
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldValidate(UTIL_FieldCreate, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -407,19 +399,19 @@ module mod_utils
 
       UTIL_CalcIntegral = ZERO_R8
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, grid=grid, staggerloc=sLoc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -430,39 +422,39 @@ module mod_utils
 
       total_de(1) = ZERO_R8
       do k = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !       Get field pointers
 !-----------------------------------------------------------------------
-!
+
         call ESMF_FieldGet(field, localDe=k, farrayPtr=ptrField,          &
                            computationalLBound=cLbnd,                     &
                            computationalUBound=cUbnd, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (area item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_AREA, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=ptrArea, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=ptrMask, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Calculate integral for each local DE and PET
 !-----------------------------------------------------------------------
-!
+
         do i = cLbnd(1), cUbnd(1)
           do j = cLbnd(2), cUbnd(2)
             if (any(ptrMask(i,j) == maskval)) then
@@ -470,12 +462,12 @@ module mod_utils
             end if
           end do
         end do
-!
+
 !-----------------------------------------------------------------------
 !       Nullify pointer to make sure that it does not point on a random
 !       part in the memory
 !-----------------------------------------------------------------------
-!
+
         if (associated(ptrField)) then
           nullify(ptrField)
         end if
@@ -487,11 +479,11 @@ module mod_utils
         end if
 
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write sum of each PETs
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 2) then
         call ESMF_FieldGet(field, name=fname, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -501,22 +493,22 @@ module mod_utils
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Collect integral from PETs and calculate global one
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMAllReduce(vm, total_de, total_global, 1,              &
                             ESMF_REDUCE_SUM, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
       UTIL_CalcIntegral = total_global(1)
-!
+
 !-----------------------------------------------------------------------
 !     Debug: write global sum
 !-----------------------------------------------------------------------
-!
+
       if (debugLevel > 1) then
         if (localPet == 0) then
           write(*,30) localPet, total_global(1), trim(fname)
@@ -525,15 +517,15 @@ module mod_utils
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                              line=__LINE__, file=FILENAME)) return
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
  20   format(" PET(",I3.3,") - DE(",I2.2,                               &
              ") - INTEGRAL = ",E14.5," (",A,")")
  30   format(" PET(",I3.3,") - GLOBAL INTEGRAL = ",E14.5," (",A,")")
-!
+
     end function UTIL_CalcIntegral
 
     subroutine UTIL_AdjustField(vm, field, maskval, error, rc)
@@ -557,19 +549,19 @@ module mod_utils
       type(ESMF_StaggerLoc) :: sLoc
 
       rc = ESMF_SUCCESS
-!
+
 !-----------------------------------------------------------------------
 !     Query VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Get number of local DEs
 !-----------------------------------------------------------------------
-!
+
       call ESMF_FieldGet(field, grid=grid, name=fname,                  &
                          staggerloc=sLoc, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -582,29 +574,29 @@ module mod_utils
       total_de(1) = ZERO_R8
 
       do k = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (area item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_AREA, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=ptrArea, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=ptrMask, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Calculate total area of matched region
 !-----------------------------------------------------------------------
-!
+
         cLbnd(1) = lbound(ptrMask, dim=1)
         cUbnd(1) = ubound(ptrMask, dim=1)
         cLbnd(2) = lbound(ptrMask, dim=2)
@@ -617,12 +609,12 @@ module mod_utils
             end if
           end do
         end do
-!
+
 !-----------------------------------------------------------------------
 !       Nullify pointer to make sure that it does not point on a random
 !       part in the memory
 !-----------------------------------------------------------------------
-!
+
         if (associated(ptrArea)) then
           nullify(ptrArea)
         end if
@@ -631,55 +623,55 @@ module mod_utils
         end if
 
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Collect calculated total area from PETs
 !-----------------------------------------------------------------------
-!
+
       total_global(1) = ZERO_R8
       call ESMF_VMAllReduce(vm, total_de, total_global, 1,              &
                             ESMF_REDUCE_SUM, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Calculate error per unit area
 !-----------------------------------------------------------------------
-!
+
       error_unit = error/total_global(1)
       if (localPet == 0) then
         write(*,40) localPet, total_global(1), error_unit, trim(fname)
       end if
-!
+
 !-----------------------------------------------------------------------
 !     Adjust field using error
 !-----------------------------------------------------------------------
-!
+
       do k = 0, localDECount-1
-!
+
 !-----------------------------------------------------------------------
 !       Get field pointers
 !-----------------------------------------------------------------------
-!
+
         call ESMF_FieldGet(field, localDe=k, farrayPtr=ptrField,          &
                            computationalLBound=cLbnd,                     &
                            computationalUBound=cUbnd, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Get pointer from grid (mask item)
 !-----------------------------------------------------------------------
-!
+
         call ESMF_GridGetItem(grid, ESMF_GRIDITEM_MASK, staggerloc=sLoc,  &
                               localDe=k, farrayPtr=ptrMask, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !       Add error
 !-----------------------------------------------------------------------
-!
+
         do i = cLbnd(1), cUbnd(1)
           do j = cLbnd(2), cUbnd(2)
             if (any(ptrMask(i,j) == maskval)) then
@@ -687,12 +679,12 @@ module mod_utils
             end if
           end do
         end do
-!
+
 !-----------------------------------------------------------------------
 !       Nullify pointer to make sure that it does not point on a random
 !       part in the memory
 !-----------------------------------------------------------------------
-!
+
         if (associated(ptrField)) then
           nullify(ptrField)
         end if
@@ -701,11 +693,11 @@ module mod_utils
         end if
 
       end do
-!
+
 !-----------------------------------------------------------------------
 !     Format definition
 !-----------------------------------------------------------------------
-!
+
  40   format(" PET(",I3.3,") - AVGERAGE DIFF = ",2E14.5," (",A,")")
 
     end subroutine UTIL_AdjustField
@@ -719,19 +711,19 @@ module mod_utils
 
       type(ESMF_VM) :: vm
       integer :: var_local(1)
-!
+
 !-----------------------------------------------------------------------
 !     Get global VM
 !-----------------------------------------------------------------------
-!
+
       call ESMF_VMGetGlobal(vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
 !-----------------------------------------------------------------------
 !     Broadcast data
 !-----------------------------------------------------------------------
-!
+
       var_local(1) = var
 
       call ESMF_VMBroadcast(vm, bcstData=var_local, count=1,            &
