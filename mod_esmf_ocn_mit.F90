@@ -9,7 +9,7 @@
 !     OCN gridded component code
 !-----------------------------------------------------------------------
 !
-      module mod_esmf_ocn
+module mod_esmf_ocn
 !
 !-----------------------------------------------------------------------
 !     Used module declarations
@@ -268,9 +268,9 @@
 !     Get gridded component clock
 !-----------------------------------------------------------------------
 !
-      call ESMF_GridCompGet(gcomp, clock=clock, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
+     call ESMF_GridCompGet(gcomp, clock=clock, rc=rc)
+     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                            line=__LINE__, file=FILENAME)) return
 !
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -2549,5 +2549,4 @@
 !
       end function findPet
 !
-      end module mod_esmf_ocn
-
+end module mod_esmf_ocn

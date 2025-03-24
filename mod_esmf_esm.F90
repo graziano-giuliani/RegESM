@@ -6,51 +6,47 @@
 #define FILENAME "mod_esmf_esm.F90"
 !
 !-----------------------------------------------------------------------
-!     ESM gridded component code
+! ESM gridded component code
 !-----------------------------------------------------------------------
 !
-      module mod_esmf_esm
+module mod_esmf_esm
 !
 !-----------------------------------------------------------------------
-!     Used module declarations
+! Used module declarations
 !-----------------------------------------------------------------------
 !
-      use ESMF
-      use NUOPC
-      use NUOPC_Driver,                                                 &
-          NUOPC_SetServices            => SetServices,                  &
-          NUOPC_Label_SetModelServices => label_SetModelServices,       &
-          NUOPC_Label_SetRunSequence   => label_SetRunSequence
+  use ESMF
+  use NUOPC
+  use NUOPC_Driver,                                                 &
+      NUOPC_SetServices            => SetServices,                  &
+      NUOPC_Label_SetModelServices => label_SetModelServices,       &
+      NUOPC_Label_SetRunSequence   => label_SetRunSequence
+
+  use mod_types
+  use mod_esmf_atm, only: ATM_SetServices
+  use mod_esmf_ocn, only: OCN_SetServices
+  use mod_esmf_rtm, only: RTM_SetServices
+  use mod_esmf_wav, only: WAV_SetServices
+  use mod_esmf_cop, only: COP_SetServices
+  use mod_esmf_cpl, only: CPL_SetServices
+
+  implicit none
+  private
 !
-      use mod_types
-      use mod_esmf_atm, only: ATM_SetServices
-      use mod_esmf_ocn, only: OCN_SetServices
-      use mod_esmf_rtm, only: RTM_SetServices
-      use mod_esmf_wav, only: WAV_SetServices
-      use mod_esmf_cop, only: COP_SetServices
-      use mod_esmf_cpl, only: CPL_SetServices
+!-----------------------------------------------------------------------
+! Public subroutines
+!-----------------------------------------------------------------------
 !
+  public :: ESM_SetServices
+
+  contains
+
+    subroutine ESM_SetServices(gcomp, rc)
       implicit none
-      private
-!
-!-----------------------------------------------------------------------
-!     Public subroutines
-!-----------------------------------------------------------------------
-!
-      public :: ESM_SetServices
-!
-      contains
-!
-      subroutine ESM_SetServices(gcomp, rc)
-      implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -62,7 +58,7 @@
       if (esmStartTime /= esmRestartTime) then
         restarted = .true.
       end if
-!
+
       if (restarted) then
         esmClock = ESMF_ClockCreate(esmTimeStep,                        &
                                     esmRestartTime,                     &
@@ -74,10 +70,10 @@
                                     stopTime=esmStopTime,               &
                                     name='ESM_clock', rc=rc)
       end if
-!
+
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_GridCompSet(gcomp, clock=esmClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -99,36 +95,27 @@
                                 specRoutine=ESM_SetModelServices, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       call NUOPC_CompSpecialize(gcomp,                                  &
                                 specLabel=NUOPC_Label_SetRunSequence,   &
                                 specRoutine=ESM_SetRunSequence, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
-      end subroutine ESM_SetServices
-!
-      subroutine ESM_SetModelServices(gcomp, rc)
+
+    end subroutine ESM_SetServices
+
+    subroutine ESM_SetModelServices(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j
-!
+
       type(ESMF_GridComp) :: child
       type(ESMF_CplComp) :: connector
-!
+
       rc = ESMF_SUCCESS
-!
 !
 !-----------------------------------------------------------------------
 !     SetServices for model components
@@ -164,12 +151,12 @@
           end if
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
               line=__LINE__, file=FILENAME)) return
-!
+
           if (debugLevel > 0) then
-          call ESMF_AttributeSet(child, name="Verbosity", value="high", &
-                                 rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
-                                 line=__LINE__, file=FILENAME)) return
+            call ESMF_AttributeSet(child, name="Verbosity", value="high", &
+                                   rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
+                                   line=__LINE__, file=FILENAME)) return
           end if
         end if
       end do
@@ -200,31 +187,23 @@
           end if
         end do
       end do
-      end subroutine ESM_SetModelServices
-!
-      subroutine ESM_SetRunSequence(gcomp, rc)
+    end subroutine ESM_SetModelServices
+
+    subroutine ESM_SetRunSequence(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, maxdiv, runid, localPet, petCount
       character(ESMF_MAXSTR) :: cname
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Time) :: startTime
       type(ESMF_Time) :: stopTime
       type(ESMF_TimeInterval) :: timeStep
       type(ESMF_Clock) :: internalClock
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -234,7 +213,7 @@
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
@@ -256,7 +235,7 @@
           end if
         end do
       end do
-!
+
       if (localPet == 0) then
         write(*,fmt="(A,I5)") "RUN ID = ", runid
       end if
@@ -275,27 +254,27 @@
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iatmos)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iocean)%name),&
                                     rc=rc)
@@ -310,27 +289,27 @@
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iatmos)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iocean)%name),&
                                     rc=rc)
@@ -346,27 +325,27 @@
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iwavee)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iwavee)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iatmos)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iwavee)%name),&
                                     rc=rc)
@@ -378,75 +357,76 @@
 !-----------------------------------------------------------------------
 !
       else if (runid == 12100) then
+
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iriver)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iriver)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                        linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iriver)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iatmos)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iocean)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_GridCompGet(gcomp, clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_ClockGet(internalClock, timeStep=timeStep,            &
                            startTime=startTime, stopTime=stopTime,      &
                            rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
                      connectors(Iocean,Iatmos)%divDT)
         cname = trim(connectors(Iatmos,Iocean)%name)//'_clock'
-!
+
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
                                          timeStep=timeStep/maxdiv,      &
                                          startTime=startTime,           &
@@ -454,7 +434,7 @@
                                          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverSetRunSequence(gcomp, slot=2,                  &
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -468,46 +448,46 @@
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iriver)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iriver)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                        linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                     compLabel=trim(models(Iriver)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iwavee)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
@@ -541,33 +521,33 @@
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iocean)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iwavee)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_GridCompGet(gcomp, clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_ClockGet(internalClock, timeStep=timeStep,            &
                            startTime=startTime, stopTime=stopTime,      &
                            rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
                      connectors(Iocean,Iatmos)%divDT)
         cname = trim(connectors(Iatmos,Iocean)%name)//'_clock'
-!
+
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
                                          timeStep=timeStep/maxdiv,      &
                                          startTime=startTime,           &
@@ -575,7 +555,7 @@
                                          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverSetRunSequence(gcomp, slot=2,                  &
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -589,68 +569,68 @@
         call NUOPC_DriverNewRunSequence(gcomp, slotCount=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Iocean)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Iatmos)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
                                        linkSlot=2, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iatmos)%name),&
                                  dstCompLabel=trim(models(Icopro)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                  srcCompLabel=trim(models(Iocean)%name),&
                                  dstCompLabel=trim(models(Icopro)%name),&
                                  rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iatmos)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Iocean)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
                                     compLabel=trim(models(Icopro)%name),&
                                     rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_GridCompGet(gcomp, clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call ESMF_ClockGet(internalClock, timeStep=timeStep,            &
                            startTime=startTime, stopTime=stopTime,      &
                            rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
                      connectors(Iocean,Iatmos)%divDT,                   &
                      connectors(Iatmos,Icopro)%divDT,                   &
@@ -658,7 +638,7 @@
         cname = trim(models(Iatmos)%name)//"-TO-"//                     &
                 trim(models(Iocean)%name)//"-TO-"//                     &
                 trim(models(Icopro)%name)//'_clock'
-!
+
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
                                          timeStep=timeStep/maxdiv,      &
                                          startTime=startTime,           &
@@ -666,7 +646,7 @@
                                          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
-!
+
         call NUOPC_DriverSetRunSequence(gcomp, slot=2,                  &
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -682,7 +662,7 @@
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
       end if
-!
-      end subroutine ESM_SetRunSequence
-!
-      end module mod_esmf_esm
+
+    end subroutine ESM_SetRunSequence
+
+end module mod_esmf_esm

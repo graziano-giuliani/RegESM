@@ -9,47 +9,25 @@
 !     Module file for generic utilities
 !-----------------------------------------------------------------------
 !
-      module mod_shared
+module mod_shared
 !
 !-----------------------------------------------------------------------
 !     Used module declarations
 !-----------------------------------------------------------------------
 !
-      use mod_types
+  use mod_types
 !
-      implicit none
+  implicit none
 !
 !-----------------------------------------------------------------------
 !     Interfaces
 !-----------------------------------------------------------------------
 !
-      interface gc_latlon
-        module procedure gc_latlon_r8
-      end interface gc_latlon
-!
-      contains
-!
-      subroutine gc_latlon_r8(plon, plat, imin, imax, jmin, jmax,       &
-                         lon, lat, distance)
-      implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
-      real*8, intent(in) :: plon
-      real*8, intent(in) :: plat
-      integer, intent(in) :: imin, imax, jmin, jmax
-      real*8, intent(in) :: lon(imin:imax,jmin:jmax)
-      real*8, intent(in) :: lat(imin:imax,jmin:jmax)
-      real*8, intent(inout) :: distance(imin:imax,jmin:jmax)
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
-      integer :: i, j
-      real*8 :: dlon, dlat, a, c, r
+  interface gc_latlon
+    module procedure gc_latlon_r8
+  end interface gc_latlon
+
+  contains
 !
 !-----------------------------------------------------------------------
 !     Calculate distance between grid points and given origin (plon,plat)
@@ -57,6 +35,19 @@
 !     Sky and Telescope, vol. 68, no. 2, 1984, p. 159) - km
 !-----------------------------------------------------------------------
 !
+    subroutine gc_latlon_r8(plon, plat, imin, imax, jmin, jmax,       &
+                            lon, lat, distance)
+      implicit none
+
+      real(8), intent(in) :: plon
+      real(8), intent(in) :: plat
+      integer, intent(in) :: imin, imax, jmin, jmax
+      real(8), intent(in) :: lon(imin:imax,jmin:jmax)
+      real(8), intent(in) :: lat(imin:imax,jmin:jmax)
+      real(8), intent(inout) :: distance(imin:imax,jmin:jmax)
+      integer :: i, j
+      real(8) :: dlon, dlat, a, c, r
+
       do i = imin, imax
         do j = jmin, jmax
           dlon = lon(i,j)-plon
@@ -68,27 +59,17 @@
           distance(i,j) = r*c
         end do
       end do
-!
-      return
-      end subroutine gc_latlon_r8
-!
-      subroutine print_matrix(inp, imin, imax, jmin, jmax,              &
-                              iskip, jskip, pet, id, header)
+    end subroutine gc_latlon_r8
+
+    subroutine print_matrix(inp, imin, imax, jmin, jmax,              &
+                            iskip, jskip, pet, id, header)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer, intent(in) :: imin, imax, jmin, jmax
-      real*8 , intent(in) :: inp(imin:imax,jmin:jmax)
+      real(8) , intent(in) :: inp(imin:imax,jmin:jmax)
       integer, intent(in) :: iskip, jskip, pet, id
       character(len=*), intent(in) :: header
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j
       character(100) :: fmt_123
 !
@@ -97,39 +78,29 @@
 !-----------------------------------------------------------------------
 !
       write(id, fmt="('PET(',I2,') - ',A)") pet, trim(header)
-!
+
       write(fmt_123, fmt="('(/, 5X, ', I3, 'I10)')") (imax-imin)+1
       write(id, fmt=trim(fmt_123))  (i, i=imin, imax, iskip)
-!
+
       write(fmt_123, fmt="('(I5, ', I3, 'F10.4)')") imax
       do j=jmin, jmax, jskip
         write(id, fmt=trim(fmt_123)) j, (inp(i,j),i=imin, imax, iskip)
       end do
-!
-      return
-      end subroutine print_matrix
-!
-      subroutine get_ij(vm, plon, plat, i, j, rc)
+    end subroutine print_matrix
+
+    subroutine get_ij(vm, plon, plat, i, j, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_VM), intent(in) :: vm
-      real*8, intent(in) :: plon, plat
+      real(8), intent(in) :: plon, plat
       integer, intent(inout) :: i, j
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: k, ii, jj, localPet, petCount, sendData(2)
       integer :: imin, imax, jmin, jmax
-      real*8, allocatable :: distance(:,:)
-      real*8 :: mdistance
-!
+      real(8), allocatable :: distance(:,:)
+      real(8) :: mdistance
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -147,7 +118,7 @@
 !
       k = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                   &
                  mask=(models(Iocean)%mesh(:)%gtype == Icross))
-!
+
       imin = lbound(models(Iocean)%mesh(k)%glon, dim=1)
       imax = ubound(models(Iocean)%mesh(k)%glon, dim=1)
       jmin = lbound(models(Iocean)%mesh(k)%glon, dim=2)
@@ -176,7 +147,7 @@
 !
       mdistance = minval(distance, mask=(models(Iocean)%mesh(k)%gmsk == &
                          models(Iocean)%isLand))
-!
+
       i = 0
       j = 0
       do jj = jmin, jmax
@@ -209,29 +180,21 @@
 !-----------------------------------------------------------------------
 !
       if (allocated(distance)) deallocate(distance)
-!
-      end subroutine get_ij
-!
-      subroutine get_ll(vm, i, j, plon, plat, rc)
+
+    end subroutine get_ij
+
+    subroutine get_ll(vm, i, j, plon, plat, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_VM), intent(in) :: vm
       integer, intent(in) :: i, j
-      real*8, intent(inout) :: plon, plat
+      real(8), intent(inout) :: plon, plat
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: k, ii, jj, localPet, petCount
       integer :: imin, imax, jmin, jmax
-      real*8 :: sendData(2)
-!
+      real(8) :: sendData(2)
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -261,7 +224,7 @@
 !
       plon = MISSING_R8
       plat = MISSING_R8
-!
+
       do jj = jmin, jmax
         do ii = imin, imax
           if (i == ii .and. j == jj) then
@@ -285,36 +248,26 @@
                              line=__LINE__, file=FILENAME)) return
       plon = sendData(1)
       plat = sendData(2)
-!
-      end subroutine get_ll
-!
+
+    end subroutine get_ll
+
 #ifdef CHYM_SUPPORT
-      subroutine init_rivers(vm, ptr, Nx, Ny, rc)
+    subroutine init_rivers(vm, ptr, Nx, Ny, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer, intent(in) :: Nx, Ny
       real*8, dimension(:,:) , intent(in) :: ptr
       type(ESMF_VM), intent(in) :: vm
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
-      integer :: i, j, k, r, np, localPet, petCount, nRiver
-      integer :: numrivers, sNx, sNy, numsend
+
+      integer :: i, j, k, r, localPet, petCount
+      integer :: numrivers
       integer :: ibuffer(1)
       real*8 :: dbuffer(1)
       logical , dimension(Nx,Ny) :: is_river
-!
+
       rc = ESMF_SUCCESS
       numrivers = 0
-!      if (.not. allocated(ptr) .and. localPet == 0) allocate(ptr(Nx,Ny))
-!
 !
 !-----------------------------------------------------------------------
 !     Query VM
@@ -323,12 +276,7 @@
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!!F      call ESMF_VMGatherV(vm, sendData=ptr, sendCount= sNx*sNy,         &
-!!F       recvData=recvptr,recvCount = Nx*Ny,recvOffsets=8 , rootPet=0,    &
-!!F           rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-!
+
       if ( localPet == 0 ) then
         is_river = .false.
         do j = 2, Ny-1
@@ -374,7 +322,6 @@
             do i=2,Nx-1
               if ( is_river(i,j) ) then
                 r = r + 1
-!                print*,'PTR(i,j):::::::::',ptr(i,j),'I,J:',i,j
                 rivers(r)%isActive = 1
                 rivers(r)%monfac(:) = 1.0
                 rivers(r)%eRadius = 10.  !Laura x il Nord Adriatico, default 50.
@@ -459,29 +406,27 @@
         write(6,*) 'RIVER INITIALIZATION COMPLETE.'
       end if
 
-      end subroutine init_rivers
+    end subroutine init_rivers
 #endif
-
-      subroutine map_rivers(vm, rc)
+!
+!-----------------------------------------------------------------------
+!   Map closest ocean grids to the river points
+!   The effective radius is used to find the set of ocean grids
+!   The algorithm runs on PET = 0 beacuse only root PET
+!   has global view of grid coordinates
+!-----------------------------------------------------------------------
+!
+    subroutine map_rivers(vm, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
       type(ESMF_VM), intent(in) :: vm
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, k, r, np, localPet, petCount, nRiver
       integer :: imin, imax, jmin, jmax, pos(2), ibuffer(1)
-      real*8, dimension(:,:), allocatable :: distance
-      real*8, dimension(:), allocatable :: dbuffer2
-      real*8 :: totalArea, dbuffer1(1)
-!
+      real(8), dimension(:,:), allocatable :: distance
+      real(8), dimension(:), allocatable :: dbuffer2
+      real(8) :: totalArea, dbuffer1(1)
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -491,33 +436,25 @@
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
-!-----------------------------------------------------------------------
-!     Map closest ocean grids to the river points
-!     The effective radius is used to find the set of ocean grids
-!     The algorithm runs on PET = 0 beacuse only root PET
-!     has global view of grid coordinates
-!-----------------------------------------------------------------------
-!
       ! get number of specified rivers
       nRiver = size(rivers, dim=1)
-!
+
       if (localPet == 0) then
         ! get index of used grid stencile (algorithm uses cross points)
         k = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                 &
                    mask=(models(Iocean)%mesh(:)%gtype == Icross))
-!
+
         ! get limits
         imin = lbound(models(Iocean)%mesh(k)%glon, dim=1)
         imax = ubound(models(Iocean)%mesh(k)%glon, dim=1)
         jmin = lbound(models(Iocean)%mesh(k)%glon, dim=2)
         jmax = ubound(models(Iocean)%mesh(k)%glon, dim=2)
-!
+
         ! allocate temporary distance array
         if (.not. allocated(distance)) then
           allocate(distance(imin:imax,jmin:jmax))
         end if
-!
+
         do r = 1, nRiver
           if (rivers(r)%isActive > 0) then
             ! calculate distance to river point
@@ -526,11 +463,11 @@
                            imin, imax, jmin, jmax,                      &
                            models(Iocean)%mesh(k)%glon,                 &
                            models(Iocean)%mesh(k)%glat, distance)
-!
+
             ! find closest ocean model grid
             pos = minloc(distance, mask=(models(Iocean)%mesh(k)%gmsk == &
                          models(Iocean)%isOcean))
-!
+
             ! check position indices and skip loop
             if (any(pos == 0)) then
               rivers(r)%mapSize = ZERO_I4
@@ -538,7 +475,7 @@
               rivers(r)%mapTable(:,:) = MISSING_R8
               cycle
             end if
-!
+
             ! calculate distance to closest ocean model grid
             distance = ZERO_R8
             call gc_latlon(models(Iocean)%mesh(k)%glon(pos(1),pos(2)),  &
@@ -546,19 +483,19 @@
                            imin, imax, jmin, jmax,                      &
                            models(Iocean)%mesh(k)%glon,                 &
                            models(Iocean)%mesh(k)%glat, distance)
-!
+
             ! find list of grid indices
             np = ZERO_I4
             totalArea = ZERO_R8
             rivers(r)%mapTable(:,:) = MISSING_R8
-!
+
             do i = imin, imax
               do j = jmin, jmax
                 if ((distance(i,j) <= rivers(r)%eRadius .and.           &
                     (models(Iocean)%mesh(k)%gmsk(i,j) ==                &
                      models(Iocean)%isOcean))) then
                   np = np+1
-!
+
                   ! check for size
                   if (np > MAX_MAPPED_GRID) then
                     write(*,fmt='(A,I5,A)') "[error] - Try to reduce "//&
@@ -568,10 +505,10 @@
                           MAX_MAPPED_GRID
                     call ESMF_Finalize(endflag=ESMF_END_ABORT)
                   end if
-!
+
                   ! calculate total area of mapped ocean grid points
                   totalArea = totalArea+models(Iocean)%mesh(k)%gare(i,j)
-!
+
                   rivers(r)%mapTable(1,np) = i
                   rivers(r)%mapTable(2,np) = j
                   rivers(r)%mapTable(3,np) =                            &
@@ -579,17 +516,17 @@
                 end if
               end do
             end do
-!
+
             rivers(r)%mapSize = np
             rivers(r)%mapArea = totalArea
-!
+
             ! calculate weights
             do i = 1, np
               rivers(r)%mapTable(3,i) = rivers(r)%mapTable(3,i)/totalArea
             end do
           end if
         end do
-!
+
         ! deallocate temporary distance array
         if (allocated(distance)) then
           deallocate(distance)
@@ -615,7 +552,7 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
           rivers(r)%mapSize = ibuffer(1)
-!
+
           ! broadcast total surface area effected by each river
           dbuffer1(1) = rivers(r)%mapArea
           call ESMF_VMBroadcast(vm, bcstData=dbuffer1, count=1,         &
@@ -623,13 +560,13 @@
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
           rivers(r)%mapArea = dbuffer1(1)
-!
+
           ! allocate send buffer for river
           np = rivers(r)%mapSize
           if (.not. allocated(dbuffer2)) then
             allocate(dbuffer2(np))
           end if
-!
+
           ! broadcast info of effected grid points (i, j and weight)
           do i = 1, 3
             dbuffer2 = rivers(r)%mapTable(i,1:np)
@@ -640,34 +577,24 @@
                                    line=__LINE__, file=FILENAME)) return
             rivers(r)%mapTable(i,1:np) = dbuffer2
           end do
-!
+
           ! deallocate buffer
           if (allocated(dbuffer2)) deallocate(dbuffer2)
         end if
       end do
-!
-      end subroutine map_rivers
-!
-      subroutine print_timestamp(field, ctime, localPet, str, rc)
+    end subroutine map_rivers
+
+    subroutine print_timestamp(field, ctime, localPet, str, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
       type(ESMF_Field), intent(in) :: field
       type(ESMF_Time),  intent(in) :: ctime
       integer, intent(in) :: localPet
       character(*), intent(in) :: str
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: vl1(9), vl2(9)
       character(ESMF_MAXSTR) :: fname, str1, str2
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -687,7 +614,7 @@
                              purpose="Instance", rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       write(str1,10) vl1(1), vl1(2), vl1(3), vl1(4), vl1(5), vl1(6)
 !
 !-----------------------------------------------------------------------
@@ -698,7 +625,7 @@
                         h=vl2(4), m=vl2(5), s=vl2(6), rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       write(str2,10) vl2(1), vl2(2), vl2(3), vl2(4), vl2(5), vl2(6)
 !
 !-----------------------------------------------------------------------
@@ -721,91 +648,63 @@
 10    format(I4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 20    format(A,': TIMESTAMP = ',A,' /= ',A,' FOR ',A,' ERROR !!!')
 30    format(A,': TIMESTAMP = ',A,' FOR ',A)
+
+    end subroutine print_timestamp
 !
-      end subroutine print_timestamp
+!-----------------------------------------------------------------------
+!   Capitalize each letter if it is lowecase
+!-----------------------------------------------------------------------
 !
-      pure function to_upper (str) result (string)
+    pure function to_upper (str) result (string)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       character(*), intent(in) :: str
       character(len(str)) :: string
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: ic, i
       character(26), parameter :: cap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       character(26), parameter :: low = 'abcdefghijklmnopqrstuvwxyz'
-!
-!-----------------------------------------------------------------------
-!     capitalize each letter if it is lowecase
-!-----------------------------------------------------------------------
-!
       string = str
       do i = 1, len_trim(str)
         ic = index(low, str(i:i))
         if (ic > 0) string(i:i) = cap(ic:ic)
       end do
+    end function to_upper
 !
-      end function to_upper
+!-----------------------------------------------------------------------
+!   Lowercase any letter if uppercase
+!-----------------------------------------------------------------------
 !
-      pure function to_lower (str) result (string)
+    pure function to_lower (str) result (string)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       character(*), intent(in) :: str
       character(len(str)) :: string
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: ic, i
       character(26), parameter :: cap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       character(26), parameter :: low = 'abcdefghijklmnopqrstuvwxyz'
-!
-!-----------------------------------------------------------------------
-!     capitalize each letter if it is lowecase
-!-----------------------------------------------------------------------
-!
+
       string = str
       do i = 1, len_trim(str)
         ic = index(cap, str(i:i))
         if (ic > 0) string(i:i) = low(ic:ic)
       end do
+    end function to_lower
 !
-      end function to_lower
+!-----------------------------------------------------------------------
+!   Replace text with replacement in the given string
+!-----------------------------------------------------------------------
 !
-      function replace_str (str, text, repl) result (string)
+    function replace_str (str, text, repl) result (string)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       character(*), intent(in) :: str
       character(*), intent(in) :: text
       character(*), intent(in) :: repl
       character(len(str)-len(text)+len(repl)) :: string
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: ind, s1, s2
-!
-!-----------------------------------------------------------------------
-!     Replace text with replacement in the given string
-!-----------------------------------------------------------------------
-!
       string = str
       s1 = len(text)
       s2 = len(repl)
@@ -817,28 +716,17 @@
           string = string(1:ind-1)//repl(1:s2)//string(ind+s1:)
         end if
       end do
-!
-      end function replace_str
-!
-      function auto_tile (ain) result (aout)
+    end function replace_str
+
+    function auto_tile (ain) result (aout)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
       integer, intent(in) :: ain
       integer :: aout(2)
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, atmp, divisor
       integer :: arr(100)
-!
+
       atmp = ain
-!
       i = 0
       do
         if (mod(atmp,2) /= 0 .or. atmp == 1) exit
@@ -846,7 +734,7 @@
         atmp = atmp/2
         arr(i) = 2
       end do
-!
+
       divisor = 3
       do
         if (divisor > atmp) exit
@@ -858,7 +746,7 @@
         end do
         divisor = divisor+2
       end do
-!
+
       aout = 1
       if (i > 1) then
         do j = 1, i-1
@@ -869,7 +757,6 @@
         aout(1) = i
         aout(2) = 1
       end if
-!
-      end function auto_tile
-!
-      end module mod_shared
+    end function auto_tile
+
+end module mod_shared
