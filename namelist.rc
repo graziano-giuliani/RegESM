@@ -93,7 +93,7 @@ Calendar:    gregorian
 StartTime:   2008 01 01 00 00 00
 RestartTime: 2008 01 01 00 00 00 
 StopTime:    2009 01 01 00 00 00
-TimeStep:    0000 00 00 01 00 00
+TimeStep:    0000 00 01 00 00 00
 #
 #-----------------------------------------------------------------------
 #     Coupling time step among components

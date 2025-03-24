@@ -24,12 +24,16 @@ program regesm
 ! Initialize ESMF framework
 !-----------------------------------------------------------------------
 
-  call ESMF_Initialize(logkindflag=ESMF_LOGKIND_SINGLE, vm=vm,      &
-                       ioUnitLBound=20, ioUnitUBound=1000, rc=rc)
+  call ESMF_Initialize(logkindflag=ESMF_LOGKIND_MULTI, vm=vm,      &
+                       defaultCalkind=ESMF_CALKIND_GREGORIAN, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
       line=__LINE__, file=__FILE__))                                &
       call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
+  call ESMF_LogWrite("RegESM STARTING", ESMF_LOGMSG_INFO, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__))                             &
+      call ESMF_Finalize(endflag=ESMF_END_ABORT)
 !-----------------------------------------------------------------------
 ! Create component
 !-----------------------------------------------------------------------
@@ -78,7 +82,6 @@ program regesm
 ! Initialize component
 !-----------------------------------------------------------------------
 
-  call ESMF_VMBarrier(vm, rc=rc)
   call ESMF_GridCompInitialize(esmComp, userRc=urc, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
       line=__LINE__, file=__FILE__))                                &
@@ -132,6 +135,11 @@ program regesm
 !-----------------------------------------------------------------------
 ! Finalize ESMF framework
 !-----------------------------------------------------------------------
+
+  call ESMF_LogWrite("RegESM FINISHED", ESMF_LOGMSG_INFO, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, file=__FILE__)) &
+    call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
   call ESMF_Finalize(rc=rc)
 

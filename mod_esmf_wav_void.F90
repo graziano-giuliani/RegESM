@@ -27,35 +27,35 @@ module mod_esmf_wav
 
   contains
 
-    subroutine WAV_SetServices(gcomp, rc)
+    subroutine WAV_SetServices(model, rc)
       implicit none
-      type(ESMF_GridComp) :: gcomp
+      type(ESMF_GridComp) :: model
       integer, intent(out) :: rc
 
       rc = ESMF_SUCCESS
 
-      call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
+      call NUOPC_CompDerive(model, NUOPC_SetServices, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, file=__FILE__)) return  ! bail out
 
-      call NUOPC_CompAttributeSet(gcomp, name="Verbosity", value="high", rc=rc)
+      call NUOPC_CompAttributeSet(model, name="Verbosity", value="high", rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, file=__FILE__)) return  ! bail out
 
       ! specialize model
-      call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_label_Advertise, &
+      call NUOPC_CompSpecialize(model, specLabel=NUOPC_label_Advertise, &
                                 specRoutine=Advertise, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
-      call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_label_RealizeProvided, &
+      call NUOPC_CompSpecialize(model, specLabel=NUOPC_label_RealizeProvided, &
                                 specRoutine=Realize, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
-      call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_label_SetClock, &
+      call NUOPC_CompSpecialize(model, specLabel=NUOPC_label_SetClock, &
                                 specRoutine=SetClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
-      call NUOPC_CompSpecialize(gcomp, specLabel=NUOPC_label_Advance, &
+      call NUOPC_CompSpecialize(model, specLabel=NUOPC_label_Advance, &
                                 specRoutine=Advance, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
@@ -96,7 +96,30 @@ module mod_esmf_wav
     subroutine Advance(model, rc)
       type(ESMF_GridComp)  :: model
       integer, intent(out) :: rc
+
+      type(ESMF_Clock)     :: clock
+      type(ESMF_State)     :: importState, exportState
+      character(len=160)   :: msgString
+
       rc = ESMF_SUCCESS
+
+      call NUOPC_ModelGet(model, modelClock=clock, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      call ESMF_ClockPrint(clock, options="currTime", &
+          preString="------>Advancing ATM from: ", unit=msgString, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      call ESMF_ClockPrint(clock, options="stopTime", &
+          preString="---------------------> to: ", unit=msgString, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
     end subroutine Advance
 
 end module mod_esmf_wav
