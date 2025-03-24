@@ -210,7 +210,7 @@ module mod_types
 !   Running mode
 !-----------------------------------------------------------------------
 !
-    character(len=10) :: RUNNDES(2) = (/'SEQUENTIAL','CONCURRENT '/)
+    character(len=11) :: RUNNDES(2) = (/'SEQUENTIAL ','CONCURRENT '/)
     integer, parameter :: Iseq = 1
     integer, parameter :: Ipar = 2
 !
