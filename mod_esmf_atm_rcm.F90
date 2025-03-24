@@ -322,7 +322,7 @@ module mod_esmf_atm
       integer :: ref_hour,   str_hour,   end_hour
       integer :: ref_minute, str_minute, end_minute
       integer :: ref_second, str_second, end_second
-      integer :: localPet, petCount, phase
+      integer :: localPet, petCount
 
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
@@ -338,8 +338,7 @@ module mod_esmf_atm
 !     Get component clock
 !-----------------------------------------------------------------------
 !
-      call ESMF_GridCompGet(gcomp, vm=vm, clock=clock,                  &
-                            currentPhase=phase, rc=rc)
+      call ESMF_GridCompGet(gcomp, vm=vm, clock=clock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 

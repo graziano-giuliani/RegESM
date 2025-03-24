@@ -285,31 +285,16 @@ module mod_esmf_ocn
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
                                line=__LINE__, file=FILENAME)) return
       end if
-!
-      end subroutine OCN_DataInit
-!
-      subroutine OCN_SetClock(gcomp, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+    end subroutine OCN_DataInit
+
+    subroutine OCN_SetClock(gcomp, rc)
       use mod_mit_gcm, only : TheCalendar, startdate_1, startdate_2,    &
                               starttime
-!
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer , intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: localPet, petCount, fac1, fac2, maxdiv
       integer :: ref_year,   str_year,   end_year
       integer :: ref_month,  str_month,  end_month
@@ -318,14 +303,14 @@ module mod_esmf_ocn
       integer :: ref_minute, str_minute, end_minute
       integer :: ref_second, str_second, end_second
       character (len=80) :: calendar
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: cmpClock
       type(ESMF_TimeInterval) :: timeStep, elapsedTime
       type(ESMF_Time) :: cmpRefTime, cmpStartTime, cmpStopTime
       type(ESMF_Time) :: dummTime, currTime
       type(ESMF_Calendar) :: cal
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -335,7 +320,7 @@ module mod_esmf_ocn
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -365,7 +350,7 @@ module mod_esmf_ocn
         cal = ESMF_CalendarCreate(ESMF_CALKIND_360DAY,                  &
                                   name=trim(calendar), rc=rc)
       end if
-!
+
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 !
@@ -395,7 +380,7 @@ module mod_esmf_ocn
       str_hour = startdate_2/10000
       str_minute = mod(startdate_2/100,100)
       str_second = mod(startdate_2,100)
-!
+
       call ESMF_TimeSet(cmpStartTime,                                   &
                         yy=str_year,                                    &
                         mm=str_month,                                   &
@@ -407,20 +392,21 @@ module mod_esmf_ocn
                         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_TimeIntervalSet(elapsedTime, s_r8=starttime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       cmpStartTime = cmpStartTime+elapsedTime
-!
+
       if (localPet == 0) then
-      call ESMF_TimePrint(cmpStartTime, options="string isofrac", rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
-      call ESMF_TimeIntervalPrint(elapsedTime, options="string isofrac", rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
+        call ESMF_TimePrint(cmpStartTime, options="string isofrac", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                               line=__LINE__, file=FILENAME)) return
+        call ESMF_TimeIntervalPrint(elapsedTime,  &
+                options="string isofrac", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                               line=__LINE__, file=FILENAME)) return
       end if
 !
 !-----------------------------------------------------------------------
@@ -439,7 +425,7 @@ module mod_esmf_ocn
       end_hour = 0
       end_minute = 0
       end_second = 0
-!
+
       call ESMF_TimeSet(cmpStopTime,                                    &
                         yy=end_year,                                    &
                         mm=end_month,                                   &
@@ -459,7 +445,7 @@ module mod_esmf_ocn
       call ESMF_GridCompGet(gcomp, clock=cmpClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_ClockGet(cmpClock, timeStep=timeStep,                   &
                          currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -474,35 +460,34 @@ module mod_esmf_ocn
       else
         dummTime = esmStartTime
       end if
-!
+
       if (cmpStartTime /= dummTime) then
         if (localPet == 0) then
-        call ESMF_TimePrint(cmpStartTime, options="string isofrac", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+          call ESMF_TimePrint(cmpStartTime, options="string isofrac", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
 
-        call ESMF_TimePrint(dummTime, options="string isofrac", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+          call ESMF_TimePrint(dummTime, options="string isofrac", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
         end if
-!
 !        call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
 !             msg='ESM and OCN start times do not match: '//             &
 !             'please check the config files')
 !        return
       end if
-!
+
       if (cal /= esmCal) then
         if (localPet == 0) then
-        call ESMF_CalendarPrint(cal, options="calkindflag", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-!
-        call ESMF_CalendarPrint(esmCal, options="calkindflag", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
+          call ESMF_CalendarPrint(cal, options="calkindflag", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
+
+          call ESMF_CalendarPrint(esmCal, options="calkindflag", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
         end if
-!
+
         call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,              &
              msg='ESM and OCN calendars do not match: '//               &
              'please check the config files')
@@ -516,41 +501,32 @@ module mod_esmf_ocn
       fac1 = maxval(connectors(Iocean,:)%divDT,mask=models(:)%modActive)
       fac2 = maxval(connectors(:,Iocean)%divDT,mask=models(:)%modActive)
       maxdiv = max(fac1, fac2)
-!
+
       call ESMF_ClockSet(cmpClock, name='ocn_clock',                    &
                          refTime=cmpRefTime, timeStep=timeStep/maxdiv,  &
                          startTime=cmpStartTime, stopTime=cmpStopTime,  &
                          rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
-      end subroutine OCN_SetClock
-!
-      subroutine OCN_CheckImport(gcomp, rc)
+    end subroutine OCN_SetClock
+
+    subroutine OCN_CheckImport(gcomp, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: itemCount, localPet
       logical :: atCorrectTime
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Time) :: startTime, currTime
       type(ESMF_TimeInterval) :: timeStep
       type(ESMF_Clock) :: driverClock
       type(ESMF_Field) :: field
       type(ESMF_State) :: importState
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -560,11 +536,11 @@ module mod_esmf_ocn
       call NUOPC_ModelGet(gcomp, driverClock=driverClock, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -593,11 +569,11 @@ module mod_esmf_ocn
       call ESMF_StateGet(importState, itemCount=itemCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       if (.not. allocated(itemNameList)) then
         allocate(itemNameList(itemCount))
       end if
-!
+
       call ESMF_StateGet(importState, itemNameList=itemNameList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -611,12 +587,12 @@ module mod_esmf_ocn
                          field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-!
+
       if (cplType == 1) then
         atCorrectTime = NUOPC_IsAtTime(field, currTime, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
-!
+
         call print_timestamp(field, currTime, localPet, "OCN", rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
@@ -630,7 +606,7 @@ module mod_esmf_ocn
 !        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
 !            line=__LINE__, file=FILENAME)) return
       end if
-!
+
       if (.not. atCorrectTime) then
         call ESMF_LogSetError(ESMF_RC_ARG_BAD,                          &
                               msg="NUOPC INCOMPATIBILITY DETECTED: "//  &
@@ -646,65 +622,50 @@ module mod_esmf_ocn
 !-----------------------------------------------------------------------
 !
       if (models(Iriver)%modActive) then
-!
-      call ESMF_StateGet(importState, itemName="rdis",                  &
-                         field=field, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
-!
-      atCorrectTime = NUOPC_IsAtTime(field, startTime, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
-!
-      if (.not. atCorrectTime) then
-        call ESMF_LogSetError(ESMF_RC_ARG_BAD,&
-                              msg="NUOPC INCOMPATIBILITY DETECTED: "//  &
-                              "Import Fields not at correct time",      &
-                              line=__LINE__, file=FILENAME,             &
-                              rcToReturn=rc)
-        return
+        call ESMF_StateGet(importState, itemName="rdis",                  &
+                           field=field, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+            line=__LINE__, file=FILENAME)) return
+
+        atCorrectTime = NUOPC_IsAtTime(field, startTime, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+            line=__LINE__, file=FILENAME)) return
+
+        if (.not. atCorrectTime) then
+          call ESMF_LogSetError(ESMF_RC_ARG_BAD,&
+                                msg="NUOPC INCOMPATIBILITY DETECTED: "//  &
+                                "Import Fields not at correct time",      &
+                                line=__LINE__, file=FILENAME,             &
+                                rcToReturn=rc)
+          return
+        end if
       end if
-      end if
-!
-      end subroutine OCN_CheckImport
-!
-      subroutine OCN_SetGridArrays(gcomp, petCount, localPet, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+    end subroutine OCN_CheckImport
+
+    subroutine OCN_SetGridArrays(gcomp, petCount, localPet, rc)
       use mod_mit_gcm, only : xC, yC, xG, yG, maskC, maskW, maskS, rA
-!
+
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp), intent(inout) :: gcomp
       integer, intent(in) :: localPet
       integer, intent(in) :: petCount
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: i, j, k, m, n, p, nr, bi, bj, iG, jG
       integer :: localDECount, tile
       character(ESMF_MAXSTR) :: name
-!
+
       integer(ESMF_KIND_I4), pointer :: ptrM(:,:)
       real(ESMF_KIND_R8), pointer :: ptrX(:,:), ptrY(:,:), ptrA(:,:)
       character(ESMF_MAXSTR) :: cname
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Array) :: arrX, arrY, arrM, arrA
       type(ESMF_StaggerLoc) :: staggerLoc
       type(ESMF_DistGrid) :: distGrid
       integer, allocatable :: deBlockList(:,:,:)
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -723,7 +684,7 @@ module mod_esmf_ocn
         allocate(mpi_myXGlobalLo(nPx*nPy))
         allocate(mpi_myYGlobalLo(nPx*nPy))
       end if
-!
+
       call ESMF_VMAllGatherV(vm, sendData=(/ myXGlobalLo /),            &
                              sendCount=1, recvData=mpi_myXGlobalLo,     &
                              recvCounts=(/ (1, k = 0, petCount-1) /),   &
@@ -731,7 +692,7 @@ module mod_esmf_ocn
                              rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMAllGatherV(vm, sendData=(/ myYGlobalLo /),            &
                              sendCount=1, recvData=mpi_myYGlobalLo,     &
                              recvCounts=(/ (1, k = 0, petCount-1) /),   &
@@ -747,7 +708,7 @@ module mod_esmf_ocn
       if (.not.allocated(deBlockList)) then
         allocate(deBlockList(2,2,nPx*nPy))
       end if
-!
+
       bj = 1
       bi = 1
       do tile = 0, (nPx*nPy)-1
@@ -2052,31 +2013,16 @@ module mod_esmf_ocn
  80   format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 
-!
-      end subroutine OCN_Get
-!
-      subroutine OCN_Put(gcomp, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+    end subroutine OCN_Get
+
+    subroutine OCN_Put(gcomp, rc)
       use mod_mit_gcm, only : theta, salt, uvel, vvel, etan, maskc
       use mod_mit_gcm, only : R_low, sflux, hflux
-!
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: bi, bj, iG, jG, imax, jmax
       integer :: i, j, ii, jj, iunit
       integer :: iyear, iday, imonth, ihour, iminute, isec
@@ -2084,14 +2030,14 @@ module mod_esmf_ocn
       character(ESMF_MAXSTR) :: cname, ofile
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8), pointer :: ptr(:,:)
-!
+
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
       type(ESMF_Time) :: currTime
       type(ESMF_Field) :: field
       type(ESMF_State) :: exportState
       type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -2102,7 +2048,7 @@ module mod_esmf_ocn
                             exportState=exportState, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -2115,7 +2061,7 @@ module mod_esmf_ocn
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
                         dd=iday, h=ihour, m=iminute, s=isec, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -2332,43 +2278,29 @@ module mod_esmf_ocn
  100  format(A10,'_',A,'_',                                             &
              I4,'-',I2.2,'-',I2.2,'_',I2.2,'_',I2.2,'_',I2.2)
 
-!
-      end subroutine OCN_Put
-!
-      subroutine put_river(vm, clock, LBi, UBi, LBj, UBj,               &
-                           ptr, sfac, addo, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+    end subroutine OCN_Put
+
+    subroutine put_river(vm, clock, LBi, UBi, LBj, UBj,               &
+                         ptr, sfac, addo, rc)
       use mod_mit_gcm, only : runoff_ESMF
       use mod_mit_gcm, only : xG, yG
-!
+
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
+
       type(ESMF_VM), intent(in) :: vm
       type(ESMF_Clock), intent(in) :: clock
       integer, intent(in) :: LBi, UBi, LBj, UBj
       real(ESMF_KIND_R8), intent(in) :: ptr(LBi:UBi,LBj:UBj)
       real(ESMF_KIND_R8), intent(in) :: sfac, addo
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       real*8 :: rdis(1)
       integer :: i, j, k, r, ii, jj, iG, jG, bi, bj
       integer :: mm, ng, np, nr, localPet, petCount
       character(ESMF_MAXSTR) :: str
-!
+
       type(ESMF_Time) :: currTime
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -2386,7 +2318,7 @@ module mod_esmf_ocn
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-!
+
       call ESMF_TimeGet(currTime, mm=mm, timeStringISOFrac=str, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
@@ -2397,10 +2329,10 @@ module mod_esmf_ocn
 !
       ! reinitialize temporary river discharge array
       runoff_ESMF(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy) = ZERO_R8
-!
+
       ! get number of rivers
       nr = size(rivers, dim=1)
-!
+
       k = 0
       bi = 1
       bj = 1
@@ -2413,29 +2345,29 @@ module mod_esmf_ocn
               rdis = (rdis*sfac)+addo
             end if
           end if
-!
+
           ! broadcast data across the PETs
           call ESMF_VMBroadcast(vm, bcstData=rdis, count=1,           &
                                 rootPet=rivers(r)%rootPet, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc,                        &
                                  msg=ESMF_LOGERR_PASSTHRU,            &
                                  line=__LINE__, file=FILENAME)) return
-!
+
           ! apply monthly correction factor
           rdis = rdis*rivers(r)%monfac(mm)
-!
+
           ! if river data is provided as monthly values (m^3/s), then
           ! overwrite river discharge data
           if (rivers(r)%isActive == 2) then
             rdis = rivers(r)%monfac(mm)
           end if
-!
+
           ! apply as point source
           if (riverOpt == 1) then
             call ESMF_LogSetError(ESMF_FAILURE, rcToReturn=rc,        &
                  msg='riverOpt == 1 is not supported by MITgcm')
             return
-!
+
           ! apply as surface boundary condition
           else if (riverOpt == 2) then
             ! distribute data to the mapped ocean grid points
@@ -2456,7 +2388,7 @@ module mod_esmf_ocn
               end do
             end do
           end if
-!
+
           ! print debug info
           if (localPet == 0) then
             if (rdis(1) < TOL_R8) then
@@ -2478,34 +2410,20 @@ module mod_esmf_ocn
 !-----------------------------------------------------------------------
 !
  110  format(' River (',I3.2,') Discharge [',A,'] : ',F15.6)
-!
-      end subroutine put_river
-!
-      function findPet(vm, i, j, rc)
-!
-!-----------------------------------------------------------------------
-!     Used module declarations
-!-----------------------------------------------------------------------
-!
+
+    end subroutine put_river
+
+    function findPet(vm, i, j, rc)
       implicit none
-!
-!-----------------------------------------------------------------------
-!     Imported variable declarations
-!-----------------------------------------------------------------------
-!
       integer :: findPet
-!
+
       type(ESMF_VM), intent(in) :: vm
       integer, intent(in) :: i, j
       integer, intent(inout) :: rc
-!
-!-----------------------------------------------------------------------
-!     Local variable declarations
-!-----------------------------------------------------------------------
-!
+
       integer :: k, n, m, bi, bj, iG, jG
       integer :: petCount, localPet, rootPet, sendData(1)
-!
+
       rc = ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
@@ -2522,7 +2440,7 @@ module mod_esmf_ocn
 !
       bj = 1
       bi = 1
-!
+
       do k = 1, petCount
         do n = 1, sNy
           do m = 1, sNx
@@ -2546,7 +2464,6 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
       findPet = sendData(1)
-!
-      end function findPet
-!
+    end function findPet
+
 end module mod_esmf_ocn
