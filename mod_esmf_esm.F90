@@ -255,39 +255,54 @@ module mod_esmf_esm
 
       if (runid == 11000) then
 
+        call ESMF_GridCompGet(gcomp, clock=internalClock, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+           line=__LINE__, file=FILENAME)) return
+
+        call ESMF_ClockGet(internalClock, timeStep=timeStep,            &
+                           startTime=startTime, stopTime=stopTime,      &
+                           rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+           line=__LINE__, file=FILENAME)) return
+
+        maxdiv = max(connectors(Iatmos,Iocean)%divDT,                   &
+                     connectors(Iocean,Iatmos)%divDT)
+        cname = trim(connectors(Iatmos,Iocean)%name)//'_clock'
+
+        internalClock = ESMF_ClockCreate(name=trim(cname),              &
+                                         timeStep=timeStep/maxdiv,      &
+                                         startTime=startTime,           &
+                                         stopTime=stopTime,             &
+                                         rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+           line=__LINE__, file=FILENAME)) return
+
 !-----------------------------------------------------------------------
 !     ATM-OCN: Explicit
 !-----------------------------------------------------------------------
 
         if (cplType == 1) then
 
-          call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
-
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                   srcCompLabel=trim(models(Iatmos)%name),&
-                                   dstCompLabel=trim(models(Iocean)%name),&
-                                   rc=rc)
+          ! set up free format run sequence
+          runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
+            " @*            ",    &
+            "   ATM -> OCN  ",    &
+            "   OCN -> ATM  ",    &
+            "   ATM         ",    &
+            "   OCN         ",    &
+            " @             " /), &
+            rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
              line=__LINE__, file=FILENAME)) return
 
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                   srcCompLabel=trim(models(Iocean)%name),&
-                                   dstCompLabel=trim(models(Iatmos)%name),&
-                                   rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
+          ! ingest FreeFormat run sequence
+          call NUOPC_DriverIngestRunSequence(gcomp, runSeqFF, &
+                 autoAddConnectors=.true., rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, file=FILENAME)) return  ! bail out
 
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iatmos)%name),&
-                                    rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
-
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iocean)%name),&
-                                    rc=rc)
+          call NUOPC_DriverSetRunSequence(gcomp, slot=1,                  &
+                                          clock=internalClock, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
              line=__LINE__, file=FILENAME)) return
 
@@ -297,35 +312,29 @@ module mod_esmf_esm
 
         else
 
-          call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
+          ! set up free format run sequence
+          runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
+            " @*            ",    &
+            "   OCN -> ATM  ",    &
+            "   ATM         ",    &
+            "   ATM -> OCN  ",    &
+            "   OCN         ",    &
+            " @             " /), &
+            rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
+             line=__LINE__, file=FILENAME)) return
 
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                   srcCompLabel=trim(models(Iocean)%name),&
-                                   dstCompLabel=trim(models(Iatmos)%name),&
-                                   rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
+          ! ingest FreeFormat run sequence
+          call NUOPC_DriverIngestRunSequence(gcomp, runSeqFF, &
+                 autoAddConnectors=.true., rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, file=FILENAME)) return  ! bail out
 
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iatmos)%name),&
-                                    rc=rc)
+          call NUOPC_DriverSetRunSequence(gcomp, slot=1,                  &
+                                          clock=internalClock, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
+             line=__LINE__, file=FILENAME)) return
 
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                   srcCompLabel=trim(models(Iatmos)%name),&
-                                   dstCompLabel=trim(models(Iocean)%name),&
-                                   rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
-
-          call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                      compLabel=trim(models(Iocean)%name),&
-                                      rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-              line=__LINE__, file=FILENAME)) return
         end if
 
 !-----------------------------------------------------------------------
@@ -334,35 +343,44 @@ module mod_esmf_esm
 
       else if (runid == 10010) then
 
-        call NUOPC_DriverNewRunSequence(gcomp, slotCount=1, rc=rc)
+        call ESMF_GridCompGet(gcomp, clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Iwavee)%name),&
-                                 rc=rc)
+        call ESMF_ClockGet(internalClock, timeStep=timeStep,            &
+                           startTime=startTime, stopTime=stopTime,      &
+                           rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iwavee)%name),&
-                                 dstCompLabel=trim(models(Iatmos)%name),&
-                                 rc=rc)
+        maxdiv = max(connectors(Iatmos,Iwavee)%divDT,                   &
+                     connectors(Iwavee,Iatmos)%divDT)
+        cname = trim(connectors(Iatmos,Iwavee)%name)//'_clock'
+
+        internalClock = ESMF_ClockCreate(name=trim(cname),              &
+                                         timeStep=timeStep/maxdiv,      &
+                                         startTime=startTime,           &
+                                         stopTime=stopTime,             &
+                                         rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iatmos)%name),&
-                                    rc=rc)
+        ! set up free format run sequence
+        runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
+          " @*            ",    &
+          "   ATM -> WAV  ",    &
+          "   WAV -> ATM  ",    &
+          "   ATM         ",    &
+          "   WAV         ",    &
+          " @             " /), &
+          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iwavee)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
+        call NUOPC_DriverIngestRunSequence(gcomp, runSeqFF, &
+               autoAddConnectors=.true., rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=FILENAME)) return  ! bail out
 
 !-----------------------------------------------------------------------
 !     ATM-OCN-RTM
@@ -448,94 +466,32 @@ module mod_esmf_esm
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverNewRunSequence(gcomp, slotCount=2, rc=rc)
+        ! set up free format run sequence
+        runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
+          " @*            ",    &
+          "   ATM -> RTM  ",    &
+          "   RTM -> OCN  ",    &
+          "   @*          ",    &
+          "     ATM -> OCN",    &
+          "     ATM -> WAV",    &
+          "     OCN -> ATM",    &
+          "     WAV -> ATM",    &
+          "     ATM       ",    &
+          "     OCN       ",    &
+          "   @           ",    &
+          "   WAV         ",    &
+          "   RTM         ",    &
+          " @             " /), &
+          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Iriver)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
+        ! ingest FreeFormat run sequence
+        call NUOPC_DriverIngestRunSequence(gcomp, runSeqFF, &
+               autoAddConnectors=.true., rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=FILENAME)) return  ! bail out
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iriver)%name),&
-                                 dstCompLabel=trim(models(Iocean)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                       linkSlot=2, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                    compLabel=trim(models(Iriver)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Iocean)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Iwavee)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iocean)%name),&
-                                 dstCompLabel=trim(models(Iatmos)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-!        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-!                                 srcCompLabel=trim(models(Iocean)%name),&
-!                                 dstCompLabel=trim(models(Iwavee)%name),&
-!                                 rc=rc)
-!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-!           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iwavee)%name),&
-                                 dstCompLabel=trim(models(Iatmos)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-!        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-!                                 srcCompLabel=trim(models(Iwavee)%name),&
-!                                 dstCompLabel=trim(models(Iocean)%name),&
-!                                 rc=rc)
-!        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-!           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Iatmos)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Iocean)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Iwavee)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
         call NUOPC_DriverSetRunSequence(gcomp, slot=2,                  &
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
@@ -573,65 +529,33 @@ module mod_esmf_esm
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverNewRunSequence(gcomp, slotCount=2, rc=rc)
+        ! set up free format run sequence
+        runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
+          " @*            ",    &
+          "   ATM -> OCN  ",    &
+          "   OCN -> ATM  ",    &
+          "   @*          ",    &
+          "     ATM       ",    &
+          "     OCN       ",    &
+          "   @           ",    &
+          "   ATM -> COP  ",    &
+          "   COP         ",    &
+          " @             " /), &
+          rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Iocean)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                 srcCompLabel=trim(models(Iocean)%name),&
-                                 dstCompLabel=trim(models(Iatmos)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=1,                   &
-                                       linkSlot=2, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iatmos)%name),&
-                                 dstCompLabel=trim(models(Icopro)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                 srcCompLabel=trim(models(Iocean)%name),&
-                                 dstCompLabel=trim(models(Icopro)%name),&
-                                 rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Iatmos)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Iocean)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
-
-        call NUOPC_DriverAddRunElement(gcomp, slot=2,                   &
-                                    compLabel=trim(models(Icopro)%name),&
-                                    rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-           line=__LINE__, file=FILENAME)) return
+        ! ingest FreeFormat run sequence
+        call NUOPC_DriverIngestRunSequence(gcomp, runSeqFF, &
+               autoAddConnectors=.true., rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=FILENAME)) return  ! bail out
 
         call NUOPC_DriverSetRunSequence(gcomp, slot=2,                  &
                                         clock=internalClock, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
+
       end if
 
 !-----------------------------------------------------------------------

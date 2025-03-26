@@ -89,6 +89,7 @@ module mod_esmf_rtm
       call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
+      ! Daily timestep
       call ESMF_ClockSet(clock, timeStep=timeStep, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
@@ -108,7 +109,7 @@ module mod_esmf_rtm
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
       call ESMF_ClockPrint(clock, options="currTime", &
-          preString="------>Advancing ATM from: ", unit=msgString, rc=rc)
+          preString="------>Advancing RTM from: ", unit=msgString, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
       call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)

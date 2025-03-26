@@ -93,7 +93,8 @@ module mod_esmf_atm
       call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
-      call ESMF_ClockSet(clock, timeStep=timeStep/8, rc=rc)
+      ! Test internal model timestep is set to two minutes
+      call ESMF_ClockSet(clock, timeStep=timeStep/(24*30), rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
     end subroutine SetClock

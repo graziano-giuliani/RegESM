@@ -88,7 +88,8 @@ module mod_esmf_wav
       call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
-      call ESMF_ClockSet(clock, timeStep=timeStep/8, rc=rc)
+      ! Test with half a day
+      call ESMF_ClockSet(clock, timeStep=timeStep/2, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
     end subroutine SetClock
@@ -107,7 +108,7 @@ module mod_esmf_wav
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
       call ESMF_ClockPrint(clock, options="currTime", &
-          preString="------>Advancing ATM from: ", unit=msgString, rc=rc)
+          preString="------>Advancing WAV from: ", unit=msgString, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, file=__FILE__)) return  ! bail out
       call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
