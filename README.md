@@ -12,7 +12,7 @@ Supported Components
 * Ocean (OCN): 
     * [ROMS](http://www.myroms.org) revision 809
     * [ROMS-Ice](https://github.com/kshedstrom/roms): The driver is not tested with new CICE implementation !!!
-    * [MITgcm](https://github.com/MITgcm/MITgcm)
+    * [MITgcm](https://github.com/graziano-giuliani/MITgcm)
 * River Routing (RTM): 
     * [HD](http://www.mpimet.mpg.de/en/science/the-land-in-the-earth-system/terrestrial-hydrology/hd-model.html) version 1.0.2
     * [CHyM](https://github.com/graziano-giuliani/CHyM_cpl)
