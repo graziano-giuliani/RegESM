@@ -353,9 +353,9 @@ module mod_esmf_esm
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
            line=__LINE__, file=FILENAME)) return
 
-        maxdiv = max(connectors(Iatmos,Iwavee)%divDT,                   &
-                     connectors(Iwavee,Iatmos)%divDT)
-        cname = trim(connectors(Iatmos,Iwavee)%name)//'_clock'
+        maxdiv = max(connectors(Iatmos,Iriver)%divDT,                   &
+                     connectors(Iriver,Iatmos)%divDT)
+        cname = trim(connectors(Iatmos,Iriver)%name)//'_clock'
 
         internalClock = ESMF_ClockCreate(name=trim(cname),              &
                                          timeStep=timeStep/maxdiv,      &
@@ -368,10 +368,9 @@ module mod_esmf_esm
         ! set up free format run sequence
         runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
           " @*            ",    &
-          "   ATM -> WAV  ",    &
-          "   WAV -> ATM  ",    &
+          "   ATM -> RTM  ",    &
           "   ATM         ",    &
-          "   WAV         ",    &
+          "   RTM         ",    &
           " @             " /), &
           rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &

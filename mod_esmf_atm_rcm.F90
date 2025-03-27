@@ -131,25 +131,29 @@ module mod_esmf_atm
 !     Set import fields
 !-----------------------------------------------------------------------
 
-      do i = 1, ubound(models(Iatmos)%importField, dim=1)
-        call NUOPC_Advertise(importState,                               &
-             StandardName=trim(models(Iatmos)%importField(i)%long_name),&
-             name=trim(models(Iatmos)%importField(i)%short_name), rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-      end do
+      if ( allocated(models(Iatmos)%importField) ) then
+        do i = 1, ubound(models(Iatmos)%importField, dim=1)
+          call NUOPC_Advertise(importState,                               &
+               StandardName=trim(models(Iatmos)%importField(i)%long_name),&
+               name=trim(models(Iatmos)%importField(i)%short_name), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
+        end do
+      end if
 
 !-----------------------------------------------------------------------
 !     Set export fields
 !-----------------------------------------------------------------------
 
-      do i = 1, ubound(models(Iatmos)%exportField, dim=1)
-        call NUOPC_Advertise(exportState,                               &
-             StandardName=trim(models(Iatmos)%exportField(i)%long_name),&
-             name=trim(models(Iatmos)%exportField(i)%short_name), rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-      end do
+      if ( allocated(models(Iatmos)%exportField) ) then
+        do i = 1, ubound(models(Iatmos)%exportField, dim=1)
+          call NUOPC_Advertise(exportState,                               &
+               StandardName=trim(models(Iatmos)%exportField(i)%long_name),&
+               name=trim(models(Iatmos)%exportField(i)%short_name), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
+        end do
+      end if
 
     end subroutine ATM_SetInitializeP1
 
@@ -961,7 +965,7 @@ module mod_esmf_atm
 !-----------------------------------------------------------------------
 
  30   format(" PET(",I3.3,") - DE(",I2.2,") - ",A20," : ",              &
-             4I8," ",L," ",L," ",L," ",L)
+             4I8," ",L1," ",L1," ",L1," ",L1)
 
     end subroutine ATM_SetGridArrays2d
 
@@ -1250,7 +1254,7 @@ module mod_esmf_atm
 !-----------------------------------------------------------------------
 
  110  format(" PET(",I3.3,") - DE(",I2.2,") - ",A20," : ",              &
-             6I8," ",L," ",L," ",L," ",L)
+             6I8," ",L1," ",L1," ",L1," ",L1)
 
     end subroutine ATM_SetGridArrays3d
 
@@ -2133,7 +2137,8 @@ module mod_esmf_atm
       type(ESMF_GridComp) :: gcomp
       integer, intent(out) :: rc
 
-      integer :: i, j, k, dd, m, n, nz
+      integer :: i, j, k, m, n, nz
+      real(8) :: dd
       integer :: iyear, iday, imonth, ihour, iminute, isec, iunit
       integer :: petCount, localPet, itemCount, localDECount
       character(ESMF_MAXSTR) :: cname, ofile

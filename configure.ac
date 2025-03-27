@@ -230,12 +230,12 @@ if eval "test x$DEBUG = x1"; then
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xgfortran"; then
-    FCFLAGS="-O0 -g -ffpe-trap=zero,invalid,overflow,underflow -fbacktrace \
+    FCFLAGS="-O0 -g -ffpe-trap=zero -fbacktrace \
             -fdump-core -Wall -pedantic -Wconversion -Wsurprising -Waliasing \
             -Wampersand -Warray-bounds -Wcharacter-truncation \
             -Wline-truncation -Wintrinsics-std -Wno-tabs -Wunderflow \
             -Wunused-parameter -Wno-align-commons $FCFLAGS -fbounds-check \
-            -fno-range-check"
+            -fno-range-check -fopenmp"
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$CXX" = xg++"; then
@@ -243,7 +243,7 @@ if eval "test x$DEBUG = x1"; then
     AC_SUBST(CXXFLAGS)
   fi
   if eval "test x"$FC" = xifort"; then
-    FCFLAGS="-O0 -g \
+    FCFLAGS="-O0 -g -qopenmp \
              -check arg_temp_created,bounds,format,output_conversion,uninit \
              -traceback -warn all -fp-model precise -fp-model source -ftz \
              -fimf-arch-consistency=true $FCFLAGS"
@@ -285,7 +285,7 @@ else
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xgfortran"; then
-    FCFLAGS="-O3 -mtune=native $FCFLAGS"
+    FCFLAGS="-O3 -mtune=native -fopenmp $FCFLAGS"
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xifort"; then

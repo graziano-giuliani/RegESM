@@ -132,13 +132,15 @@ module mod_esmf_rtm
 !     Set export fields
 !-----------------------------------------------------------------------
 
-      do i = 1, ubound(models(Iriver)%exportField, dim=1)
-        call NUOPC_Advertise(exportState,                               &
-             StandardName=trim(models(Iriver)%exportField(i)%long_name),&
-             name=trim(models(Iriver)%exportField(i)%short_name), rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-                               line=__LINE__, file=FILENAME)) return
-      end do
+      if ( allocated(models(Iriver)%exportField) ) then
+        do i = 1, ubound(models(Iriver)%exportField, dim=1)
+          call NUOPC_Advertise(exportState,                               &
+               StandardName=trim(models(Iriver)%exportField(i)%long_name),&
+               name=trim(models(Iriver)%exportField(i)%short_name), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
+                                 line=__LINE__, file=FILENAME)) return
+        end do
+      end if
 
     end subroutine RTM_SetInitializeP1
 

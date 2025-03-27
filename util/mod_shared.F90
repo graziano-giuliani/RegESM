@@ -45,7 +45,7 @@ module mod_shared
           dlat = lat(i,j)-plat
           a = sin(dlat*D2R/2.0d0)**2+cos(plat*D2R)*                     &
               cos(lat(i,j)*D2R)*sin(dlon*D2R/2.0d0)**2
-          c = 2.0d0*asin(min(1.0,a**0.5))
+          c = 2.0d0*asin(min(1.0d0,a**0.5d0))
           r = 6378.0d0-21.0d0*sin(lat(i,j)*D2R)
           distance(i,j) = r*c
         end do

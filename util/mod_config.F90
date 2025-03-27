@@ -329,7 +329,7 @@ module mod_config
         if (models(i)%modActive) then
           k = ubound(models(i)%petList, dim=1)
           if (models(i)%nPets < 300) then
-            write(fmt_123, fmt="('(A10, L, ', I3, 'I4)')") k
+            write(fmt_123, fmt="('(A10, L1, ', I3, 'I4)')") k
             write(*, fmt=trim(fmt_123)) trim(models(i)%name)//'    ', &
                   models(i)%modActive, models(i)%petList
           end if
@@ -432,7 +432,7 @@ module mod_config
           if (connectors(i,j)%modActive) then
             k = ubound(connectors(i,j)%petList, dim=1)
             if (connectors(i,j)%nPets < 300) then
-              write(fmt_123, fmt="('(A10, L, ', I3, 'I4)')") k
+              write(fmt_123, fmt="('(A10, L1, ', I3, 'I4)')") k
               write(*, fmt=trim(fmt_123)) connectors(i,j)%name,       &
                     connectors(i,j)%modActive, connectors(i,j)%petList
             end if
@@ -770,6 +770,8 @@ module mod_config
     logical :: flag
 
     rc = ESMF_SUCCESS
+    i = -1
+    j = -1
 
 !-----------------------------------------------------------------------
 !   Read field table
@@ -830,7 +832,7 @@ module mod_config
         connectors(i,j)%modExtrapolation = extp
 
         if (debugLevel > 0 .and. localPet == 0) then
-          write(*,fmt='(A,I2,A,L)') COMPDES(i)//' -> '//COMPDES(j)//' ',&
+          write(*,fmt='(A,I2,A,L1)') COMPDES(i)//' -> '//COMPDES(j)//' ',&
                               nf, ' ', extp
         end if
 
@@ -926,7 +928,7 @@ module mod_config
 !-----------------------------------------------------------------------
 
  30 format(2I3,1X,A6,1X,A32,1X,I2,1X,A10,1X,A10,1X,A10,               &
-           1X,A10,1X,2E15.4,1X,L,1X,A7)
+           1X,A10,1X,2E15.4,1X,L1,1X,A7)
 
   end subroutine read_field_table
 
