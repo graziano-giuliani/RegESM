@@ -2,20 +2,20 @@ RegESM: **Reg**ional **E**arth **S**ystem **M**odel
 ======
 
 [![DOI](https://zenodo.org/badge/7665906.svg)](https://zenodo.org/badge/latestdoi/7665906)
-[![Build Status](https://travis-ci.org/uturuncoglu/RegESM.svg?branch=master)](https://travis-ci.org/uturuncoglu/RegESM) still under testing
 
 Supported Components
 ====================
 
 * Atmosphere (ATM):
-    * [RegCM](http://gforge.ictp.it/gf/project/regcm/) version >4.5 (it needs extra patch for co-processing)
+    * [RegCM](http://gforge.ictp.it/gf/project/regcm/) version 5
     * [WRF](http://www2.mmm.ucar.edu/wrf/users/download/get_source.html) version 3.8.1
 * Ocean (OCN): 
     * [ROMS](http://www.myroms.org) revision 809
     * [ROMS-Ice](https://github.com/kshedstrom/roms): The driver is not tested with new CICE implementation !!!
-    * [MITgcm](http://mitgcm.org/download/) version c63s 
+    * [MITgcm](https://github.com/MITgcm/MITgcm)
 * River Routing (RTM): 
     * [HD](http://www.mpimet.mpg.de/en/science/the-land-in-the-earth-system/terrestrial-hydrology/hd-model.html) version 1.0.2
+    * [CHyM](https://github.com/graziano-giuliani/CHyM_cpl)
 * Wave (WAV):
     * [WAM](http://journals.ametsoc.org/doi/pdf/10.1175/1520-0485(1988)018%3C1775:TWMTGO%3E2.0.CO%3B2) version Cycle\_4.5.3\_MPI
 * Co-processing (COP):
@@ -25,8 +25,8 @@ Prerequisites
 =============
 
 * RegESM itself (as a driver)
-* Earth System Modeling Framework (ESMF) Library: version [7.1.0](http://www.earthsystemmodeling.org/download/data/releases.shtml#v7_1_0)
-* Model Components (patched and installed with coupling support - see documentation for more information)
+* Earth System Modeling Framework (ESMF) Library: version [8.8.0](https://github.com/esmf-org/esmf)
+* Model Components (eventually patched and installed with coupling support - see documentation for more information)
 
 Documentation
 =============
@@ -80,6 +80,9 @@ Previous publications with early version of the two-component (atmosphere-ocean)
 Release Notes
 =============
 ## Updates
+
+### New in Version 1.3
+* Updated for ESMF 8.0, added CHyM hydrological model as RTM component
 
 ### New in Version 1.2
 * The COP component is optimized for very-high resolution applications
