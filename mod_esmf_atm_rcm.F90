@@ -870,6 +870,7 @@ module mod_esmf_atm
           do j0 = jde1, jde2
             ptrX(i0,j0) = mddom%dlon(j0,i0)
             ptrY(i0,j0) = mddom%dlat(j0,i0)
+            ptrA(i0,j0) = mddom%area(j0,i0) ! Partially not correct...
           end do
         end do
 
@@ -883,7 +884,6 @@ module mod_esmf_atm
           ptrY(ide2+1,:) = ptrY(ide2,:)+(ptrY(ide2,:)-ptrY(ide2-1,:))
         end if
 
-        ptrA = dxsq
       else if (models(Iatmos)%mesh(i)%gtype == Icross) then
         if (debugLevel > 0) then
           write(*,30) localPet, j, adjustl("DAT/ATM/GRD/"//name),       &
@@ -897,10 +897,9 @@ module mod_esmf_atm
             ptrX(i0,j0) = mddom%xlon(j0,i0)
             ptrY(i0,j0) = mddom%xlat(j0,i0)
             ptrM(i0,j0) = int(mddom%mask(j0,i0))
+            ptrA(i0,j0) = mddom%area(j0,i0)
           end do
         end do
-
-        ptrA = dxsq
 
         if (ma%has_bdyright) then
            ptrX(:,jce2+1) = ptrX(:,jce2)+(ptrX(:,jce2)-ptrX(:,jce2-1))
