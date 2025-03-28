@@ -368,8 +368,8 @@ module mod_esmf_esm
         ! set up free format run sequence
         runSeqFF = NUOPC_FreeFormatCreate(stringList=(/ &
           " @*            ",    &
-          "   ATM -> RTM  ",    &
           "   ATM         ",    &
+          "   ATM -> RTM  ",    &
           "   RTM         ",    &
           " @             " /), &
           rc=rc)

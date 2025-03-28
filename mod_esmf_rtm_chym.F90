@@ -910,7 +910,7 @@ module mod_esmf_rtm
     end subroutine RTM_SetFinalize
 
     subroutine RTM_Get(gcomp, rc)
-      use mod_chym_param, only : nlc, nbc, chym_runoff, chym_surf
+      use mod_chym_param, only : nlc, nbc, chym_runoff
       implicit none
 
       type(ESMF_GridComp) :: gcomp
@@ -1049,16 +1049,6 @@ module mod_esmf_rtm
                     chym_runoff(n,m) = 0.0d0
                   else
                     chym_runoff(n,m) = (ptr(n,m)*sfac)+addo
-                  end if
-                end do
-              end do
-            case ('snof')
-              do m = 1, nbc
-                do n = 1, nlc
-                  if (ptr(n,m) < 0.0d0 .or. ptr(n,m) > 1.0d0) then
-                    chym_surf(n,m) = 0.0d0
-                  else
-                    chym_surf(n,m) = (ptr(n,m)*sfac)+addo
                   end if
                 end do
               end do

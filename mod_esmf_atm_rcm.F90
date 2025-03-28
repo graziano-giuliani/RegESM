@@ -2346,12 +2346,6 @@ module mod_esmf_atm
             ptr2d(m,n) = exportFields%rnof(n,m)
           end do
         end do
-      case ('snof')
-        do m = ici1, ici2
-          do n = jci1, jci2
-            ptr2d(m,n) = exportFields%snof(n,m)
-          end do
-        end do
       case ('taux')
         do m = ici1, ici2
           do n = jci1, jci2
