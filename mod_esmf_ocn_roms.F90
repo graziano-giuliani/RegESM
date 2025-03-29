@@ -646,18 +646,9 @@ module mod_esmf_ocn
         atCorrectTime = NUOPC_IsAtTime(field, currTimeCmp, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
-
-        call print_timestamp(field, currTimeCmp, localPet, "OCN", rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-            line=__LINE__, file=FILENAME)) return
       else
         atCorrectTime = NUOPC_IsAtTime(field, currTimeCmp+timeStepCmp,  &
                                        rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
-            line=__LINE__, file=FILENAME)) return
-
-        call print_timestamp(field, currTimeCmp+timeStepCmp, localPet,  &
-                             "OCN", rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,  &
             line=__LINE__, file=FILENAME)) return
       end if

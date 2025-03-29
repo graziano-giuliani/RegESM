@@ -523,11 +523,6 @@ module mod_esmf_wav
       atCorrectTime = NUOPC_IsAtTime(field, currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
           line=__LINE__, file=FILENAME)) return
-
-      call print_timestamp(field, currTime, localPet, "WAV", rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-          line=__LINE__, file=FILENAME)) return
-
       if (.not. atCorrectTime) then
         call ESMF_LogSetError(ESMF_RC_ARG_BAD,                          &
                               msg="NUOPC INCOMPATIBILITY DETECTED: "//  &
