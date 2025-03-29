@@ -372,10 +372,6 @@ module mod_esmf_ocn
         call ESMF_TimePrint(cmpStartTime, options="string isofrac", rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                                line=__LINE__, file=FILENAME)) return
-        call ESMF_TimeIntervalPrint(elapsedTime,  &
-                options="string isofrac", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                               line=__LINE__, file=FILENAME)) return
       end if
 
 !-----------------------------------------------------------------------
