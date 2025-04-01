@@ -315,7 +315,7 @@ module mod_shared
                 r = r + 1
                 rivers(r)%isActive = 1
                 rivers(r)%monfac(:) = 1.0
-                rivers(r)%eRadius = 10.  !Laura x il Nord Adriatico, default 50.
+                rivers(r)%eRadius = 25.  !Laura x il Nord Adriatico, default 50.
                 rivers(r)%dir = 0 ! River mouth direction, to be implemented
                 rivers(r)%iindex = i
                 rivers(r)%jindex = j
