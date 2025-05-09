@@ -1476,6 +1476,14 @@ module mod_esmf_ocn
                               wspeed_ESMF, precip_ESMF, runoff_ESMF,    &
                               swdown_ESMF, lwdown_ESMF, apressure_ESMF, &
                               snowprecip_ESMF, uwind_ESMF, vwind_ESMF
+      use mod_mit_gcm, only : what_is_in_ESMF
+      use mod_mit_gcm, only : HAS_ESMF_USTRESS, HAS_ESMF_VSTRESS,   &
+              HAS_ESMF_HFLUX, HAS_ESMF_SFLUX, HAS_ESMF_SWFLUX,      &
+              HAS_ESMF_UWIND, HAS_ESMF_VWIND, HAS_ESMF_WSPEED,      &
+              HAS_ESMF_ATEMP, HAS_ESMF_AQH, HAS_ESMF_LWFLUX,        &
+              HAS_ESMF_EVAP, HAS_ESMF_PRECIP, HAS_ESMF_SNOWPRECIP,  &
+              HAS_ESMF_SWDOWN, HAS_ESMF_LWDOWN, HAS_ESMF_APRESSURE, &
+              HAS_ESMF_RUNOFF
       use mod_mit_gcm, only : xG, yG
 
       implicit none
@@ -1504,6 +1512,7 @@ module mod_esmf_ocn
       type(ESMF_StateItem_Flag), allocatable :: itemTypeList(:)
 
       rc = ESMF_SUCCESS
+      WHAT_IS_IN_ESMF(:) = .false.
 
 !-----------------------------------------------------------------------
 !     Get gridded component
@@ -1660,6 +1669,7 @@ module mod_esmf_ocn
 
       select case (trim(adjustl(itemNameList(i))))
       case ('taux')
+        WHAT_IS_IN_ESMF(HAS_ESMF_USTRESS) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1671,6 +1681,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('tauy')
+        WHAT_IS_IN_ESMF(HAS_ESMF_VSTRESS) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1682,6 +1693,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('nflx')
+        WHAT_IS_IN_ESMF(HAS_ESMF_HFLUX) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1693,6 +1705,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('nflz')
+        WHAT_IS_IN_ESMF(HAS_ESMF_HFLUX) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1704,6 +1717,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('sflx')
+        WHAT_IS_IN_ESMF(HAS_ESMF_SFLUX) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1715,6 +1729,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('swrd')
+        WHAT_IS_IN_ESMF(HAS_ESMF_SWFLUX) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1726,6 +1741,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('wndu')
+        WHAT_IS_IN_ESMF(HAS_ESMF_UWIND) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1737,6 +1753,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('wndv')
+        WHAT_IS_IN_ESMF(HAS_ESMF_VWIND) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1748,6 +1765,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('wspd')
+        WHAT_IS_IN_ESMF(HAS_ESMF_WSPEED) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1759,6 +1777,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('tsfc')
+        WHAT_IS_IN_ESMF(HAS_ESMF_ATEMP) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1770,6 +1789,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('qsfc')
+        WHAT_IS_IN_ESMF(HAS_ESMF_AQH) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1781,6 +1801,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('lwrd')
+        WHAT_IS_IN_ESMF(HAS_ESMF_LWFLUX) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1792,6 +1813,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('evap')
+        WHAT_IS_IN_ESMF(HAS_ESMF_EVAP) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1803,6 +1825,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('prec')
+        WHAT_IS_IN_ESMF(HAS_ESMF_PRECIP) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1814,6 +1837,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('snow')
+        WHAT_IS_IN_ESMF(HAS_ESMF_SNOWPRECIP) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1825,6 +1849,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('dswr')
+        WHAT_IS_IN_ESMF(HAS_ESMF_SWDOWN) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1836,6 +1861,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('dlwr')
+        WHAT_IS_IN_ESMF(HAS_ESMF_LWDOWN) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1847,6 +1873,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('psfc')
+        WHAT_IS_IN_ESMF(HAS_ESMF_APRESSURE) = .true.
         do jj = 1-OLy, sNy+OLy
           do ii = 1-OLx, sNx+OLx
             iG = myXGlobalLo-1+(bi-1)*sNx+ii
@@ -1858,6 +1885,7 @@ module mod_esmf_ocn
           end do
         end do
       case ('rdis')
+        WHAT_IS_IN_ESMF(HAS_ESMF_RUNOFF) = .true.
         LBi = myXGlobalLo-1+(bi-1)*sNx+(1-OLx)
         UBi = myXGlobalLo-1+(bi-1)*sNx+(sNx+OLx)
         LBj = myYGlobalLo-1+(bj-1)*sNy+(1-OLy)

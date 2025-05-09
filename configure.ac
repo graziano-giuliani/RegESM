@@ -26,7 +26,6 @@ LT_INIT
 
 AM_INIT_AUTOMAKE([foreign])
 
-AC_PROG_RANLIB
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_FC
@@ -293,7 +292,8 @@ else
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xifx"; then
-    FCFLAGS="-O3 -fp-model precise -fp-model source -qopenmp $FCFLAGS"
+    FCFLAGS="-O3 -fp-model precise -flto -xCORE-AVX512 \
+	    -fp-model source -qopenmp $FCFLAGS"
     AC_SUBST(FCFLAGS)
   fi
   if eval "test x"$FC" = xxlf2003"; then
