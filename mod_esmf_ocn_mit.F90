@@ -225,6 +225,7 @@ module mod_esmf_ocn
     end subroutine OCN_SetInitializeP2
 
     subroutine OCN_DataInit(gcomp, rc)
+      use mod_mit_gcm, only : what_is_in_esmf
       implicit none
 
       type(ESMF_GridComp) :: gcomp
@@ -236,6 +237,11 @@ module mod_esmf_ocn
 !-----------------------------------------------------------------------
 !     Get gridded component clock
 !-----------------------------------------------------------------------
+
+     ! First time in, assume all ok. Will be reset first time data
+     ! are sent in and we will then test.
+
+     what_is_in_esmf(:) = .true.
 
      call ESMF_GridCompGet(gcomp, clock=clock, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
