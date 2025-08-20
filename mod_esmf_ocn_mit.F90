@@ -1481,7 +1481,8 @@ module mod_esmf_ocn
                               aqh_ESMF, lwflux_ESMF, evap_ESMF,         &
                               wspeed_ESMF, precip_ESMF, runoff_ESMF,    &
                               swdown_ESMF, lwdown_ESMF, apressure_ESMF, &
-                              snowprecip_ESMF, uwind_ESMF, vwind_ESMF
+                              snowprecip_ESMF, uwind_ESMF, vwind_ESMF,  &
+                              hl_ESMF, hs_ESMF
       use mod_mit_gcm, only : what_is_in_ESMF
       use mod_mit_gcm, only : HAS_ESMF_USTRESS, HAS_ESMF_VSTRESS,   &
               HAS_ESMF_HFLUX, HAS_ESMF_SFLUX, HAS_ESMF_SWFLUX,      &
@@ -1489,7 +1490,7 @@ module mod_esmf_ocn
               HAS_ESMF_ATEMP, HAS_ESMF_AQH, HAS_ESMF_LWFLUX,        &
               HAS_ESMF_EVAP, HAS_ESMF_PRECIP, HAS_ESMF_SNOWPRECIP,  &
               HAS_ESMF_SWDOWN, HAS_ESMF_LWDOWN, HAS_ESMF_APRESSURE, &
-              HAS_ESMF_RUNOFF
+              HAS_ESMF_SHFX, HAS_ESMF_LHFX, HAS_ESMF_RUNOFF
       use mod_mit_gcm, only : xG, yG
 
       implicit none
@@ -1695,6 +1696,30 @@ module mod_esmf_ocn
             if ((iG > 0 .and. iG < imax) .and.                          &
                 (jG > 0 .and. jG < jmax) .and. ptr(iG,jG) < TOL_R8) then
               vstress_ESMF(ii,jj,1,1) = (ptr(iG,jG)*sfac)+addo
+            end if
+          end do
+        end do
+      case ('lhfx')
+        WHAT_IS_IN_ESMF(HAS_ESMF_LHFX) = .true.
+        do jj = 1-OLy, sNy+OLy
+          do ii = 1-OLx, sNx+OLx
+            iG = myXGlobalLo-1+(bi-1)*sNx+ii
+            jG = myYGlobalLo-1+(bj-1)*sNy+jj
+            if ((iG > 0 .and. iG < imax) .and.                          &
+                (jG > 0 .and. jG < jmax) .and. ptr(iG,jG) < TOL_R8) then
+              hl_ESMF(ii,jj,1,1) = (ptr(iG,jG)*sfac)+addo
+            end if
+          end do
+        end do
+      case ('shfx')
+        WHAT_IS_IN_ESMF(HAS_ESMF_SHFX) = .true.
+        do jj = 1-OLy, sNy+OLy
+          do ii = 1-OLx, sNx+OLx
+            iG = myXGlobalLo-1+(bi-1)*sNx+ii
+            jG = myYGlobalLo-1+(bj-1)*sNy+jj
+            if ((iG > 0 .and. iG < imax) .and.                          &
+                (jG > 0 .and. jG < jmax) .and. ptr(iG,jG) < TOL_R8) then
+              hs_ESMF(ii,jj,1,1) = (ptr(iG,jG)*sfac)+addo
             end if
           end do
         end do
