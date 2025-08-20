@@ -334,7 +334,6 @@ module mod_esmf_rtm
       type(ESMF_StaggerLoc) :: staggerLoc
       integer, pointer :: ptrM(:,:)
       real(ESMF_KIND_R8), pointer :: ptrX(:,:), ptrY(:,:), ptrA(:,:)
-      real(ESMF_KIND_R8), parameter :: umfang = 360.0d0
       character (len=40) :: name
 
       rc = ESMF_SUCCESS
