@@ -2307,6 +2307,12 @@ module mod_esmf_atm
             ptr2d(m,n) = exportFields%prec(n,m)
           end do
         end do
+      case ('evap')
+        do m = ici1, ici2
+          do n = jci1, jci2
+            ptr2d(m,n) = exportFields%evap(n,m)
+          end do
+        end do
       case ('wndu')
         do m = ici1, ici2
           do n = jci1, jci2
