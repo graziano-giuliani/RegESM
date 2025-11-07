@@ -176,7 +176,7 @@ module mod_esmf_rtm
 !     Initialize the gridded component
 !-----------------------------------------------------------------------
 
-      call RTM_Initialize
+      call RTM_Initialize(comm)
 
 !-----------------------------------------------------------------------
 !     Set-up grid and load coordinate data

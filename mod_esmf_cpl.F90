@@ -543,6 +543,16 @@ module mod_esmf_cpl
                                  ignoreDegenerate=.true., &
                                  rc=rc)
 #endif
+      else if (iSrc == Iatmos .and. iDst == Iocean ) then
+      call ESMF_FieldRegridStore(srcField=srcField,                     &
+                                 dstField=dstField,                     &
+                                 srcMaskValues=(/models(iSrc)%isLand/), &
+                                 unmappedaction=unmap,                  &
+                                 routeHandle=routeHandle,               &
+                                 regridmethod=regridMethod,             &
+                                 srcTermProcessing=srcTermProcessing,   &
+                                 ignoreDegenerate=.true.,               &
+                                 rc=rc)
       else
       call ESMF_FieldRegridStore(srcField=srcField,                     &
                                  dstField=dstField,                     &
