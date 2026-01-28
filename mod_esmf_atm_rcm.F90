@@ -1886,6 +1886,7 @@ module mod_esmf_atm
     end subroutine ATM_SetFinalize
 
     subroutine ATM_Get(gcomp, rc)
+      use mpi
       use mod_update, only : importFields
       use mod_dynparam, only : ici1, ici2, jci1, jci2
 
@@ -1897,6 +1898,7 @@ module mod_esmf_atm
       integer :: i, j, n, m, id
       integer :: iyear, iday, imonth, ihour, iunit
       integer :: localPet, petCount, itemCount, localDECount
+      integer :: comm ! , ierr, is_ok, all_ok
       character(ESMF_MAXSTR) :: cname, ofile
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8) :: sfac, addo
@@ -1920,7 +1922,8 @@ module mod_esmf_atm
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
-      call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
+      call ESMF_VMGet(vm, localPet=localPet, petCount=petCount,         &
+                      mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
@@ -2016,6 +2019,21 @@ module mod_esmf_atm
 
       sfac = models(Iatmos)%importField(id)%scale_factor
       addo = models(Iatmos)%importField(id)%add_offset
+
+      !is_ok = 1
+      !if ( all(ptr(:,:) > TOL_R8) ) then
+      !  is_ok = 0
+      !end if
+      !call mpi_allreduce(is_ok, all_ok, 1, mpi_integer, mpi_sum, comm, ierr)
+      !if ( is_ok == 0 ) then
+      !  rc = ESMF_RC_PTR_BAD
+      !  call ESMF_LogSetError(ESMF_RC_ARG_BAD,                          &
+      !                        msg="COMMUNICATION PROBLEM: EMPTY FIELD: "&
+      !                        //trim(adjustl(itemNameList(i))),         &
+      !                        line=__LINE__, file=FILENAME,             &
+      !                        rcToReturn=rc)
+      !  return
+      !end if
 
       select case (trim(adjustl(itemNameList(i))))
 !     Import from OCN

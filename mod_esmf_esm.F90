@@ -417,8 +417,8 @@ module mod_esmf_esm
           "   @*          ",    &
           "     ATM -> OCN",    &
           "     OCN -> ATM",    &
-          "     ATM       ",    &
           "     OCN       ",    &
+          "     ATM       ",    &
           "   @           ",    &
           "   RTM         ",    &
           " @             " /), &

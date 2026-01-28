@@ -231,6 +231,7 @@ OBJ=
 if DO_COMPILE_LIBATM
 if DO_COMPILE_RCM
 mod_esmf_atm_rcm.o: mod_esmf_atm_rcm.F90 mod_types.o mod_shared.o
+	$(MPIFC) $(CPPFLAGS) $(FCFLAGS) -c $<
 OBJ+=mod_esmf_atm_rcm.o
 else
 if DO_COMPILE_WRF
@@ -255,6 +256,7 @@ mod_mit_gcm.F90: $(OCN_PREFIX)/ENEA.f
         $(AWK) -f tools/other/awk.prog | $(SED) -e 's/\([0-9]\) d \([0-9]\)/\1d\2/g' > mod_mit_gcm.F90	
 
 mod_esmf_ocn_mit.o: mod_esmf_ocn_mit.F90 mod_types.o mod_shared.o mod_mit_gcm.o
+	$(MPIFC) $(CPPFLAGS) $(FCFLAGS) -c $<
 mod_mit_gcm.o: mod_mit_gcm.F90
 OBJ+=mod_esmf_ocn_mit.o
 endif

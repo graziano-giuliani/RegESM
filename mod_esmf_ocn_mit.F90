@@ -1401,7 +1401,7 @@ module mod_esmf_ocn
 !     Debug: write time information
 !-----------------------------------------------------------------------
 
-      iter = int(trun/deltaT)
+      iter = int(trun/deltaT,kind(iter))
 
       if (debugLevel >= 0 .and. localPet == 0) then
         call ESMF_TimeGet(currTime,                                     &
@@ -1435,15 +1435,17 @@ module mod_esmf_ocn
 !     Run OCN component
 !-----------------------------------------------------------------------
 
-      call MIT_RUN(iter, iLoop, myTime, myIter, myThid)
+      if ( iter > 0 ) then
+        call MIT_RUN(iter, iLoop, myTime, myIter, myThid)
 
 !-----------------------------------------------------------------------
 !     Put export fields
 !-----------------------------------------------------------------------
 
-      call OCN_Put(gcomp, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
-                             line=__LINE__, file=FILENAME)) return
+        call OCN_Put(gcomp, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                               line=__LINE__, file=FILENAME)) return
+      end if
 
 !-----------------------------------------------------------------------
 !     Formats
@@ -1476,6 +1478,7 @@ module mod_esmf_ocn
     end subroutine OCN_SetFinalize
 
     subroutine OCN_Get(gcomp, rc)
+      use mpi
       use mod_mit_gcm, only : ustress_ESMF, vstress_ESMF, hflux_ESMF,   &
                               sflux_ESMF, swflux_ESMF, atemp_ESMF,      &
                               aqh_ESMF, lwflux_ESMF, evap_ESMF,         &
@@ -1503,6 +1506,7 @@ module mod_esmf_ocn
       integer :: iyear, iday, imonth, ihour, iminute, isec
       integer :: LBi, UBi, LBj, UBj
       integer :: localPet, petCount, itemCount, localDECount
+      integer :: comm !, ierr, is_ok, all_ok
       character(ESMF_MAXSTR) :: cname, ofile
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8) :: sfac, addo
@@ -1530,7 +1534,8 @@ module mod_esmf_ocn
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
-      call ESMF_VMGet(vm, localPet=localPet, petCount=petCount, rc=rc)
+      call ESMF_VMGet(vm, localPet=localPet, petCount=petCount,         &
+                      mpiCommunicator=comm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
@@ -1542,7 +1547,6 @@ module mod_esmf_ocn
       call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
-
       call ESMF_TimeGet(currTime, yy=iyear, mm=imonth,                  &
                         dd=iday, h=ihour, m=iminute, s=isec, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
@@ -1673,6 +1677,21 @@ module mod_esmf_ocn
         end select
       end if
 #endif
+
+      !is_ok = 1
+      !if ( all(ptr(:,:) > TOL_R8) ) then
+      !  is_ok = 0
+      !end if
+      !call mpi_allreduce(is_ok, all_ok, 1, mpi_integer, mpi_sum, comm, ierr)
+      !if ( is_ok == 0 ) then
+      !  rc = ESMF_RC_PTR_BAD
+      !  call ESMF_LogSetError(ESMF_RC_ARG_BAD,                          &
+      !                        msg="COMMUNICATION PROBLEM: EMPTY FIELD: "&
+      !                        //trim(adjustl(itemNameList(i))),         &
+      !                        line=__LINE__, file=FILENAME,             &
+      !                        rcToReturn=rc)
+      !  return
+      !end if
 
       select case (trim(adjustl(itemNameList(i))))
       case ('taux')
