@@ -2713,9 +2713,9 @@ module mod_esmf_atm
 
         do j = jci1, jci2
           do i = ici1, ici2
-            zphi = mddom%dlat(j,i)*degrad
-            zrla = mddom%dlon(j,i)*degrad
-            if (mddom%dlat(j,i) > 89.999999D0) zrla = 0.0d0
+            zphi = mddom%xlat(j,i)*degrad
+            zrla = mddom%xlon(j,i)*degrad
+            if (mddom%xlat(j,i) > 89.999999D0) zrla = 0.0d0
             zrlap = pollam*degrad-zrla
             zarg1 = polcphi*dsin(zrlap)
             zarg2 = polsphi*dcos(zphi)-polcphi*dsin(zphi)*dcos(zrlap)
@@ -2735,15 +2735,15 @@ module mod_esmf_atm
         polphi = degrad*plat
         do i = ici1, ici2
           do j = jci1, jci2
-            phi = degrad*mddom%dlat(j,i)
-            lam = degrad*mddom%dlon(j,i)
+            phi = degrad*mddom%xlat(j,i)
+            lam = degrad*mddom%xlon(j,i)
             dlam = pollam - lam
             zarg1 = cos(polphi)*sin(dlam)
             zarg2 = cos(phi)*sin(polphi)-sin(phi)*cos(polphi)*cos(dlam)
             delta = atan(zarg1/zarg2)
             cosdel = cos(delta)
             sindel = sin(delta)
-            us = u(j,i)*cosdel+v(j,i)*sindel
+            us =  u(j,i)*cosdel+v(j,i)*sindel
             vs = -u(j,i)*sindel+v(j,i)*cosdel
             u(j,i) = us
             v(j,i) = vs
