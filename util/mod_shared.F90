@@ -315,7 +315,7 @@ module mod_shared
                 r = r + 1
                 rivers(r)%isActive = 1
                 rivers(r)%monfac(:) = 1.0
-                rivers(r)%eRadius = 10.0*ptr(i,j)**0.4
+                rivers(r)%eRadius = 12.0d0*ptr(i,j)**0.17
                 rivers(r)%dir = 0 ! River mouth direction, to be implemented
                 rivers(r)%iindex = i
                 rivers(r)%jindex = j
@@ -416,7 +416,7 @@ module mod_shared
       integer :: imin, imax, jmin, jmax, pos(2), ibuffer(1)
       real(8), dimension(:,:), allocatable :: distance
       real(8), dimension(:), allocatable :: dbuffer2
-      real(8) :: totalArea, dbuffer1(1)
+      real(8) :: totalArea, expectedArea, dbuffer1(1)
 
       rc = ESMF_SUCCESS
 
@@ -478,6 +478,7 @@ module mod_shared
             ! find list of grid indices
             np = ZERO_I4
             totalArea = ZERO_R8
+            expectedArea = ZERO_R8
             rivers(r)%mapTable(:,:) = MISSING_R8
 
             do i = imin, imax
@@ -485,8 +486,33 @@ module mod_shared
                 if ((distance(i,j) <= rivers(r)%eRadius .and.           &
                     (models(Iocean)%mesh(k)%gmsk(i,j) ==                &
                      models(Iocean)%isOcean))) then
-                  np = np+1
+                  ! calculate total area of mapped ocean grid points
+                  totalArea = totalArea+models(Iocean)%mesh(k)%gare(i,j)
+                end if
+              end do
+            end do
 
+            if (totalArea == ZERO_R8 ) then
+              write(*,fmt='(A,I5,A)') "[error] - River area null "//&
+                    "for river [", r, "]"
+              write(*,fmt='(A)')"[error] - Review mapping! "
+              call ESMF_Finalize(endflag=ESMF_END_ABORT)
+            end if
+            !
+            ! Re-scale the radius to take care if river mouth is
+            ! not normal to a planar coast (area not a half cirle)
+            ! Area is in square meters, eRadius is in km.
+            !
+            expectedArea = 0.5d0*pi*(1000.0d0*rivers(r)%eRadius)**2
+            rivers(r)%eRadius = min(rivers(r)%eRadius * &
+                 ((expectedArea/totalArea)**0.15d0),200.0d0)
+            totalArea = ZERO_R8
+            do i = imin, imax
+              do j = jmin, jmax
+                if ((distance(i,j) <= rivers(r)%eRadius .and.           &
+                    (models(Iocean)%mesh(k)%gmsk(i,j) ==                &
+                     models(Iocean)%isOcean))) then
+                  np = np+1
                   ! check for size
                   if (np > MAX_MAPPED_GRID) then
                     write(*,fmt='(A,I5,A)') "[error] - Try to reduce "//&
@@ -496,7 +522,6 @@ module mod_shared
                           MAX_MAPPED_GRID
                     call ESMF_Finalize(endflag=ESMF_END_ABORT)
                   end if
-
                   ! calculate total area of mapped ocean grid points
                   totalArea = totalArea+models(Iocean)%mesh(k)%gare(i,j)
 
