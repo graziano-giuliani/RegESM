@@ -264,11 +264,8 @@ module mod_config
     select case (runMod)
       case (iseq) ! sequential
         do i = 1, nModels
-          if ((i == Iatmos) .or. (i == Iocean) .or.                     &
-              (i == Iwavee) .or. (i == Icopro)) then
-            models(i)%nPets = petCount
-          else if (i == Iriver) then
-            models(i)%nPets = 1
+          if (i == Iriver) then
+             models(i)%nPets = 1
           end if
 
           if (.not. allocated(models(i)%petList)) then
@@ -277,7 +274,7 @@ module mod_config
 
           if ((i == Iatmos) .or. (i == Iocean) .or.                     &
               (i == Iwavee) .or. (i == Icopro)) then
-            models(i)%petList = (/ (k, k = 0, petCount-1) /)
+            models(i)%petList = (/ (k, k = 0, models(i)%nPets-1) /)
           else if (i == Iriver) then
             models(i)%petList(1) = petCount-1
           end if
