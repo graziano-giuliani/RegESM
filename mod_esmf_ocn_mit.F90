@@ -41,7 +41,6 @@ module mod_esmf_ocn
   integer :: myThid = 1
   integer :: iLoop = 0
   integer :: myIter = 0
-  integer :: iter
   integer, allocatable :: mpi_myXGlobalLo(:), mpi_myYGlobalLo(:)
 
   type(ESMF_RouteHandle) :: rh_halo
@@ -1355,9 +1354,9 @@ module mod_esmf_ocn
       integer, intent(out) :: rc
 
       real(8) :: trun
-      integer :: myThid = 1
       integer :: localPet, petCount, phase
       character(ESMF_MAXSTR) :: str1, str2
+      integer :: iter
 
       type(ESMF_VM) :: vm
       type(ESMF_Clock) :: clock
@@ -1474,7 +1473,7 @@ module mod_esmf_ocn
 !     Call model finalize routines
 !-----------------------------------------------------------------------
 
-      call MIT_FINALIZE(iter, iLoop, myTime, myIter, myThid)
+      call MIT_FINALIZE(myTime, myIter, myThid)
 
     end subroutine OCN_SetFinalize
 
