@@ -67,7 +67,10 @@ module mod_types
       integer :: rootPet
       integer :: mapSize
       real(ESMF_KIND_R8)  :: mapArea
-      real(ESMF_KIND_R8)  :: mapTable(3,MAX_MAPPED_GRID) ! i, j and weight
+      ! i, j and weight of each mapped ocean point, allocated with mapSize
+      ! columns in map_rivers (a fixed MAX_MAPPED_GRID array costs 240 kB
+      ! per river on every PET: 175 MB for ~700 rivers)
+      real(ESMF_KIND_R8), allocatable :: mapTable(:,:)
     end type RTM_River
 
 !-----------------------------------------------------------------------

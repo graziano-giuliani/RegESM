@@ -1664,7 +1664,7 @@ module mod_esmf_ocn
             if (rivers(ii)%isActive > 0) then
               rivers(ii)%rootPet = findPet(vm, rivers(ii)%iindex, &
                                            rivers(ii)%jindex, rc)
-              if (localPet == 0) then
+              if (localPet == 0 .and. debugLevel > 0) then
                 write(*,20) ii, rivers(ii)%dir, rivers(ii)%eRadius,  &
                         rivers(ii)%lon, rivers(ii)%lat, &
                         rivers(ii)%iindex, rivers(ii)%jindex, &
@@ -1672,6 +1672,14 @@ module mod_esmf_ocn
               end if
             end if
           end do
+          if (localPet == 0) then
+            write(*,'(A,I6,A,F8.1,A,F8.1,A)') ' RIVERS - ',           &
+              count(rivers(:)%isActive > 0), ' active, radius ',      &
+              minval(rivers(:)%eRadius, mask=rivers(:)%isActive > 0), &
+              ' - ',                                                  &
+              maxval(rivers(:)%eRadius, mask=rivers(:)%isActive > 0), &
+              ' km (list with debugLevel > 0)'
+          end if
           deallocate(farrayDst)
           firstT = .false.
         end select
@@ -2286,8 +2294,9 @@ module mod_esmf_ocn
       real(ESMF_KIND_R8), intent(in) :: sfac, addo
       integer, intent(inout) :: rc
 
-      real(8) :: rdis(1)
-      integer :: i, j, k, r, ii, jj, iG, jG, bi, bj
+      real(8) :: rdis(1), total
+      real(8), allocatable, save :: rdisall(:), rdisloc(:)
+      integer :: i, j, k, r, ii, jj, bi, bj
       integer :: mm, ng, np, nr, localPet, petCount
       character(ESMF_MAXSTR) :: str
 
@@ -2324,26 +2333,31 @@ module mod_esmf_ocn
 
       ! get number of rivers
       nr = size(rivers, dim=1)
+      if (.not. allocated(rdisall)) allocate(rdisall(nr), rdisloc(nr))
 
-      k = 0
+      ! Each PET reads the discharge of the rivers it owns; a single
+      ! reduction then gives every PET all discharges (one collective per
+      ! call instead of one broadcast per river).
+      rdisloc = ZERO_R8
+      do r = 1, nr
+        if (rivers(r)%isActive > 0 .and. localPet == rivers(r)%rootPet) then
+          rdis = ptr(rivers(r)%iindex,rivers(r)%jindex)
+          if (rdis(1) < TOL_R8) then
+            rdisloc(r) = (rdis(1)*sfac)+addo
+          end if
+        end if
+      end do
+      call ESMF_VMAllReduce(vm, rdisloc, rdisall, nr,                  &
+                            ESMF_REDUCE_SUM, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
+                             line=__LINE__, file=FILENAME)) return
+
       bi = 1
       bj = 1
+      total = ZERO_R8
       do r = 1, nr
         if (rivers(r)%isActive > 0) then
-          ! get river discharge
-          if (localPet == rivers(r)%rootPet) then
-            rdis = ptr(rivers(r)%iindex,rivers(r)%jindex)
-            if (rdis(1) < TOL_R8) then
-              rdis = (rdis*sfac)+addo
-            end if
-          end if
-
-          ! broadcast data across the PETs
-          call ESMF_VMBroadcast(vm, bcstData=rdis, count=1,           &
-                                rootPet=rivers(r)%rootPet, rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc,                        &
-                                 msg=ESMF_LOGERR_PASSTHRU,            &
-                                 line=__LINE__, file=FILENAME)) return
+          rdis(1) = rdisall(r)
 
           ! apply monthly correction factor
           rdis = rdis*rivers(r)%monfac(mm)
@@ -2353,6 +2367,7 @@ module mod_esmf_ocn
           if (rivers(r)%isActive == 2) then
             rdis = rivers(r)%monfac(mm)
           end if
+          total = total + rdis(1)
 
           ! apply as point source
           if (riverOpt == 1) then
@@ -2362,46 +2377,41 @@ module mod_esmf_ocn
 
           ! apply as surface boundary condition
           else if (riverOpt == 2) then
-            ! distribute data to the mapped ocean grid points
+            ! distribute data to the mapped ocean grid points; the global
+            ! indices are converted directly to local ones (halo included,
+            ! as before)
             np = rivers(r)%mapSize
             do k = 1, np
               i = int(rivers(r)%mapTable(1,k))
               j = int(rivers(r)%mapTable(2,k))
-
-              do jj = 1-OLy, sNy+OLy
-                do ii = 1-OLx, sNx+OLx
-                  iG = myXGlobalLo-1+(bi-1)*sNx+ii
-                  jG = myYGlobalLo-1+(bj-1)*sNy+jj
-                  if (iG == i .and. jG ==j .and. rdis(1) < TOL_R8) then
-                    runoff_ESMF(ii,jj,1,1) = runoff_ESMF(ii,jj,1,1)+  &
-                                           (rdis(1)/rivers(r)%mapArea)
-                  end if
-                end do
-              end do
+              ii = i-(myXGlobalLo-1+(bi-1)*sNx)
+              jj = j-(myYGlobalLo-1+(bj-1)*sNy)
+              if (ii >= 1-OLx .and. ii <= sNx+OLx .and.                &
+                  jj >= 1-OLy .and. jj <= sNy+OLy) then
+                runoff_ESMF(ii,jj,1,1) = runoff_ESMF(ii,jj,1,1)+        &
+                                         (rdis(1)/rivers(r)%mapArea)
+              end if
             end do
           end if
 
           ! print debug info
-          if (localPet == 0) then
-            if (rdis(1) < TOL_R8) then
-              write(*,110) r, trim(str), rdis(1)
-            else
-              write(*,110) r, trim(str), ZERO_R8
-            end if
-          end if
-        else
-          ! print debug info
-          if (localPet == 0) then
-            write(*,110) r, trim(str), ZERO_R8
+          if (localPet == 0 .and. debugLevel > 1) then
+            write(*,110) r, trim(str), rdis(1)
           end if
         end if
       end do
+
+      ! one summary line per call
+      if (localPet == 0) then
+        write(*,120) trim(str), count(rivers(:)%isActive > 0), total
+      end if
 
 !-----------------------------------------------------------------------
 !     Formats
 !-----------------------------------------------------------------------
 
- 110  format(' River (',I3.2,') Discharge [',A,'] : ',F15.6)
+ 110  format(' River (',I5.5,') Discharge [',A,'] : ',F15.6)
+ 120  format(' Rivers Discharge [',A,'] : ',I6,' rivers, total ',F15.3,' m3/s')
 
     end subroutine put_river
 

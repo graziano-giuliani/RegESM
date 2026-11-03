@@ -252,7 +252,7 @@ module mod_shared
       integer, intent(inout) :: rc
 
       integer :: i, j, k, r, localPet, petCount
-      integer :: numrivers
+      integer :: numrivers, numcand
       integer :: ibuffer(1)
       real(8) :: dbuffer(1)
       logical , dimension(Nx,Ny) :: is_river
@@ -268,6 +268,7 @@ module mod_shared
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,    &
                              line=__LINE__, file=FILENAME)) return
 
+      numcand = 0
       if ( localPet == 0 ) then
         is_river = .false.
         do j = 2, Ny-1
@@ -277,6 +278,7 @@ module mod_shared
             end if
           end do
         end do
+        numcand = count(is_river)
         do j = 2, Ny-1
           do i = 2, Nx-1
             if ( is_river(i,j) ) then
@@ -299,6 +301,14 @@ module mod_shared
 
       if ( localPet == 0 ) then
         write(6,*) 'NUMBER OF RIVERS IN INITRIVERS: ', numrivers
+        ! Points with a neighbouring river point are dropped above, and the
+        ! discharge they carry never reaches the ocean. Report it.
+        if ( numcand > numrivers ) then
+          write(6,*) 'WARNING: ', numcand-numrivers, ' OF ', numcand,    &
+                     ' RIVER POINTS DROPPED (NOT ISOLATED IN 3x3).',     &
+                     ' THEIR DISCHARGE IS LOST: INCREASE THE OUTLET',    &
+                     ' SEPARATION IN THE RIVER MODEL.'
+        end if
       end if
 
       if ( numrivers .gt. 0 ) then
@@ -430,6 +440,12 @@ module mod_shared
       ! get number of specified rivers
       nRiver = size(rivers, dim=1)
 
+      do r = 1, nRiver
+        if (allocated(rivers(r)%mapTable)) deallocate(rivers(r)%mapTable)
+        rivers(r)%mapSize = ZERO_I4
+        rivers(r)%mapArea = ZERO_R8
+      end do
+
       if (localPet == 0) then
         ! get index of used grid stencile (algorithm uses cross points)
         k = minloc(models(Iocean)%mesh(:)%gtype, dim=1,                 &
@@ -461,9 +477,7 @@ module mod_shared
 
             ! check position indices and skip loop
             if (any(pos == 0)) then
-              rivers(r)%mapSize = ZERO_I4
-              rivers(r)%mapArea = ZERO_R8
-              rivers(r)%mapTable(:,:) = MISSING_R8
+              allocate(rivers(r)%mapTable(3,0))
               cycle
             end if
 
@@ -475,22 +489,11 @@ module mod_shared
                            models(Iocean)%mesh(k)%glon,                 &
                            models(Iocean)%mesh(k)%glat, distance)
 
-            ! find list of grid indices
-            np = ZERO_I4
-            totalArea = ZERO_R8
-            expectedArea = ZERO_R8
-            rivers(r)%mapTable(:,:) = MISSING_R8
-
-            do i = imin, imax
-              do j = jmin, jmax
-                if ((distance(i,j) <= rivers(r)%eRadius .and.           &
-                    (models(Iocean)%mesh(k)%gmsk(i,j) ==                &
-                     models(Iocean)%isOcean))) then
-                  ! calculate total area of mapped ocean grid points
-                  totalArea = totalArea+models(Iocean)%mesh(k)%gare(i,j)
-                end if
-              end do
-            end do
+            ! total ocean area within the first-guess radius
+            totalArea = sum(models(Iocean)%mesh(k)%gare,                &
+                            mask=(distance <= rivers(r)%eRadius .and.   &
+                                  models(Iocean)%mesh(k)%gmsk ==        &
+                                  models(Iocean)%isOcean))
 
             if (totalArea == ZERO_R8 ) then
               write(*,fmt='(A,I5,A)') "[error] - River area null "//&
@@ -498,14 +501,28 @@ module mod_shared
               write(*,fmt='(A)')"[error] - Review mapping! "
               call ESMF_Finalize(endflag=ESMF_END_ABORT)
             end if
-            !
+
             ! Re-scale the radius to take care if river mouth is
             ! not normal to a planar coast (area not a half cirle)
             ! Area is in square meters, eRadius is in km.
-            !
             expectedArea = 0.5d0*pi*(1000.0d0*rivers(r)%eRadius)**2
             rivers(r)%eRadius = min(rivers(r)%eRadius * &
                  ((expectedArea/totalArea)**0.15d0),200.0d0)
+
+            ! count the mapped ocean points, then fill the table
+            np = count(distance <= rivers(r)%eRadius .and.              &
+                       models(Iocean)%mesh(k)%gmsk ==                   &
+                       models(Iocean)%isOcean)
+            if (np > MAX_MAPPED_GRID) then
+              write(*,fmt='(A,I5,A)') "[error] - Try to reduce "//      &
+                    "effective radius for river [", r, "]"
+              write(*,fmt='(A,I5)')"[error] - Number of effected "//    &
+                    "ocean grid points greater than ", MAX_MAPPED_GRID
+              call ESMF_Finalize(endflag=ESMF_END_ABORT)
+            end if
+            allocate(rivers(r)%mapTable(3,np))
+
+            np = ZERO_I4
             totalArea = ZERO_R8
             do i = imin, imax
               do j = jmin, jmax
@@ -513,18 +530,8 @@ module mod_shared
                     (models(Iocean)%mesh(k)%gmsk(i,j) ==                &
                      models(Iocean)%isOcean))) then
                   np = np+1
-                  ! check for size
-                  if (np > MAX_MAPPED_GRID) then
-                    write(*,fmt='(A,I5,A)') "[error] - Try to reduce "//&
-                          "effective radius for river [", r, "]"
-                    write(*,fmt='(A,I5)')"[error] - Number of effected "//&
-                          "ocean grid points greater than ",            &
-                          MAX_MAPPED_GRID
-                    call ESMF_Finalize(endflag=ESMF_END_ABORT)
-                  end if
                   ! calculate total area of mapped ocean grid points
                   totalArea = totalArea+models(Iocean)%mesh(k)%gare(i,j)
-
                   rivers(r)%mapTable(1,np) = i
                   rivers(r)%mapTable(2,np) = j
                   rivers(r)%mapTable(3,np) =                            &
@@ -547,12 +554,6 @@ module mod_shared
         if (allocated(distance)) then
           deallocate(distance)
         end if
-      else
-        do r = 1, nRiver
-          rivers(r)%mapSize = ZERO_I4
-          rivers(r)%mapArea = ZERO_R8
-          rivers(r)%mapTable(:,:) = MISSING_R8
-        end do
       end if
 
 !-----------------------------------------------------------------------
@@ -568,6 +569,11 @@ module mod_shared
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU,&
                                  line=__LINE__, file=FILENAME)) return
           rivers(r)%mapSize = ibuffer(1)
+          np = rivers(r)%mapSize
+          if (.not. allocated(rivers(r)%mapTable)) then
+            allocate(rivers(r)%mapTable(3,np))
+          end if
+          if (np == 0) cycle
 
           ! broadcast total surface area effected by each river
           dbuffer1(1) = rivers(r)%mapArea
@@ -577,25 +583,16 @@ module mod_shared
                                  line=__LINE__, file=FILENAME)) return
           rivers(r)%mapArea = dbuffer1(1)
 
-          ! allocate send buffer for river
-          np = rivers(r)%mapSize
-          if (.not. allocated(dbuffer2)) then
-            allocate(dbuffer2(np))
-          end if
-
           ! broadcast info of effected grid points (i, j and weight)
-          do i = 1, 3
-            dbuffer2 = rivers(r)%mapTable(i,1:np)
-            call ESMF_VMBroadcast(vm, bcstData=dbuffer2,                &
-                                  count=np, rootPet=0, rc=rc)
-            if (ESMF_LogFoundError(rcToCheck=rc,                        &
-                                   msg=ESMF_LOGERR_PASSTHRU,            &
-                                   line=__LINE__, file=FILENAME)) return
-            rivers(r)%mapTable(i,1:np) = dbuffer2
-          end do
-
-          ! deallocate buffer
-          if (allocated(dbuffer2)) deallocate(dbuffer2)
+          allocate(dbuffer2(3*np))
+          dbuffer2 = reshape(rivers(r)%mapTable, [3*np])
+          call ESMF_VMBroadcast(vm, bcstData=dbuffer2,                  &
+                                count=3*np, rootPet=0, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc,                          &
+                                 msg=ESMF_LOGERR_PASSTHRU,              &
+                                 line=__LINE__, file=FILENAME)) return
+          rivers(r)%mapTable = reshape(dbuffer2, [3,np])
+          deallocate(dbuffer2)
         end if
       end do
     end subroutine map_rivers

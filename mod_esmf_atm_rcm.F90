@@ -2131,7 +2131,6 @@ module mod_esmf_atm
     subroutine ATM_Put(gcomp, rc)
       use mod_constants, only : regrav, d_100
       use mod_hgt, only : htsig, nonhydrost
-      use mod_vertint, only : intlinreg
       use mod_mppparam, only : ma
       use mod_update, only : exportFields, exportFields3d
       use mod_dynparam, only : ici1, ici2, jci1, jci2
@@ -2153,7 +2152,6 @@ module mod_esmf_atm
       character(ESMF_MAXSTR), allocatable :: itemNameList(:)
       real(ESMF_KIND_R8), pointer :: ptr2d(:,:)
       real(ESMF_KIND_R8), pointer :: ptr3d(:,:,:)
-      real(ESMF_KIND_R8), allocatable :: zvar(:,:,:), hzvar(:,:,:)
       integer(ESMF_KIND_I8) :: tstep
 
       type(ESMF_VM) :: vm
@@ -2517,121 +2515,6 @@ module mod_esmf_atm
       ptr3d = MISSING_R8
 
 !-----------------------------------------------------------------------
-!     Calculate heights on sigma surfaces
-!-----------------------------------------------------------------------
-
-      if (.not. allocated(hzvar)) then
-        allocate(hzvar(jce1:jce2,ice1:ice2,kz))
-        hzvar = ZERO_R8
-      end if
-
-      if (idynamic == 1) then
-        call htsig(exportFields3d%t, hzvar, exportFields%psfc*d_100,&
-                     mddom%ht(jce1:jce2,ice1:ice2)*regrav,              &
-                     sigma, ptop*d_100, jce1, jce2, ice1, ice2, kz)
-      else
-!        call nonhydrost(hzvar, exportFields3d%t,                      &
-!                          (exportFields%psfc-ptop)*d_100, ptop*d_100,   &
-!                          mddom%ht(jce1:jce2,ice1:ice2), sigma,         &
-!                          jce1, jce2, ice1, ice2, kz)
-!       call nonhydrost(hzvar, exportFields3d%t,                      &
-!                         (exportFields%psfc-ptop)*d_100, ptop,         &
-!                         mddom%ht(jce1:jce2,ice1:ice2)*regrav, sigma,  &
-!                         jce1, jce2, ice1, ice2, kz)
-      end if
-
-!-----------------------------------------------------------------------
-!     Perform vertical interpolation from aigma to height
-!-----------------------------------------------------------------------
-
-      nz = models(Iatmos)%nLevs
-
-      if (.not. allocated(zvar)) then
-        allocate(zvar(jce1:jce2,ice1:ice2,nz))
-        zvar = ZERO_R8
-      end if
-
-      select case (trim(adjustl(itemNameList(i))))
-      case ('tlev')
-        call intlinreg(zvar, exportFields3d%t,      &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('qlev')
-        call intlinreg(zvar, exportFields3d%q,      &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('ulev')
-        call intlinreg(zvar, exportFields3d%u,      &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('vlev')
-        call intlinreg(zvar, exportFields3d%v,      &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('wlev')
-        call intlinreg(zvar, exportFields3d%w,      &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('cldfrc')
-        call intlinreg(zvar, exportFields3d%cldfrc, &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      case ('cldlwc')
-        call intlinreg(zvar, exportFields3d%cldlwc, &
-                       models(Iatmos)%levs,         &
-                       jce1, jce2, ice1, ice2, kz,  &
-                       hzvar,nz)
-      end select
-
-!-----------------------------------------------------------------------
-!           Put data to export field
-!-----------------------------------------------------------------------
-
-            do k = 1 , nz
-              do m = ice1, ice2
-                do n = jce1, jce2
-                  ptr3d(m,n,k) = zvar(n,m,k)
-                end do
-              end do
-            end do
-
-!-----------------------------------------------------------------------
-!           Fill domain boundaries with data
-!-----------------------------------------------------------------------
-
-            if (ma%has_bdytop) then ! right
-              do k = 1 , nz
-                ptr3d(ice2,:,k) = ptr3d(ice2-1,:,k)
-                ptr3d(ice2+1,:,k) = ptr3d(ice2-1,:,k)
-              end do
-            end if
-
-            if (ma%has_bdybottom) then ! left
-              do k = 1 , nz
-                ptr3d(ice1,:,k) = ptr3d(ice1+1,:,k)
-              end do
-            end if
-
-            if (ma%has_bdyright) then !top
-              do k = 1 , nz
-                ptr3d(:,jce2,k) = ptr3d(:,jce2-1,k)
-                ptr3d(:,jce2+1,k) = ptr3d(:,jce2-1,k)
-              end do
-            end if
-
-            if (ma%has_bdyleft) then ! bottom
-              do k = 1 , nz
-                ptr3d(:,jce1,k) = ptr3d(:,jce1+1,k)
-              end do
-            end if
-
-!-----------------------------------------------------------------------
 !           Nullify pointer to make sure that it does not point on a random
 !           part in the memory
 !-----------------------------------------------------------------------
@@ -2664,8 +2547,6 @@ module mod_esmf_atm
 
       if (allocated(itemNameList)) deallocate(itemNameList)
       if (allocated(itemTypeList)) deallocate(itemTypeList)
-      if (allocated(zvar)) deallocate(zvar)
-      if (allocated(hzvar)) deallocate(hzvar)
 
 !-----------------------------------------------------------------------
 !     Format definition
