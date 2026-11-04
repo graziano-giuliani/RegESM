@@ -1044,11 +1044,26 @@ module mod_esmf_rtm
             case ('rnof')
               do m = 1, nbc
                 do n = 1, nlc
+                  ! Out of bounds (missing value)
                   if ( ptr(n,m) > 1.0d0) then
                     chym_runoff(n,m) = 0.0d0
                   else
-                    ! Seems if internal water CLM sets negative runoff?
-                    chym_runoff(n,m) = (abs(ptr(n,m))*sfac)+addo
+                    ! CLM50 Tech note 2.27.3.1: Water and Energy Conservation
+                    ! The section on MOSART talks about how only positive 
+                    ! runoff is routed. Negative runoff means that more water
+                    ! is needed for hydrology in the land model than what it
+                    ! is available, and it must be taken from 'elsewhere'
+                    ! to fill in the soil and close. Negative runoff is
+                    ! effectively a withdrawal of water from the ocean.
+                    ! It is needed to close water balance in the system.
+                    ! Because we are a REGIONAL model, the balance CANNOT
+                    ! be completely closed. We can zero it out.
+                    ! I have put here central Spain minimum runoff value.
+                    if ( ptr(n,m) > 0.0d0 ) then
+                      chym_runoff(n,m) = ptr(n,m)*sfac + addo
+                    else
+                      chym_runoff(n,m) = (2.0d-7)*sfac + addo
+                    end if
                   end if
                 end do
               end do
